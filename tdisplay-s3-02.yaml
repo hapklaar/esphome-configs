@@ -1,0 +1,269 @@
+esphome:
+  name: tdisplay-s3-02
+
+external_components:
+  - source: github://landonr/lilygo-tdisplays3-esphome
+    components: [tdisplays3]
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: arduino
+
+logger:
+  level: debug
+
+api:
+  encryption:
+    key: !secret api_secret
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "AP ${node_name}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+web_server:
+  port: 80
+
+font:
+  - file: "fonts/Oswald-Light.ttf"
+    id: font_oswald_120
+    size: 96
+
+  - file: "fonts/Oswald-Light.ttf"
+    id: font_oswald_70
+    size: 70
+
+  - file: "fonts/Oswald-Light.ttf"
+    id: font_oswald_30
+    size: 30
+
+  - file: 'fonts/slkscr.ttf'
+    id: font_slkscr_8
+    size: 8
+    glyphs: "!%()+,-/_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
+  - file: 'fonts/slkscr.ttf'
+    id: font_slkscr_16
+    size: 16
+    glyphs: "!%()+,-/_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
+  - file: 'fonts/BebasNeue-Regular.ttf'
+    id: font_bebas_48
+    size: 48
+  - file: 'fonts/BebasNeue-Regular.ttf'
+    id: font_bebas_56
+    size: 56
+  - file: 'fonts/BebasNeue-Regular.ttf'
+    id: font_bebas_96
+    size: 96
+  - file: 'fonts/BebasNeue-Regular.ttf'
+    id: font_bebas_120
+    size: 120
+  - file: 'fonts/arial.ttf'
+    id: font_arial_12
+    size: 12
+  - file: 'fonts/arial.ttf'
+    id: font_arial_16
+    size: 16
+
+color:
+  - id: color_red
+    red: 1
+    green: 0
+    blue: 0
+  - id: color_green
+    red: 0
+    green: 1
+    blue: 0
+  - id: color_blue
+    red: 0
+    green: 0
+    blue: 1
+  - id: color_orange
+    red: 1
+    green: 0.6
+    blue: 0
+  - id: color_teal_blue
+    red: 0
+    green: 0.5
+    blue: 0.45
+  - id: color_grey
+    red: 0.3
+    green: 0.3
+    blue: 0.3
+  - id: color_black
+    red: 0
+    green: 0
+    blue: 0
+  - id: color_white
+    red: 1
+    green: 1
+    blue: 1
+
+time:
+  - platform: homeassistant
+    id: esptime
+    
+binary_sensor:
+
+  - platform: gpio
+    pin:
+      number: GPIO14
+      inverted: true
+    id: tdisplay_button_input_1
+    on_click:
+      then:
+        - homeassistant.service:
+            service: lock.unlock
+            data:
+              entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
+
+  - platform: gpio
+    pin:
+      number: GPIO0
+      inverted: true
+    id: tdisplay_button_input_0
+    on_click:
+      then:
+        - homeassistant.service:
+            service: lock.lock
+            data:
+              entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
+
+  - platform: status
+    name: "Node Status"
+    id: system_status              
+
+# Backlight on when on battery
+switch:
+  - platform: gpio
+    pin: GPIO38
+    name: "Backlight"
+    id: backlight
+    internal: true
+    restore_mode: ALWAYS_ON             
+
+sensor:
+  - platform: homeassistant
+    id: dsmr_power_production
+    entity_id: sensor.electricity_meter_power_production
+    unit_of_measurement: 'W'
+    filters:
+      - multiply: 1000
+      - heartbeat: 5s
+
+  - platform: homeassistant
+    id: dsmr_power_consumption
+    entity_id: sensor.electricity_meter_power_consumption
+    unit_of_measurement: 'W'
+    filters:
+      - multiply: 1000
+      - heartbeat: 5s
+  
+  - platform: homeassistant
+    id: dsmr_total_power
+    entity_id: sensor.dsmr_total_sl
+    unit_of_measurement: 'W'  
+  
+
+  #- platform: homeassistant
+  #  id: dsmr_power_delivered
+  #  #entity_id: sensor.dsmr_power_delivered
+  #  entity_id: sensor.dsmr_consumed_in_watts
+  #  unit_of_measurement: 'W'
+
+  #- platform: homeassistant
+  #  id: dsmr_power_returned
+  #  #entity_id: sensor.dsmr_power_returned
+  #  entity_id: sensor.dsmr_produced_in_watts
+  #  unit_of_measurement: 'W'
+
+  #- platform: template
+  #  name: dds238_total_power
+  #  id: dds238_total_power
+  #  unit_of_measurement: 'W'
+  #  update_interval: 1s
+  #  lambda: |-
+  #    return ((id(dds238_1_power).state + (id(dds238_2_power).state + (id(dds238_3_power).state))));
+
+  #- platform: template
+  #  name: dsmr_total_power
+  #  id: dsmr_total_power
+  #  unit_of_measurement: 'W'
+  #  update_interval: 1s
+  #  lambda: |-
+  #    return ((id(dsmr_power_consumption).state - (id(dsmr_power_production).state)));
+
+text_sensor:
+  - platform: homeassistant
+    id: lock_status
+    entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
+    
+graph:
+  - id: dsmr_power_graph
+    duration: 60min
+    x_grid: 10min
+    y_grid: 500
+    width: 318
+    height: 63
+    border: false
+    traces:
+      - sensor: dsmr_power_consumption
+        line_type: SOLID
+        line_thickness: 3
+        color: color_red
+      - sensor: dsmr_power_production
+        line_type: SOLID
+        line_thickness: 2
+        color: color_green
+        
+# 240x135
+display:
+  - platform: tdisplays3
+    rotation: 270
+    update_interval: 1s
+    lambda: |-
+      auto white = Color(255, 255, 255);
+      auto test = Color(40, 40, 255);
+      auto purple = Color(102, 0, 204);
+      it.filled_rectangle(0, 0, 320, 15, test);
+      it.strftime(80, -2, id(font_arial_16), id(color_white), "%d-%m-%Y %H:%M:%S", id(esptime).now());
+      
+      //if (id(vcc).has_state()) {
+        //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
+      //}
+      
+      if (id(dsmr_total_power).has_state()) 
+        {
+        float pwr = id(dsmr_total_power).state;
+            if (pwr > 1000.0) 
+            {
+            it.printf(160, -5, id(font_bebas_120), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+            } 
+            else {if (pwr > 750.0) 
+            {
+            it.printf(160, -5, id(font_bebas_120), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+            } 
+            else {if (pwr < 0.0)
+            {
+            it.printf(160, -5, id(font_bebas_120), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+            }
+            else {
+            it.printf(160, -5, id(font_bebas_120), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+            }
+          }
+        }
+      }
+      // Draw the graph
+      it.graph(1, 107, id(dsmr_power_graph), color_teal_blue);
+      
+      

@@ -1,0 +1,224 @@
+esphome:
+  name: ttgo-tdisplay-watt
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_secret
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "AP ${node_name}"
+    password: !secret wifi_ap_password
+
+captive_portal:
+
+web_server:
+  port: 80
+
+font:
+  - file: 'fonts/slkscr.ttf'
+    id: font_slkscr_8
+    size: 8
+    glyphs: "!%()+,-/_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
+  - file: 'fonts/slkscr.ttf'
+    id: font_slkscr_16
+    size: 16
+    glyphs: "!%()+,-/_.:°0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz"
+  - file: 'fonts/BebasNeue-Regular.ttf'
+    id: font_bebas_48
+    size: 48
+  - file: 'fonts/BebasNeue-Regular.ttf'
+    id: font_bebas_56
+    size: 56
+  - file: 'fonts/BebasNeue-Regular.ttf'
+    id: font_bebas_96
+    size: 96
+  - file: 'fonts/arial.ttf'
+    id: font_arial_12
+    size: 12
+  - file: 'fonts/arial.ttf'
+    id: font_arial_16
+    size: 16
+
+color:
+  - id: color_red
+    red: 1
+    green: 0
+    blue: 0
+  - id: color_green
+    red: 0
+    green: 1
+    blue: 0
+  - id: color_blue
+    red: 0
+    green: 0
+    blue: 1
+  - id: color_orange
+    red: 1
+    green: 0.6
+    blue: 0
+  - id: color_teal_blue
+    red: 0
+    green: 0.5
+    blue: 0.45
+  - id: color_grey
+    red: 0.3
+    green: 0.3
+    blue: 0.3
+    
+spi:
+  clk_pin: GPIO18
+  mosi_pin: GPIO19
+
+time:
+  - platform: homeassistant
+    id: esptime
+    
+binary_sensor:
+
+  - platform: gpio
+    pin:
+      number: GPIO35
+      inverted: true
+    id: tdisplay_button_input_1
+    on_click:
+      then:
+        - homeassistant.service:
+            service: lock.unlock
+            data:
+              entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
+
+  - platform: gpio
+    pin:
+      number: GPIO0
+      inverted: true
+    id: tdisplay_button_input_0
+    on_click:
+      then:
+        - homeassistant.service:
+            service: lock.lock
+            data:
+              entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
+
+  - platform: status
+    name: "Node Status"
+    id: system_status              
+
+# We can still control the backlight independently
+switch:
+  - platform: gpio
+    pin: GPIO4
+    name: "Backlight"
+    id: backlight              
+
+sensor:
+
+  - platform: homeassistant
+    id: dsmr_power_consumption
+    entity_id: sensor.power_consumption
+    unit_of_measurement: 'kW'
+    filters:
+      - multiply: 1000
+
+  - platform: homeassistant
+    id: dds238_combined_power
+    entity_id: sensor.dds238_combined
+    unit_of_measurement: 'W'
+
+  - platform: homeassistant
+    id: dsmr_power
+    entity_id: sensor.dsmr_power_consumed
+    unit_of_measurement: 'W'
+
+  - platform: adc
+    pin: 34
+    attenuation: 11db
+    filters:
+      - multiply: 2
+    name: VBatt
+    id: vcc
+    update_interval: 60s
+
+  - platform: template
+    name: batterylevel
+    id: batterylevel
+    unit_of_measurement: '%'
+    update_interval: 60s
+    lambda: |-
+      //return ((id(vcc).state /4.2) * 100.00);
+      return ((id(vcc).state -3) /1.2 * 100.00);   
+      
+  #- platform: template
+  #  name: dds238_total_power
+  #  id: dds238_total_power
+  #  unit_of_measurement: 'W'
+  #  update_interval: 1s
+  #  lambda: |-
+  #    return ((id(dds238_1_power).state + (id(dds238_2_power).state + (id(dds238_3_power).state))));
+
+
+text_sensor:
+  - platform: homeassistant
+    id: lock_status
+    entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
+    
+graph:
+  - id: dsmr_power_graph
+    duration: 60min
+    x_grid: 10min
+    y_grid: 200
+    width: 230
+    height: 55
+    border: false
+    traces:
+      - sensor: dds238_combined_power
+        line_type: SOLID
+        line_thickness: 3
+        color: color_red
+
+# 240x135
+display:
+  - platform: st7789v
+    model: TTGO TDisplay 135x240
+    backlight_pin: GPIO4
+    cs_pin: GPIO5
+    dc_pin: GPIO16
+    reset_pin: GPIO23
+    rotation: 90°
+    update_interval: 1s
+    lambda: |-
+      //if (id(vcc).has_state()) {
+        //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
+      //}
+      if (id(dsmr_power).has_state()) {
+        float pwr = id(dds238_combined_power).state;
+        if (pwr > 1000.0) {
+          it.printf(120, -15, id(font_bebas_96), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dds238_combined_power).state);
+        } else {
+        if (pwr > 750.0) {
+          it.printf(120, -15, id(font_bebas_96), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dds238_combined_power).state);
+        } else {
+        it.printf(120, -15, id(font_bebas_96), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dds238_combined_power).state);
+         }
+        }
+      }
+      // Draw the graph
+      it.graph(4, 80, id(dsmr_power_graph), color_grey);
+      
+      //it.strftime(4, 120, id(font_arial_16), "%Y-%m-%d %H:%M:%S", id(esptime).now());
