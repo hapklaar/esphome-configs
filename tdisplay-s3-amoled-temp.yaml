@@ -132,15 +132,10 @@ sensor:
     id: dsmr_total_power
     entity_id: sensor.dsmr_total_sl
     unit_of_measurement: 'W'
-
-text_sensor:
-  - platform: wifi_info
-    ip_address:
-      internal: true
-      id: wifi_ip_addr
-    ssid:
-      internal: true
-      id: wifi_ssid
+  - platform: homeassistant
+    id: solar_power
+    entity_id: sensor.dds238_2_solar_energy_power
+    unit_of_measurement: 'W'
 
 binary_sensor:
   # Button to cycle through pages on the display
@@ -238,11 +233,7 @@ display:
           it.filled_rectangle(0, 0, 535, 20, test);
           it.strftime(268, -2, id(font_arial_20), id(color_white), TextAlign::CENTER_HORIZONTAL, "%c", id(esptime).now());
 
-          //if (id(vcc).has_state()) {
-            //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
-          //}
-
-          it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_power_production).state);
+          it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(solar_power).state);
           
           // Draw the graph
           it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
