@@ -24,7 +24,6 @@ spi:
 logger:
   hardware_uart: USB_SERIAL_JTAG
 
-
 # Enable Home Assistant API
 api:
   encryption:
