@@ -20,6 +20,9 @@ spi:
       - 48
       - 5
 
+psram:
+  mode: octal
+
 # Enable logging
 logger:
   hardware_uart: USB_SERIAL_JTAG
@@ -243,6 +246,3 @@ display:
           
           // Draw the graph
           it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
-
-psram:
-  mode: octal
