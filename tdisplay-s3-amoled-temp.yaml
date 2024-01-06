@@ -165,10 +165,10 @@ binary_sensor:
       number: GPIO21
       inverted: true
     id: button_1
-    on_click:
+    on_press:
       then:
         - display.page.show_next: my_display
-#        - component.update: my_display     
+       # - component.update: my_display
 graph:
   - id: dsmr_power_graph
     duration: 30min
