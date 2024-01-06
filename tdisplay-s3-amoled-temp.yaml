@@ -116,7 +116,7 @@ time:
 sensor:
   - platform: adc
     pin: GPIO04
-    attenuation: 11db
+    attenuation: auto
     filters:
       - multiply: 2
     name: VBatt
@@ -124,13 +124,15 @@ sensor:
     update_interval: 10s
 
   - platform: template
-    name: batterylevel
-    id: batterylevel
-    unit_of_measurement: '%'
-    update_interval: 10s
+    name: "Battery Percentage"
+    update_interval: 30s
+    accuracy_decimals: 2
     lambda: |-
-      //return ((id(vcc).state /4.2) * 100.00);
-      return ((id(vcc).state -3) /1.2 * 100.00);  
+      return (id(vcc).state - 3.5) / 0.7 * 100.00;
+    id: battery_percentage
+    entity_category: diagnostic
+    unit_of_measurement: '%'
+    device_class: battery
 
   - platform: homeassistant
     id: dsmr_power_production
