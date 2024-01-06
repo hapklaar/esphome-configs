@@ -121,13 +121,13 @@ sensor:
       - multiply: 2
     name: VBatt
     id: vcc
-    update_interval: 60s
+    update_interval: 10s
 
   - platform: template
     name: batterylevel
     id: batterylevel
     unit_of_measurement: '%'
-    update_interval: 60s
+    update_interval: 10s
     lambda: |-
       //return ((id(vcc).state /4.2) * 100.00);
       return ((id(vcc).state -3) /1.2 * 100.00);  
@@ -152,7 +152,7 @@ sensor:
     id: dsmr_total_power
     entity_id: sensor.dsmr_total_sl
     unit_of_measurement: 'W'
-    
+
   - platform: homeassistant
     id: solar_power
     entity_id: sensor.dds238_2_solar_energy_power
