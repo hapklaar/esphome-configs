@@ -2,7 +2,7 @@ substitutions:
   device_name: nspanel
   wifi_ssid: haplan_IoT
   wifi_password: xxxxxxxxxx
-  nextion_update_url: "https://raw.githubusercontent.com/Blackymas/NSPanel_HA_Blueprint/main/nspanel_eu.tft"
+  nextion_update_url: "https://raw.githubusercontent.com/Blackymas/NSPanel_HA_Blueprint/beta/nspanel_eu.tft"
   #nextion_update_url: "https://raw.githubusercontent.com/Blackymas/NSPanel_HA_Blueprint/dev/nspanel_eu.tft"
   #nextion_update_url: "https://raw.githubusercontent.com/Blackymas/NSPanel_HA_Blueprint/dev/custom_configuration/nspanel_blank.tft"
 
