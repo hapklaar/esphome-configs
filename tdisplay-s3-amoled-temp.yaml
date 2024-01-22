@@ -11,6 +11,11 @@ esp32:
   framework:
     type: esp-idf
 
+external_components:
+  source: github://clydebarrow/esphome@amoled
+  components: [ qspi_amoled ]
+  refresh: 10min
+
 spi:
   - id: quad_spi
     clk_pin: 47
