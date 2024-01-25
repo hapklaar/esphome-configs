@@ -82,3 +82,9 @@ sensor:
         ((273.15 + id(temp).state) * r); // in grams/m^3
     accuracy_decimals: 2
     update_interval: 10s
+
+  - platform: absolute_humidity
+    name: "esp32-aht25-002 Absolute Humidity platform"
+    temperature: temp
+    humidity: rh
+    unit_of_measurement: "g/m^3"
