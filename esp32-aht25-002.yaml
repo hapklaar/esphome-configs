@@ -84,7 +84,22 @@ sensor:
     update_interval: 10s
 
   - platform: absolute_humidity
-    name: "esp32-aht25-002 Absolute Humidity platform"
+    name: "esp32-aht25-002 Absolute Humidity Wobus"
     temperature: temp
     humidity: rh
+    equation: Wobus
+    unit_of_measurement: "g/m^3"
+
+  - platform: absolute_humidity
+    name: "esp32-aht25-002 Absolute Humidity Buck"
+    temperature: temp
+    humidity: rh
+    equation: Buck
+    unit_of_measurement: "g/m^3"
+
+  - platform: absolute_humidity
+    name: "esp32-aht25-002 Absolute Humidity Tetens"
+    temperature: temp
+    humidity: rh
+    equation: Tetens
     unit_of_measurement: "g/m^3"
