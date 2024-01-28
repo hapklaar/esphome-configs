@@ -197,6 +197,7 @@ graph:
 display:
   - platform: qspi_amoled
     id: my_display
+    model: T-DISP-AMOLED
     dimensions:
       height: 240
       width: 536
