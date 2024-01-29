@@ -129,16 +129,16 @@ sensor:
     id: vcc
     update_interval: 10s
 
-  - platform: template
-    name: "Battery Percentage"
-    update_interval: 30s
-    accuracy_decimals: 2
-    lambda: |-
-      return (id(vcc).state - 3.5) / 0.7 * 100.00;
-    id: battery_percentage
-    entity_category: diagnostic
-    unit_of_measurement: '%'
-    device_class: battery
+#  - platform: template
+#    name: "Battery Percentage"
+#    update_interval: 30s
+#    accuracy_decimals: 2
+#    lambda: |-
+#      return (id(vcc).state - 3.5) / 0.7 * 100.00;
+#    id: battery_percentage
+#    entity_category: diagnostic
+#    unit_of_measurement: '%'
+#    device_class: battery
 
   - platform: homeassistant
     id: dsmr_power_production
@@ -198,7 +198,7 @@ graph:
 display:
   - platform: qspi_amoled
     id: my_display
-    model: T-DISP-AMOLED
+    model: RM67162
     dimensions:
       height: 240
       width: 536
