@@ -112,36 +112,6 @@ time:
   - platform: homeassistant
     id: esptime
     
-binary_sensor:
-
-  - platform: gpio
-    pin:
-      number: GPIO14
-      inverted: true
-    id: tdisplay_button_input_1
-    on_click:
-      then:
-        - homeassistant.service:
-            service: lock.unlock
-            data:
-              entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
-
-  - platform: gpio
-    pin:
-      number: GPIO0
-      inverted: true
-    id: tdisplay_button_input_0
-    on_click:
-      then:
-        - homeassistant.service:
-            service: lock.lock
-            data:
-              entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
-
-  - platform: status
-    name: "Node Status"
-    id: system_status              
-
 # Backlight on when on battery
 switch:
   - platform: gpio
@@ -202,11 +172,17 @@ sensor:
   #  lambda: |-
   #    return ((id(dsmr_power_consumption).state - (id(dsmr_power_production).state)));
 
-text_sensor:
-  - platform: homeassistant
-    id: lock_status
-    entity_id: lock.z_wave_controlled_door_lock_with_bluetooth_smart
-    
+binary_sensor:
+  # Button to cycle through pages on the display
+  - platform: gpio
+    pin:
+      number: GPIO14
+      inverted: true
+    id: button_1
+    on_press:
+      then:
+        - display.page.show_next: my_display
+
 graph:
   - id: dsmr_power_graph
     duration: 60min
@@ -230,39 +206,56 @@ display:
   - platform: tdisplays3
     rotation: 90
     update_interval: 1s
-    lambda: |-
-      auto white = Color(255, 255, 255);
-      auto test = Color(40, 40, 255);
-      auto purple = Color(102, 0, 204);
-      it.filled_rectangle(0, 0, 320, 15, test);
-      it.strftime(80, -2, id(font_arial_16), id(color_white), "%d-%m-%Y %H:%M:%S", id(esptime).now());
+    pages:
+      - id: page1
+      lambda: |-
+        auto white = Color(255, 255, 255);
+        auto test = Color(40, 40, 255);
+        auto purple = Color(102, 0, 204);
+        it.filled_rectangle(0, 0, 320, 15, test);
+        it.strftime(80, -2, id(font_arial_16), id(color_white), "%d-%m-%Y %H:%M:%S", id(esptime).now());
       
-      //if (id(vcc).has_state()) {
-        //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
-      //}
+        //if (id(vcc).has_state()) {
+          //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
+        //}
       
-      if (id(dsmr_total_power).has_state()) 
-        {
-        float pwr = id(dsmr_total_power).state;
+        if (id(dsmr_total_power).has_state()) 
+          {
+          float pwr = id(dsmr_total_power).state;
             if (pwr > 1000.0) 
-            {
-            it.printf(160, -5, id(font_bebas_120), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
-            } 
-            else {if (pwr > 750.0) 
-            {
-            it.printf(160, -5, id(font_bebas_120), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
-            } 
-            else {if (pwr < 0.0)
-            {
-            it.printf(160, -5, id(font_bebas_120), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
-            }
-            else {
-            it.printf(160, -5, id(font_bebas_120), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+              {
+              it.printf(160, -5, id(font_bebas_120), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+              } 
+            else 
+              {
+              if (pwr > 750.0) 
+                {
+                it.printf(160, -5, id(font_bebas_120), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                } 
+            else 
+              {if (pwr < 0.0)
+                {
+                it.printf(160, -5, id(font_bebas_120), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                }
+            else 
+              {
+              it.printf(160, -5, id(font_bebas_120), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+              }
             }
           }
         }
-      }
       // Draw the graph
       it.graph(1, 107, id(dsmr_power_graph), color_teal_blue);
-      
+      - id: page2
+        lambda: |-
+          auto white = Color(255, 255, 255);
+          auto test = Color(40, 40, 255);
+          auto purple = Color(102, 0, 204);
+          it.filled_rectangle(0, 0, 535, 20, test);
+          it.strftime(268, -2, id(font_arial_20), id(color_white), TextAlign::CENTER_HORIZONTAL, "%c", id(esptime).now());
+
+          it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(solar_power).state);
+          
+          // Draw the graph
+          it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
       
