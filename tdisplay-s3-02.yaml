@@ -142,7 +142,11 @@ sensor:
     id: dsmr_total_power
     entity_id: sensor.dsmr_total_sl
     unit_of_measurement: 'W'  
-  
+
+  - platform: homeassistant
+    id: solar_power
+    entity_id: sensor.dds238_2_solar_energy_power
+    unit_of_measurement: 'W'  
 
   #- platform: homeassistant
   #  id: dsmr_power_delivered
@@ -204,58 +208,59 @@ graph:
 # 240x135
 display:
   - platform: tdisplays3
+    id: my_display
     rotation: 90
     update_interval: 1s
     pages:
       - id: page1
-      lambda: |-
-        auto white = Color(255, 255, 255);
-        auto test = Color(40, 40, 255);
-        auto purple = Color(102, 0, 204);
-        it.filled_rectangle(0, 0, 320, 15, test);
-        it.strftime(80, -2, id(font_arial_16), id(color_white), "%d-%m-%Y %H:%M:%S", id(esptime).now());
+        lambda: |-
+          auto white = Color(255, 255, 255);
+          auto test = Color(40, 40, 255);
+          auto purple = Color(102, 0, 204);
+          it.filled_rectangle(0, 0, 320, 15, test);
+          it.strftime(80, -2, id(font_arial_16), id(color_white), "%d-%m-%Y %H:%M:%S", id(esptime).now());
       
-        //if (id(vcc).has_state()) {
-          //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
-        //}
+          //if (id(vcc).has_state()) {
+            //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
+          //}
       
-        if (id(dsmr_total_power).has_state()) 
-          {
-          float pwr = id(dsmr_total_power).state;
-            if (pwr > 1000.0) 
-              {
-              it.printf(160, -5, id(font_bebas_120), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
-              } 
-            else 
-              {
-              if (pwr > 750.0) 
+          if (id(dsmr_total_power).has_state()) 
+            {
+            float pwr = id(dsmr_total_power).state;
+              if (pwr > 1000.0) 
                 {
-                it.printf(160, -5, id(font_bebas_120), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                it.printf(160, -5, id(font_bebas_120), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                 } 
-            else 
-              {if (pwr < 0.0)
+              else 
                 {
-                it.printf(160, -5, id(font_bebas_120), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                if (pwr > 750.0) 
+                  {
+                  it.printf(160, -5, id(font_bebas_120), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  } 
+              else 
+                {if (pwr < 0.0)
+                  {
+                  it.printf(160, -5, id(font_bebas_120), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  }
+              else 
+                  {
+                  it.printf(160, -5, id(font_bebas_120), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  }
                 }
-            else 
-              {
-              it.printf(160, -5, id(font_bebas_120), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
               }
             }
-          }
-        }
-      // Draw the graph
-      it.graph(1, 107, id(dsmr_power_graph), color_teal_blue);
+          // Draw the graph
+          it.graph(1, 107, id(dsmr_power_graph), color_teal_blue);
       - id: page2
         lambda: |-
           auto white = Color(255, 255, 255);
           auto test = Color(40, 40, 255);
           auto purple = Color(102, 0, 204);
-          it.filled_rectangle(0, 0, 535, 20, test);
-          it.strftime(268, -2, id(font_arial_20), id(color_white), TextAlign::CENTER_HORIZONTAL, "%c", id(esptime).now());
+          it.filled_rectangle(0, 0, 320, 15, test);
+          it.strftime(80, -2, id(font_arial_16), id(color_white), TextAlign::CENTER_HORIZONTAL, "%c", id(esptime).now());
 
-          it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(solar_power).state);
+          it.printf(160, 0, id(font_bebas_120), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(solar_power).state);
           
           // Draw the graph
-          it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
+          it.graph(1, 107, id(dsmr_power_graph), color_teal_blue);
       
