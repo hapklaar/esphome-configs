@@ -243,7 +243,7 @@ display:
               }
             }
           // Draw the graph
-          it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
+          // it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
       - id: page2
         lambda: |-
           auto white = Color(255, 255, 255);
