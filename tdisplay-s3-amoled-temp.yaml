@@ -129,17 +129,6 @@ sensor:
     id: vcc
     update_interval: 10s
 
-#  - platform: template
-#    name: "Battery Percentage"
-#    update_interval: 30s
-#    accuracy_decimals: 2
-#    lambda: |-
-#      return (id(vcc).state - 3.5) / 0.7 * 100.00;
-#    id: battery_percentage
-#    entity_category: diagnostic
-#    unit_of_measurement: '%'
-#    device_class: battery
-
   - platform: homeassistant
     id: dsmr_power_production
     entity_id: sensor.electricity_meter_power_production
