@@ -4,6 +4,10 @@ esphome:
   platformio_options:
     build_unflags: -Werror=all
     board_build.flash_mode: dio
+  on_boot:
+    priority: 500
+    then:
+      - delay: 5s
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -243,7 +247,7 @@ display:
               }
             }
           // Draw the graph
-          //it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
+          it.graph(1, 160, id(dsmr_power_graph), color_teal_blue);
       - id: page2
         lambda: |-
           auto white = Color(255, 255, 255);
