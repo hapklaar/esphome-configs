@@ -160,7 +160,7 @@ graph:
       - sensor: solar_power
         line_type: SOLID
         line_thickness: 2
-        color: color_blue
+        color: color_orange
 
 display:
   - platform: qspi_amoled
@@ -230,9 +230,11 @@ display:
           it.filled_rectangle(0, 0, 535, 20, test);
           it.strftime(268, -2, id(font_arial_20), id(color_white), TextAlign::CENTER_HORIZONTAL, "%c", id(esptime).now());
 
-          //if (id(vcc).has_state()) {
+          if (id(vcc).has_state()) {
+            it.printf(450, -2, id(font_arial_20), id(color_white), "%.2f V", id(vcc).state);
+
             //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
-          //}
+          }
 
           if (id(dsmr_total_power).has_state()) 
             {
@@ -269,7 +271,9 @@ display:
           auto purple = Color(102, 0, 204);
           it.filled_rectangle(0, 0, 535, 20, test);
           it.strftime(268, -2, id(font_arial_20), id(color_white), TextAlign::CENTER_HORIZONTAL, "%c", id(esptime).now());
-
+          if (id(vcc).has_state()) {
+            it.printf(450, -2, id(font_arial_20), id(color_white), "%.2f V", id(vcc).state);
+          }
           it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(solar_power).state);
           
           // Draw the graph
