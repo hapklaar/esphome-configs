@@ -105,14 +105,15 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_power_production
-    entity_id: sensor.electricity_meter_power_production
+    entity_id: sensor.power_produced
     unit_of_measurement: 'W'
     filters:
+      - multiply: 1000
       - heartbeat: 5s
 
   - platform: homeassistant
     id: dsmr_power_consumption
-    entity_id: sensor.electricity_meter_power_consumption
+    entity_id: sensor.power_consumed
     unit_of_measurement: 'W'
     filters:
       - multiply: 1000
