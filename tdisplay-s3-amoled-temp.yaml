@@ -108,7 +108,6 @@ sensor:
     entity_id: sensor.electricity_meter_power_production
     unit_of_measurement: 'W'
     filters:
-      - multiply: 1000
       - heartbeat: 5s
 
   - platform: homeassistant
