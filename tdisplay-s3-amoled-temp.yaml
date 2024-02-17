@@ -105,7 +105,7 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_power_production
-    entity_id: sensor.power_produced
+    entity_id: sensor.electricity_meter_power_production
     unit_of_measurement: 'W'
     filters:
       - multiply: 1000
@@ -113,7 +113,7 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_power_consumption
-    entity_id: sensor.power_consumed
+    entity_id: sensor.electricity_meter_power_consumption
     unit_of_measurement: 'W'
     filters:
       - multiply: 1000
@@ -121,7 +121,7 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_total_power
-    entity_id: sensor.dsmr_total_sl
+    entity_id: sensor.dsmr_total_sg
     unit_of_measurement: 'W'
 
   - platform: homeassistant
