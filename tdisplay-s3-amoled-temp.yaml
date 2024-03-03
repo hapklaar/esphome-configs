@@ -121,7 +121,7 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_total_power
-    entity_id: sensor.dsmr_total_sg
+    entity_id: sensor.dsmr_total_sg_mqtt
     unit_of_measurement: 'W'
 
   - platform: homeassistant
