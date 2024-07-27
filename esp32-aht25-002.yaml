@@ -56,8 +56,8 @@ sensor:
   - platform: adc
     pin: 35
     attenuation: auto
-    name: "esp32-aht25-002 VBatt"
-    update_interval: 10s
+    name: "esp32-aht25-002 Battery"
+    update_interval: 60s
     filters:
       - multiply: 1.96
     
