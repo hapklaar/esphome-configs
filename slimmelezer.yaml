@@ -91,14 +91,10 @@ dsmr:
 
 sensor:
   - platform: dsmr
-    energy_delivered_lux:
-      name: "Energy Consumed Luxembourg"
     energy_delivered_tariff1:
       name: "Energy Consumed Tariff 1"
     energy_delivered_tariff2:
       name: "Energy Consumed Tariff 2"
-    energy_returned_lux:
-      name: "Energy Produced Luxembourg"
     energy_returned_tariff1:
       name: "Energy Produced Tariff 1"
     energy_returned_tariff2:
@@ -117,38 +113,16 @@ sensor:
       icon: mdi:alert
     voltage_l1:
       name: "Voltage Phase 1"
-    voltage_l2:
-      name: "Voltage Phase 2"
-    voltage_l3:
-      name: "Voltage Phase 3"
     current_l1:
       name: "Current Phase 1"
-    current_l2:
-      name: "Current Phase 2"
-    current_l3:
-      name: "Current Phase 3"
     power_delivered_l1:
       name: "Power Consumed Phase 1"
-      accuracy_decimals: 3
-    power_delivered_l2:
-      name: "Power Consumed Phase 2"
-      accuracy_decimals: 3
-    power_delivered_l3:
-      name: "Power Consumed Phase 3"
       accuracy_decimals: 3
     power_returned_l1:
       name: "Power Produced Phase 1"
       accuracy_decimals: 3
-    power_returned_l2:
-      name: "Power Produced Phase 2"
-      accuracy_decimals: 3
-    power_returned_l3:
-      name: "Power Produced Phase 3"
-      accuracy_decimals: 3
     gas_delivered:
       name: "Gas Consumed"
-    gas_delivered_be:
-      name: "Gas Consumed Belgium"
   - platform: uptime
     name: "SlimmeLezer Uptime"
   - platform: wifi_signal
@@ -161,8 +135,6 @@ text_sensor:
       name: "DSMR Identification"
     p1_version:
       name: "DSMR Version"
-    p1_version_be:
-      name: "DSMR Version Belgium"
   - platform: wifi_info
     ip_address:
       name: "SlimmeLezer IP Address"
