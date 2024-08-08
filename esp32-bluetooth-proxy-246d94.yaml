@@ -21,7 +21,6 @@ wifi:
   password: !secret wifi_password
 
 logger:
-  level: VERBOSE
 
 ota:
   - platform: esphome
