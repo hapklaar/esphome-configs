@@ -9,7 +9,7 @@ esphome:
   friendly_name: ${friendly_name}
 
 logger: 
-  level: VERBOSE
+  level: DEBUG
 
 api:
   encryption:
