@@ -7,10 +7,13 @@ esphome:
   name: ${name}
   name_add_mac_suffix: false
   friendly_name: ${friendly_name}
+
+logger: 
+  level: VERBOSE
+
 api:
   encryption:
-    key: iYwIxdoTWuoZslJD4+HzoIquoyedGl5V+OAIxl1uqeU=
-
+    key: !secret api_secret
 
 wifi:
   ssid: !secret wifi_ssid
