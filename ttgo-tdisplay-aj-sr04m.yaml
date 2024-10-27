@@ -13,20 +13,23 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "bSDvXTUFK5GsjJUBeUdM63UT6PgDS9qJFnhgtYgjKgo="
+    key: !secret api_secret
 
 ota:
   - platform: esphome
-    password: "d8d9129107f01abc8b8b597a445d23a4"
+    password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  power_save_mode: none
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Ttgo-Tdisplay-Aj-Sr04M"
-    password: "resIvXvNmMi6"
+uart:
+  tx_pin: GPIO2
+  rx_pin: GPIO15
+  baud_rate: 9600
 
-captive_portal:
-    
+sensor:
+  - platform: "jsn_sr04t"
+    name: "Distance"
+    update_interval: 1s
