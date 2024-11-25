@@ -159,7 +159,7 @@ graph:
         color: color_orange
 
 display:
-  - platform: qspi_dbi
+  - platform: qspi_amoled
     id: my_display
     model: RM67162
     dimensions:
