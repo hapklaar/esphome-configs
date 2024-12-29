@@ -79,10 +79,18 @@ color:
 
 display:
   - platform: st7789v
-    model: TTGO TDisplay 135x240
+    model: TTGO_TDISPLAY_135X240
     update_interval: 5s
     id: my_display
-    backlight_pin: GPIO4
+    backlight_pin: 
+      number: 4
+      allow_other_uses: true
+      mode: 
+        output: True
+        input: False
+        open_drain: False
+        pullup: False
+        pulldown: False
     cs_pin: GPIO5
     dc_pin: GPIO16
     reset_pin: GPIO23
@@ -174,6 +182,14 @@ sensor:
     update_interval: 5s
     id: id_mhz19
     automatic_baseline_calibration: False
+  - platform: adc
+    pin: GPIO34
+    attenuation: auto
+    filters:
+      - multiply: 2
+    name: VBatt
+    id: vcc
+    update_interval: 10s
 
 text_sensor:
   - platform: wifi_info
