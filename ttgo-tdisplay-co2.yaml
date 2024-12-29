@@ -11,14 +11,15 @@ logger:
 
 api:
   encryption:
-    key: "BuTBZ2aBS5wmUG5bhjkVuSGzEEJq0nlxGJc4Yrz5mzg="
+    key: !secret api_secret
   services:
     - service: ttgo_tdisplay_co2_calibrate_zero
       then:
         - mhz19.calibrate_zero: id_mhz19
 
 ota:
-  password: "b0b763b70d3526c5d4282185c15262b2"
+  - platform: esphome
+    password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
@@ -156,7 +157,9 @@ display:
 
 switch:
   - platform: gpio
-    pin: GPIO4
+    pin:
+      number: GPIO4
+      allow_other_uses: true
     id: backlight
     internal: true
 
