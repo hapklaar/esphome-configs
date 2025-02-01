@@ -30,11 +30,11 @@ spi:
   clk_pin: 47
   data_pins: [ 18 , 7 , 48 , 5 ]
 
-i2c:
-  sda:
-    number: 3
-    ignore_strapping_warning: true
-  scl: 2
+# i2c:
+#   sda:
+#     number: 3
+#     ignore_strapping_warning: true
+#   scl: 2
 
 psram:
   mode: octal
@@ -53,8 +53,7 @@ display:
     reset_pin: 17
     enable_pin: 38
     auto_clear_enabled: false
-
-
+    draw_from_origin: true
 
 lvgl:
   widgets:
