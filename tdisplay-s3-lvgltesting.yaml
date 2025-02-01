@@ -1,0 +1,32 @@
+esphome:
+  name: tdisplay-s3-lvgltesting
+  friendly_name: tdisplay-s3-lvgltesting
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "N16GzTcp6uZ5ChVVKPURA3SbAinJvRZDeOlRhz+OSvc="
+
+ota:
+  - platform: esphome
+    password: "9240c4e28609d9448bc8d100583fda99"
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Tdisplay-S3-Lvgltesting"
+    password: "wg7od1PWlUOi"
+
+captive_portal:
+    
