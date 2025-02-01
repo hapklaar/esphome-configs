@@ -1,8 +1,8 @@
 esphome:
   name: tdisplay-s3-lvgltesting
   friendly_name: tdisplay-s3-lvgltesting
-  platformio_options:
-    board_build.flash_mode: dio
+  # platformio_options:
+    # board_build.flash_mode: dio
 
 esp32:
   board: esp32-s3-devkitc-1
