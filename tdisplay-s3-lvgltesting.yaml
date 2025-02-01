@@ -31,11 +31,10 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  power_save_mode: none
+#  power_save_mode: none
 
 display:
   - platform: qspi_dbi
-    auto_clear_enabled: false
     id: my_display
     model: RM67162
     dimensions:
@@ -53,12 +52,15 @@ display:
     cs_pin: 6
     reset_pin: 17
     enable_pin: 38
+    auto_clear_enabled: false
+    draw_from_origin: true
+    update_interval: never
 
-# lvgl:
-#   widgets:
-#     - label:
-#         align: CENTER
-#         text: 'Hello World!'
+lvgl:
+  # widgets:
+  #   - label:
+  #       align: CENTER
+  #       text: 'Hello World!'
 
 # Sensor configuration
 # sensor:
