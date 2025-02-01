@@ -1,32 +1,123 @@
 esphome:
   name: tdisplay-s3-lvgltesting
-  friendly_name: tdisplay-s3-lvgltesting
+  friendly_name: TTGO T-Display S3 LVGL
 
 esp32:
   board: esp32-s3-devkitc-1
   framework:
-    type: arduino
+    type: esp-idf
+
+spi:
+  id: quad_spi
+  type: quad
+  clk_pin: 47
+  data_pins:
+    - 18
+    - 7
+    - 48
+    - 5
 
 # Enable logging
 logger:
 
-# Enable Home Assistant API
 api:
   encryption:
-    key: "N16GzTcp6uZ5ChVVKPURA3SbAinJvRZDeOlRhz+OSvc="
+    key: !secret api_secret
 
 ota:
   - platform: esphome
-    password: "9240c4e28609d9448bc8d100583fda99"
+    password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  power_save_mode: none
 
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Tdisplay-S3-Lvgltesting"
-    password: "wg7od1PWlUOi"
+display:
+  - platform: qspi_dbi
+    auto_clear_enabled: false
+    id: my_display
+    model: RM67162
+    dimensions:
+      height: 240
+      width: 536
+      offset_height: 0
+      offset_width: 0
+    transform:
+      mirror_x: true
+      mirror_y: false
+      swap_xy: true
+    color_order: rgb
+    invert_colors: false
+    brightness: 175
+    cs_pin: 6
+    reset_pin: 17
+    enable_pin: 38
 
-captive_portal:
-    
+lvgl:
+    pages:
+      - id: meter_page
+        widgets:
+          - meter:
+              align: CENTER
+              height: 180
+              width: 180
+              scales:
+                - range_from: 0 # scale for the needle value
+                  range_to: 4000
+                  angle_range: 240
+                  rotation: 150
+                  indicators:
+                    - line:
+                        id: power_needle
+                        width: 2
+                        color: 0xFF0000
+                        r_mod: -4
+                    - tick_style:
+                        start_value: -10
+                        end_value: 40
+                        color_start: 0x0000bd
+                        color_end: 0xbd0000
+                        width: 1
+                - range_from: -10 # scale for the value labels
+                  range_to: 40
+                  angle_range: 240
+                  rotation: 150
+                  ticks:
+                    width: 1
+                    count: 51
+                    length: 10
+                    color: 0x000000
+                    major:
+                      stride: 5
+                      width: 2
+                      length: 10
+                      color: 0x404040
+                      label_gap: 10
+              widgets:
+                - label:
+                    id: power_text
+                    text: "-.-°C"
+                    align: CENTER
+                    y: 45
+                - label:
+                    text: "Watt"
+                    align: CENTER
+                    y: 65
+
+# Sensor configuration
+sensor:
+  - platform: homeassistant
+    id: sensor_dsmr_total_sg_mqtt
+    entity_id: sensor.dsmr_total_sg_mqtt
+    internal: true
+    on_value:
+      then:
+      - lvgl.indicator.update:
+          id: power_needle
+          value: !lambda return x * 10;
+      - lvgl.label.update:
+          id: power_text
+          text:
+            format: "%.1fW"
+            args: [ 'x' ]
