@@ -181,7 +181,7 @@ sensor:
       internal: true
     update_interval: 5s
     id: id_mhz19
-    automatic_baseline_calibration: False
+    automatic_baseline_calibration: True
   - platform: adc
     pin: GPIO34
     attenuation: auto
