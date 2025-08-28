@@ -14,5 +14,3 @@ packages:
     files:
       - nspanel_esphome.yaml
     refresh: 300s
-
-bluetooth_proxy:
