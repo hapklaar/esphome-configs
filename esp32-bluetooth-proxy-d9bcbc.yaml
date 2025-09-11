@@ -11,6 +11,8 @@ api:
   encryption:
     key: !secret api_secret
 
+logger:
+  level: VERBOSE
 
 wifi:
   ssid: !secret wifi_ssid
