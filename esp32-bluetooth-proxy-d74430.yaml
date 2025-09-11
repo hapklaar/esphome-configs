@@ -2,13 +2,8 @@ substitutions:
   name: esp32-bluetooth-proxy-d74430
   friendly_name: Bluetooth Proxy d74430
 
-#packages:
-#  esphome.bluetooth-proxy: github://esphome/bluetooth-proxies/esp32-generic/esp32-generic-c3.yaml@main
-
-esp32:
-  board: esp32dev
-  framework:
-    type: esp-idf
+packages:
+  esphome.bluetooth-proxy: github://esphome/bluetooth-proxies/esp32-generic/esp32-generic-c3.yaml@main
 
 esphome:
   name: ${name}
