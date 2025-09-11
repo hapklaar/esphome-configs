@@ -1,6 +1,6 @@
 substitutions:
   name: esp32-bluetooth-proxy-d74430
-  friendly_name: Bluetooth Proxy d74430
+  friendly_name: Bluetooth Proxy d74430 Slk Boven
 
 packages:
   esphome.bluetooth-proxy: github://esphome/bluetooth-proxies/esp32-generic/esp32-generic-c3.yaml@main
