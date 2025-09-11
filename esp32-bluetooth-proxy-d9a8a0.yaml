@@ -9,8 +9,10 @@ esphome:
   friendly_name: ${friendly_name}
 api:
   encryption:
-    key: mQU7vVTJ/AvPK0anhD4wRmMBmU5au54cmlvGEvwK/RM=
+    key: !secret api_secret
 
+logger:
+  level: VERBOSE
 
 wifi:
   ssid: !secret wifi_ssid
