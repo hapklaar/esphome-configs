@@ -1,0 +1,94 @@
+# Basic Config
+---
+substitutions:
+  device_name: energy_meter
+  friendly_name: "Energy Meter"
+
+esphome:
+  name: ${device_name}
+
+esp8266:
+  board: esp01_1m
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: ${friendly_name}
+    password: !secret wifi_password
+
+captive_portal:
+
+logger:
+  baud_rate: 0
+
+api:
+
+ota:
+
+uart:
+  rx_pin: GPIO3
+  tx_pin: GPIO1
+  baud_rate: 9600
+
+tuya:
+
+switch:
+  - platform: "tuya"
+    name: "${friendly_name} Switch"
+    id: power
+    switch_datapoint: 1
+
+binary_sensor:
+  - platform: gpio
+    pin: 16
+    id: button
+    on_press:
+      then:
+        - switch.toggle: power
+
+sensor:
+  - platform: "tuya"
+    name: "${friendly_name} Current"
+    sensor_datapoint: 18
+    accuracy_decimals: 2
+    unit_of_measurement: "A"
+    icon: "mdi:flash"
+    filters:
+      - multiply: 0.001
+
+  - platform: "tuya"
+    name: "${friendly_name} Power"
+    sensor_datapoint: 19
+    accuracy_decimals: 1
+    unit_of_measurement: "W"
+    icon: "mdi:flash"
+    filters:
+      - multiply: 0.1
+
+  - platform: "tuya"
+    name: "${friendly_name} Voltage"
+    sensor_datapoint: 20
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+    icon: "mdi:flash"
+    filters:
+      - multiply: 0.1
+
+  - platform: "tuya"
+    name: "${friendly_name} kWh +"
+    sensor_datapoint: 101
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    icon: "mdi:flash"
+    filters:
+      - multiply: 0.01
+
+  - platform: "tuya"
+    name: "${friendly_name} kWh -"
+    sensor_datapoint: 9
+    unit_of_measurement: "kWh"
+    accuracy_decimals: 3
+    icon: "mdi:flash"
+    filters:
+      - multiply: 0.01
