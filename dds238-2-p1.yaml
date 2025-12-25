@@ -2,7 +2,7 @@
 ---
 substitutions:
   device_name: energy_meter
-  friendly_name: "Energy Meter"
+  friendly_name: "dds238-2-p1"
 
 esphome:
   name: ${device_name}
