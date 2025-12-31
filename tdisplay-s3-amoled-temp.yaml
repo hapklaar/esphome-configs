@@ -121,6 +121,11 @@ sensor:
     unit_of_measurement: 'W'
 
   - platform: homeassistant
+    id: shellypro3em_total_power
+    entity_id: sensor.shellypro3em_441d6474d608_energy_meter_2_power
+    unit_of_measurement: 'W'
+
+  - platform: homeassistant
     id: solar_power
     entity_id: sensor.dds238_2_solar_energy_power
     unit_of_measurement: 'W'
@@ -192,28 +197,28 @@ display:
             //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
           }
 
-          if (id(dsmr_total_power).has_state()) 
+          if (id(shellypro3em_total_power).has_state()) 
             {
-            float pwr = id(dsmr_total_power).state;
+            float pwr = id(shellypro3em_total_power).state;
               if (pwr > 1000.0) 
                 {
-                it.printf(268, 0, id(font_bebas_230), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                it.printf(268, 0, id(font_bebas_230), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                 } 
               else
                 {
                 if (pwr > 750.0) 
                   {
-                  it.printf(268, 0, id(font_bebas_230), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  it.printf(268, 0, id(font_bebas_230), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                   } 
               else 
                 {
                 if (pwr < 0.0)
                   {
-                  it.printf(268, 0, id(font_bebas_230), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  it.printf(268, 0, id(font_bebas_230), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                   }
               else
                   {
-                  it.printf(268, 0, id(font_bebas_230), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  it.printf(268, 0, id(font_bebas_230), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                   }
                 }
               }
@@ -232,28 +237,28 @@ display:
             //it.printf(4, 0, id(font_arial_16), id(color_teal_blue), "%.2f V (%.2f %%)", id(vcc).state, id(batterylevel).state);
           }
 
-          if (id(dsmr_total_power).has_state()) 
+          if (id(shellypro3em_total_power).has_state()) 
             {
-            float pwr = id(dsmr_total_power).state;
+            float pwr = id(shellypro3em_total_power).state;
               if (pwr > 1000.0) 
                 {
-                it.printf(268, 0, id(font_bebas_160), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                it.printf(268, 0, id(font_bebas_160), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                 } 
               else
                 {
                 if (pwr > 750.0) 
                   {
-                  it.printf(268, 0, id(font_bebas_160), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  it.printf(268, 0, id(font_bebas_160), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                   } 
               else 
                 {
                 if (pwr < 0.0)
                   {
-                  it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                   }
               else
                   {
-                  it.printf(268, 0, id(font_bebas_160), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
+                  it.printf(268, 0, id(font_bebas_160), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
                   }
                 }
               }
