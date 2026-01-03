@@ -77,111 +77,226 @@ sensor:
     unit_of_measurement: 'W'
     on_value:
       - lambda: |-
-          for (int i = 0; i < 29; i++) {
-            id(power_history)[i] = id(power_history)[i + 1];
-          }
+          id(power_0)  = id(power_1);
+          id(power_1)  = id(power_2);
+          id(power_2)  = id(power_3);
+          id(power_3)  = id(power_4);
+          id(power_4)  = id(power_5);
+          id(power_5)  = id(power_6);
+          id(power_6)  = id(power_7);
+          id(power_7)  = id(power_8);
+          id(power_8)  = id(power_9);
+          id(power_9)  = id(power_10);
+          id(power_10) = id(power_11);
+          id(power_11) = id(power_12);
+          id(power_12) = id(power_13);
+          id(power_13) = id(power_14);
+          id(power_14) = id(power_15);
+          id(power_15) = id(power_16);
+          id(power_16) = id(power_17);
+          id(power_17) = id(power_18);
+          id(power_18) = id(power_19);
+          id(power_19) = id(power_20);
+          id(power_20) = id(power_21);
+          id(power_21) = id(power_22);
+          id(power_22) = id(power_23);
+          id(power_23) = id(power_24);
+          id(power_24) = id(power_25);
+          id(power_25) = id(power_26);
+          id(power_26) = id(power_27);
+          id(power_27) = id(power_28);
+          id(power_28) = id(power_29);
 
           float v = x;
           if (v < 0) v = 0;
           if (v > 3000) v = 3000;
-          id(power_history)[29] = v;
+          id(power_29) = v;
+
 
       - lvgl.bar.update:
           id: power_bar_0
-          value: !lambda return id(power_history)[0];
+          value: !lambda return id(power_0);
       - lvgl.bar.update:
           id: power_bar_1
-          value: !lambda return id(power_history)[1];
+          value: !lambda return id(power_1);
       - lvgl.bar.update:
           id: power_bar_2
-          value: !lambda return id(power_history)[2];
+          value: !lambda return id(power_2);
       - lvgl.bar.update:
           id: power_bar_3
-          value: !lambda return id(power_history)[3];
+          value: !lambda return id(power_3);
       - lvgl.bar.update:
           id: power_bar_4
-          value: !lambda return id(power_history)[4];
+          value: !lambda return id(power_4);
       - lvgl.bar.update:
           id: power_bar_5
-          value: !lambda return id(power_history)[5];
+          value: !lambda return id(power_5);
       - lvgl.bar.update:
           id: power_bar_6
-          value: !lambda return id(power_history)[6];
+          value: !lambda return id(power_6);
       - lvgl.bar.update:
           id: power_bar_7
-          value: !lambda return id(power_history)[7];
+          value: !lambda return id(power_7);
       - lvgl.bar.update:
           id: power_bar_8
-          value: !lambda return id(power_history)[8];
+          value: !lambda return id(power_8);
       - lvgl.bar.update:
           id: power_bar_9
-          value: !lambda return id(power_history)[9];
+          value: !lambda return id(power_9);
       - lvgl.bar.update:
           id: power_bar_10
-          value: !lambda return id(power_history)[10];
+          value: !lambda return id(power_10);
       - lvgl.bar.update:
           id: power_bar_11
-          value: !lambda return id(power_history)[11];
+          value: !lambda return id(power_11);
       - lvgl.bar.update:
           id: power_bar_12
-          value: !lambda return id(power_history)[12];
+          value: !lambda return id(power_12);
       - lvgl.bar.update:
           id: power_bar_13
-          value: !lambda return id(power_history)[13];
+          value: !lambda return id(power_13);
       - lvgl.bar.update:
           id: power_bar_14
-          value: !lambda return id(power_history)[14];
+          value: !lambda return id(power_14);
       - lvgl.bar.update:
           id: power_bar_15
-          value: !lambda return id(power_history)[15];
+          value: !lambda return id(power_15);
       - lvgl.bar.update:
           id: power_bar_16
-          value: !lambda return id(power_history)[16];
+          value: !lambda return id(power_16);
       - lvgl.bar.update:
           id: power_bar_17
-          value: !lambda return id(power_history)[17];
+          value: !lambda return id(power_17);
       - lvgl.bar.update:
           id: power_bar_18
-          value: !lambda return id(power_history)[18];
+          value: !lambda return id(power_18);
       - lvgl.bar.update:
           id: power_bar_19
-          value: !lambda return id(power_history)[19];
+          value: !lambda return id(power_19);
       - lvgl.bar.update:
           id: power_bar_20
-          value: !lambda return id(power_history)[20];
+          value: !lambda return id(power_20);
       - lvgl.bar.update:
           id: power_bar_21
-          value: !lambda return id(power_history)[21];
+          value: !lambda return id(power_21);
       - lvgl.bar.update:
           id: power_bar_22
-          value: !lambda return id(power_history)[22];
+          value: !lambda return id(power_22);
       - lvgl.bar.update:
           id: power_bar_23
-          value: !lambda return id(power_history)[23];
+          value: !lambda return id(power_23);
       - lvgl.bar.update:
           id: power_bar_24
-          value: !lambda return id(power_history)[24];
+          value: !lambda return id(power_24);
       - lvgl.bar.update:
           id: power_bar_25
-          value: !lambda return id(power_history)[25];
+          value: !lambda return id(power_25);
       - lvgl.bar.update:
           id: power_bar_26
-          value: !lambda return id(power_history)[26];
+          value: !lambda return id(power_26);
       - lvgl.bar.update:
           id: power_bar_27
-          value: !lambda return id(power_history)[27];
+          value: !lambda return id(power_27);
       - lvgl.bar.update:
           id: power_bar_28
-          value: !lambda return id(power_history)[28];
+          value: !lambda return id(power_28);
       - lvgl.bar.update:
           id: power_bar_29
-          value: !lambda return id(power_history)[29];
+          value: !lambda return id(power_29);
+
 
 globals:
-  - id: power_history
-    type: float[30]
-    restore_value: no
-    initial_value: '{0}'
+  - id: power_0
+    type: float
+    initial_value: '0'
+  - id: power_1
+    type: float
+    initial_value: '0'
+  - id: power_2
+    type: float
+    initial_value: '0'
+  - id: power_3
+    type: float
+    initial_value: '0'
+  - id: power_4
+    type: float
+    initial_value: '0'
+  - id: power_5
+    type: float
+    initial_value: '0'
+  - id: power_6
+    type: float
+    initial_value: '0'
+  - id: power_7
+    type: float
+    initial_value: '0'
+  - id: power_8
+    type: float
+    initial_value: '0'
+  - id: power_9
+    type: float
+    initial_value: '0'
+  - id: power_10
+    type: float
+    initial_value: '0'
+  - id: power_11
+    type: float
+    initial_value: '0'
+  - id: power_12
+    type: float
+    initial_value: '0'
+  - id: power_13
+    type: float
+    initial_value: '0'
+  - id: power_14
+    type: float
+    initial_value: '0'
+  - id: power_15
+    type: float
+    initial_value: '0'
+  - id: power_16
+    type: float
+    initial_value: '0'
+  - id: power_17
+    type: float
+    initial_value: '0'
+  - id: power_18
+    type: float
+    initial_value: '0'
+  - id: power_19
+    type: float
+    initial_value: '0'
+  - id: power_20
+    type: float
+    initial_value: '0'
+  - id: power_21
+    type: float
+    initial_value: '0'
+  - id: power_22
+    type: float
+    initial_value: '0'
+  - id: power_23
+    type: float
+    initial_value: '0'
+  - id: power_24
+    type: float
+    initial_value: '0'
+  - id: power_25
+    type: float
+    initial_value: '0'
+  - id: power_26
+    type: float
+    initial_value: '0'
+  - id: power_27
+    type: float
+    initial_value: '0'
+  - id: power_28
+    type: float
+    initial_value: '0'
+  - id: power_29
+    type: float
+    initial_value: '0'
+
 
 lvgl:
   pages:
