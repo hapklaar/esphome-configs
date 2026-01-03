@@ -55,7 +55,9 @@ touchscreen:
     interrupt_pin: 21
     reset_pin: 13
     on_touch:
-      - light.turn_on: display_backlight
+      - light.control:
+          id: display_backlight
+          brightness: 100% # Bring it back to full brightness
       - script.execute: screen_timeout
 
 globals:
@@ -71,7 +73,7 @@ script:
     parameters:
       brightness_val: int
     then:
-      - delay: 200ms
+      - delay: 50ms
       - homeassistant.service:
           service: light.turn_on
           data:
@@ -82,7 +84,10 @@ script:
     mode: restart
     then:
       - delay: 30s
-      - light.turn_off: display_backlight
+      - light.control:
+          id: display_backlight
+          brightness: 30%
+          transition_length: 1s
 
   - id: end_slider_touch
     mode: restart
@@ -199,7 +204,11 @@ lvgl:
 
               - slider:
                   id: yee_slider
-                  # ... (min/max/width/etc) ...
+                  min_value: 0
+                  max_value: 255
+                  width: 179
+                  x: 1
+                  y: 100
                   on_press:
                     - script.stop: end_slider_touch # Stop the cool-down if we touch again
                     - lambda: 'id(slider_active) = true;'
