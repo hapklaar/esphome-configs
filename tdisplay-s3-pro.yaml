@@ -120,7 +120,7 @@ lvgl:
             width: 180
             bg_opa: 0
             scales:
-              - range_from: -100
+              - range_from: 0
                 range_to: 400
                 angle_range: 240
                 rotation: 150
@@ -172,7 +172,7 @@ lvgl:
             width: 180
             bg_opa: 0
             scales:
-              - range_from: -100
+              - range_from: -200
                 range_to: 400
                 angle_range: 240
                 rotation: 150
@@ -194,7 +194,7 @@ lvgl:
                 rotation: 150
                 ticks:
                   width: 1
-                  count: 51
+                  count: 61
                   length: 8
                   color: 0xB0B0B0
                   major:
