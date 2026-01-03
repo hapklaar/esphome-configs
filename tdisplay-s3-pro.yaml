@@ -106,13 +106,9 @@ sensor:
             return std::string(buf);
 
 lvgl:
-  theme:
-    label:
-      text_color: 0xFFFFFF
-
   pages:
     - id: meter_page
-      bg_color: 0x000000
+      bg_color: 0xF2F2EE   # off-white / warm light gray
       widgets:
 
         # ===== INDOOR (TOP) =====
@@ -132,7 +128,7 @@ lvgl:
                   - line:
                       id: indoor_temperature_needle
                       width: 3
-                      color: 0x3BFF3B
+                      color: 0x2E7D32   # muted green
                       r_mod: -4
               - range_from: -10
                 range_to: 40
@@ -142,12 +138,12 @@ lvgl:
                   width: 1
                   count: 51
                   length: 8
-                  color: 0x404040
+                  color: 0xB0B0B0     # minor ticks
                   major:
                     stride: 5
                     width: 2
                     length: 12
-                    color: 0xC1C1C1
+                    color: 0x707070   # major ticks + numbers
                     label_gap: 10
             widgets:
               - label:
@@ -155,12 +151,12 @@ lvgl:
                   text: "-.-°C"
                   align: CENTER
                   y: 45
-                  text_color: 0xFFFFFF
+                  text_color: 0x1A1A1A
               - label:
                   text: "Indoor"
                   align: CENTER
                   y: 65
-                  text_color: 0xAAAAAA
+                  text_color: 0x404040
 
         # ===== OUTDOOR (BOTTOM) =====
         - meter:
@@ -178,7 +174,7 @@ lvgl:
                   - line:
                       id: outdoor_temperature_needle
                       width: 3
-                      color: 0xFF3B3B
+                      color: 0xC62828   # muted red
                       r_mod: -4
               - range_from: -10
                 range_to: 40
@@ -188,12 +184,12 @@ lvgl:
                   width: 1
                   count: 51
                   length: 8
-                  color: 0x404040
+                  color: 0xB0B0B0
                   major:
                     stride: 5
                     width: 2
                     length: 12
-                    color: 0xC1C1C1
+                    color: 0x707070
                     label_gap: 10
             widgets:
               - label:
@@ -201,10 +197,9 @@ lvgl:
                   text: "-.-°C"
                   align: CENTER
                   y: 45
-                  text_color: 0xFFFFFF
+                  text_color: 0x1A1A1A
               - label:
                   text: "Outdoor"
                   align: CENTER
                   y: 65
-                  text_color: 0xAAAAAA
-
+                  text_color: 0x404040
