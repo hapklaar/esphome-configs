@@ -59,13 +59,15 @@ binary_sensor:
   - platform: homeassistant
     id: yee_light_state
     entity_id: light.yee_group
-    trigger_on_initial_state: true   # ← CORRECT OPTION
+    trigger_on_initial_state: true
     on_state:
+      # Update button
       - lvgl.button.update:
           id: yee_light_btn
           state:
             checked: !lambda return x;
 
+      # OFF → slider to 0
       - if:
           condition:
             lambda: 'return !x;'
@@ -73,6 +75,22 @@ binary_sensor:
             - lvgl.slider.update:
                 id: yee_slider
                 value: 0
+            - lambda: |-
+                id(slider_latched) = false;
+
+      # ON → pull current HA brightness
+      - if:
+          condition:
+            lambda: 'return x;'
+          then:
+            - lvgl.slider.update:
+                id: yee_slider
+                value: !lambda |-
+                  if (id(yee_light_brightness).has_state()) {
+                    return (int) id(yee_light_brightness).state;
+                  }
+                  return 0;
+
 
 sensor:
   - platform: homeassistant
@@ -82,16 +100,15 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: 'return !id(slider_active);'
+            lambda: |-
+              if (!id(slider_latched)) return true;
+              return (int)x == id(pending_brightness);
           then:
-            - if:
-                condition:
-                  binary_sensor.is_on: yee_light_state
-                then:
-                  - lvgl.slider.update:
-                      id: yee_slider
-                      value: !lambda return (int)x;
-
+            - lvgl.slider.update:
+                id: yee_slider
+                value: !lambda return (int)x;
+            - lambda: |-
+                id(slider_latched) = false;
 
 
 display:
@@ -99,10 +116,16 @@ display:
     model: t-display-s3-pro
 
 globals:
-  - id: slider_active
+  - id: slider_latched
     type: bool
     restore_value: no
     initial_value: "false"
+
+  - id: pending_brightness
+    type: int
+    restore_value: no
+    initial_value: "0"
+
 
 
 
@@ -179,19 +202,17 @@ lvgl:
                   id: yee_slider
                   min_value: 0
                   max_value: 255
-                  width: 180
+                  width: 179
                   x: 1
                   y: 100
 
-                  on_press:
-                    - lambda: |-
-                        id(slider_active) = true;
-
                   on_release:
                     - lambda: |-
-                        id(slider_active) = false;
+                        id(slider_latched) = true;
+                        id(pending_brightness) = (int)x;
                     - homeassistant.service:
                         service: light.turn_on
                         data:
                           entity_id: light.yee_group
                           brightness: !lambda return (int)x;
+
