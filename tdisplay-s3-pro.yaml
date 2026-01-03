@@ -106,6 +106,10 @@ sensor:
             return std::string(buf);
 
 lvgl:
+  theme:
+    label:
+      text_color: 0xFFFFFF
+
   pages:
     - id: meter_page
       bg_color: 0x000000
@@ -143,7 +147,7 @@ lvgl:
                     stride: 5
                     width: 2
                     length: 12
-                    color: 0x808080
+                    color: 0xC1C1C1
                     label_gap: 10
             widgets:
               - label:
@@ -189,7 +193,7 @@ lvgl:
                     stride: 5
                     width: 2
                     length: 12
-                    color: 0x808080
+                    color: 0xC1C1C1
                     label_gap: 10
             widgets:
               - label:
