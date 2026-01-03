@@ -25,20 +25,11 @@ psram:
 
 logger:
 
-# --- BACKLIGHT CONTROL ---
-output:
-  - platform: ledc
+power_supply:
+  - id: backlight
     pin: 48
-    id: backlight_pwm
+    enable_on_boot: true
 
-light:
-  - platform: monochromatic
-    output: backlight_pwm
-    name: "Display Backlight"
-    id: display_backlight
-    restore_mode: ALWAYS_ON
-
-# --- HARDWARE ---
 spi:
   clk_pin: 18
   mosi_pin: 17
@@ -46,75 +37,50 @@ spi:
 i2c:
   - scl: 6
     sda: 5
+    scan: true
     id: i2c_onboard
+    frequency: 400kHz
 
 touchscreen:
   - platform: cst226
     interrupt_pin: 21
     reset_pin: 13
-    on_touch:
-      - light.control:
-          id: display_backlight
-          brightness: 100%
-      - script.execute: screen_timeout
+    # on_touch:
+    #   - lambda: |-
+    #       ESP_LOGI(
+    #         "cal",
+    #         "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+    #         touch.x,
+    #         touch.y,
+    #         touch.x_raw,
+    #         touch.y_raw
+    #       );
 
-globals:
-  - id: slider_active
-    type: bool
-    initial_value: "false"
-  - id: button_processing
-    type: bool
-    initial_value: "false"
-
-# --- SCRIPTS ---
-script:
-  - id: debounce_light_slider
-    mode: restart
-    parameters:
-      brightness_val: int
-    then:
-      - delay: 100ms
-      - homeassistant.service:
-          service: light.turn_on
-          data:
-            entity_id: light.yee_group
-            brightness: !lambda return brightness_val;
-
-  - id: screen_timeout
-    mode: restart
-    then:
-      - delay: 30s
-      - light.control:
-          id: display_backlight
-          brightness: 30%
-          transition_length: 1s
-
-  - id: end_slider_touch
-    mode: restart
-    then:
-      - delay: 1000ms
-      - lambda: 'id(slider_active) = false;'
-
-  - id: end_button_lockout
-    mode: restart
-    then:
-      - delay: 1000ms
-      - lambda: 'id(button_processing) = false;'
-
-# --- HOME ASSISTANT SYNC ---
 binary_sensor:
+  - platform: cst226
+    id: cst226_sensor
+    on_click:
+      - logger.log: Sensor clicked
+
   - platform: homeassistant
     id: yee_light_state
     entity_id: light.yee_group
+    trigger_on_initial_state: true
     on_state:
-      # This ensures the UI always matches the actual light state
+      # Sync button state
       - lvgl.button.update:
           id: yee_light_btn
           state:
             checked: !lambda return x;
-      - lvgl.widget.update:
-          id: yee_light_btn
-          bg_color: !lambda 'return x ? lv_color_hex(0x00FF00) : lv_color_hex(0xDDDDDD);'
+
+      # Light OFF → force slider to 0
+      - if:
+          condition:
+            lambda: 'return !x;'
+          then:
+            - lvgl.slider.update:
+                id: yee_slider
+                value: 0
 
 sensor:
   - platform: homeassistant
@@ -124,94 +90,97 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: 'return !id(slider_active);'
+            binary_sensor.is_on: yee_light_state
           then:
             - lvgl.slider.update:
                 id: yee_slider
                 value: !lambda return (int)x;
-            - lvgl.label.update:
-                id: yee_pct_label
-                text: !lambda |-
-                  int pct = (int)((x / 255.0) * 100.0);
-                  return to_string(pct) + "%";
 
 display:
   - platform: mipi_spi
     model: t-display-s3-pro
 
-# --- LVGL UI ---
-lvgl:
-  full_refresh: false
+######################################
+# SCRIPT-BASED DEBOUNCE
+######################################
+script:
+  - id: debounce_light_slider
+    mode: restart
+    parameters:
+      brightness_val: int
+    then:
+      - delay: 200ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: light.yee_group
+            brightness: !lambda return brightness_val;
 
+######################################
+# LVGL UI
+######################################
+lvgl:
   pages:
     - id: lights_page
       bg_color: 0xF2F2EE
       widgets:
+
+        ################################################
+        # LIGHT CARD
+        ################################################
         - container:
             width: 202
             height: 160
             x: 10
             y: 10
+            pad_all: 10
             bg_color: 0xFFFFFF
             radius: 10
+
             widgets:
+
+              ############################################
+              # LIGHT BUTTON
+              ############################################
               - button:
                   id: yee_light_btn
-                  # REMOVED checkable: true to prevent internal state fighting
+                  checkable: true
                   width: 180
                   height: 80
                   x: 1
                   y: 0
-                  bg_color: 0xDDDDDD
-                  # We use on_click instead of on_value for a cleaner trigger
-                  on_click:
+                  on_value:
                     - if:
                         condition:
-                          # Check the current known state of the light
-                          binary_sensor.is_on: yee_light_state
+                          lambda: 'return x;'
                         then:
                           - homeassistant.service:
-                              service: light.turn_off
-                              data: {entity_id: light.yee_group}
+                              service: light.turn_on
+                              data:
+                                entity_id: light.yee_group
                         else:
                           - homeassistant.service:
-                              service: light.turn_on
-                              data: {entity_id: light.yee_group}
+                              service: light.turn_off
+                              data:
+                                entity_id: light.yee_group
                   widgets:
                     - label:
                         text: "LR Lights"
                         text_font: montserrat_28
                         align: CENTER
+                        text_color: 0x000000
 
-              - label:
-                  id: yee_pct_label
-                  text: "0%"
-                  text_font: montserrat_14
-                  text_color: 0x808080
-                  x: 155
-                  y: 82
-
+              ############################################
+              # BRIGHTNESS SLIDER (DEBOUNCED)
+              ############################################
               - slider:
                   id: yee_slider
                   min_value: 0
                   max_value: 255
-                  width: 179
+                  width: 180
                   x: 1
                   y: 100
-                  on_press:
-                    - script.stop: end_slider_touch
-                    - lambda: 'id(slider_active) = true;'
                   on_value:
-                    - lvgl.label.update:
-                        id: yee_pct_label
-                        text: !lambda |-
-                          int pct = (int)((x / 255.0) * 100.0);
-                          return to_string(pct) + "%";
                     - script.execute:
                         id: debounce_light_slider
                         brightness_val: !lambda return (int)x;
-                  on_release:
-                    - script.execute:
-                        id: debounce_light_slider
-                        brightness_val: !lambda return (int)lv_slider_get_value(id(yee_slider));
-                    - script.execute: end_slider_touch
