@@ -1,27 +1,6 @@
 esphome:
   name: t-display-s3-pro-lights
-  on_boot:
-    priority: -100   # very late, after API + HA states
-    then:
-      - if:
-          condition:
-            binary_sensor.is_on: yee_light_state
-          then:
-            - lvgl.button.update:
-                id: yee_light_btn
-                state:
-                  checked: true
-            - lvgl.slider.update:
-                id: yee_slider
-                value: !lambda return (int)id(yee_light_brightness).state;
-          else:
-            - lvgl.button.update:
-                id: yee_light_btn
-                state:
-                  checked: false
-            - lvgl.slider.update:
-                id: yee_slider
-                value: 0
+
 esp32:
   board: esp32-s3-devkitc-1
   framework:
@@ -80,11 +59,13 @@ binary_sensor:
   - platform: homeassistant
     id: yee_light_state
     entity_id: light.yee_group
+    trigger_on_initial_state: true   # ← CORRECT OPTION
     on_state:
       - lvgl.button.update:
           id: yee_light_btn
           state:
             checked: !lambda return x;
+
       - if:
           condition:
             lambda: 'return !x;'
@@ -92,7 +73,6 @@ binary_sensor:
             - lvgl.slider.update:
                 id: yee_slider
                 value: 0
-
 
 sensor:
   - platform: homeassistant
@@ -102,18 +82,29 @@ sensor:
     on_value:
       - if:
           condition:
-            binary_sensor.is_on: yee_light_state
+            lambda: 'return !id(slider_active);'
           then:
-            - lvgl.slider.update:
-                id: yee_slider
-                value: !lambda return (int)x;
-
+            - if:
+                condition:
+                  binary_sensor.is_on: yee_light_state
+                then:
+                  - lvgl.slider.update:
+                      id: yee_slider
+                      value: !lambda return (int)x;
 
 
 
 display:
   - platform: mipi_spi
     model: t-display-s3-pro
+
+globals:
+  - id: slider_active
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+
 
 ######################################
 # LVGL UI
@@ -124,17 +115,17 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
 
-        ################################################
-        # SCREEN FRAME (DEBUG – KEEP FOR VERIFICATION)
-        ################################################
-        - container:
-            x: 0
-            y: 0
-            width: 222
-            height: 480
-            border_width: 2
-            border_color: 0x000000
-            bg_opa: 0
+        # ################################################
+        # # SCREEN FRAME (DEBUG – KEEP FOR VERIFICATION)
+        # ################################################
+        # - container:
+        #     x: 0
+        #     y: 0
+        #     width: 222
+        #     height: 480
+        #     border_width: 2
+        #     border_color: 0x000000
+        #     bg_opa: 0
 
         ################################################
         # LIGHT CARD (CENTERED ON SCREEN)
@@ -143,7 +134,7 @@ lvgl:
             width: 202
             height: 160
             x: 10            # (222 - 202) / 2  ✔ correct
-            y: 20
+            y: 10
             pad_all: 10
             bg_color: 0xFFFFFF
             radius: 10
@@ -176,7 +167,8 @@ lvgl:
                                 entity_id: light.yee_group
                   widgets:
                     - label:
-                        text: "Living Room"
+                        text: "LR Lights"
+                        text_font: montserrat_28
                         align: CENTER
                         text_color: 0x000000
 
@@ -188,9 +180,16 @@ lvgl:
                   min_value: 0
                   max_value: 255
                   width: 180
-                  x: 1           # SAME FIX HERE
-                  y: 100          # 10 + 40 + 10
+                  x: 1
+                  y: 100
+
+                  on_press:
+                    - lambda: |-
+                        id(slider_active) = true;
+
                   on_release:
+                    - lambda: |-
+                        id(slider_active) = false;
                     - homeassistant.service:
                         service: light.turn_on
                         data:
