@@ -1,6 +1,27 @@
 esphome:
   name: t-display-s3-pro-lights
-
+  on_boot:
+    priority: -100   # very late, after API + HA states
+    then:
+      - if:
+          condition:
+            binary_sensor.is_on: yee_light_state
+          then:
+            - lvgl.button.update:
+                id: yee_light_btn
+                state:
+                  checked: true
+            - lvgl.slider.update:
+                id: yee_slider
+                value: !lambda return (int)id(yee_light_brightness).state;
+          else:
+            - lvgl.button.update:
+                id: yee_light_btn
+                state:
+                  checked: false
+            - lvgl.slider.update:
+                id: yee_slider
+                value: 0
 esp32:
   board: esp32-s3-devkitc-1
   framework:
@@ -104,12 +125,24 @@ lvgl:
       widgets:
 
         ################################################
+        # SCREEN FRAME (DEBUG – KEEP FOR VERIFICATION)
+        ################################################
+        - container:
+            x: 0
+            y: 0
+            width: 222
+            height: 480
+            border_width: 2
+            border_color: 0x000000
+            bg_opa: 0
+
+        ################################################
         # LIGHT CARD (CENTERED ON SCREEN)
         ################################################
         - container:
             width: 202
             height: 160
-            x: 10            # (222 - 202) / 2
+            x: 10            # (222 - 202) / 2  ✔ correct
             y: 20
             pad_all: 10
             bg_color: 0xFFFFFF
@@ -124,9 +157,9 @@ lvgl:
                   id: yee_light_btn
                   checkable: true
                   width: 180
-                  height: 40
-                  x: 11          # (202 - 180) / 2
-                  y: 10
+                  height: 80
+                  x: 1           # (182 - 180) / 2  ✔ FIXED
+                  y: 0
                   on_value:
                     - if:
                         condition:
@@ -155,12 +188,11 @@ lvgl:
                   min_value: 0
                   max_value: 255
                   width: 180
-                  x: 11          # SAME as button
-                  y: 60          # button y (10) + height (40) + gap (10)
+                  x: 1           # SAME FIX HERE
+                  y: 100          # 10 + 40 + 10
                   on_release:
                     - homeassistant.service:
                         service: light.turn_on
                         data:
                           entity_id: light.yee_group
                           brightness: !lambda return (int)x;
-
