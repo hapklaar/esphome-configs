@@ -64,6 +64,14 @@ binary_sensor:
           id: yee_light_btn
           state:
             checked: !lambda return x;
+      - if:
+          condition:
+            lambda: 'return !x;'
+          then:
+            - lvgl.slider.update:
+                id: yee_slider
+                value: 0
+
 
 sensor:
   - platform: homeassistant
@@ -78,10 +86,7 @@ sensor:
             - lvgl.slider.update:
                 id: yee_slider
                 value: !lambda return (int)x;
-          else:
-            - lvgl.slider.update:
-                id: yee_slider
-                value: 0
+
 
 
 
@@ -98,86 +103,64 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
 
-        # ===============================
-        # PAGE CONTAINER
-        # ===============================
+        ################################################
+        # LIGHT CARD (CENTERED ON SCREEN)
+        ################################################
         - container:
-            width: 222
-            height: 480
-            pad_all: 3
-            layout:
-              type: FLEX
-              flex_flow: COLUMN
-              flex_align_main: START
-              flex_align_cross: CENTER
-              flex_align_track: START
+            width: 202
+            height: 160
+            x: 10            # (222 - 202) / 2
+            y: 20
+            pad_all: 10
+            bg_color: 0xFFFFFF
+            radius: 10
 
             widgets:
 
-              # ===============================
-              # LIGHT CARD
-              # ===============================
-              - container:
-                  width: 202
-                  height: 160
-                  pad_all: 10
-                  bg_color: 0xFFFFFF
-                  radius: 10
-                  layout:
-                    type: FLEX
-                    flex_flow: COLUMN
-                    flex_align_main: START
-                    flex_align_cross: CENTER
-                    flex_align_track: START
-
-                  widgets:
-
-                    ################################
-                    # LIGHT BUTTON (light_btn)
-                    ################################
-                    - button:
-                        id: yee_light_btn
-                        checkable: true
-                        width: 180
-                        height: 40
-                        on_value:
-                          - if:
-                              condition:
-                                lambda: 'return x;'
-                              then:
-                                - homeassistant.service:
-                                    service: light.turn_on
-                                    data:
-                                      entity_id: light.yee_group
-                              else:
-                                - homeassistant.service:
-                                    service: light.turn_off
-                                    data:
-                                      entity_id: light.yee_group
-                        widgets:
-                          - label:
-                              text: "Living Room"
-                              align: CENTER
-                              text_color: 0x000000
-
-                    ################################
-                    # SPACER (10 px)
-                    ################################
-                    - container:
-                        height: 10
-                        bg_opa: 0
-
-                    ################################
-                    # BRIGHTNESS SLIDER
-                    ################################
-                    - slider:
-                        id: yee_slider
-                        min_value: 0
-                        max_value: 255
-                        width: 180
-                        on_release:
+              ############################################
+              # LIGHT BUTTON
+              ############################################
+              - button:
+                  id: yee_light_btn
+                  checkable: true
+                  width: 180
+                  height: 40
+                  x: 11          # (202 - 180) / 2
+                  y: 10
+                  on_value:
+                    - if:
+                        condition:
+                          lambda: 'return x;'
+                        then:
                           - homeassistant.service:
                               service: light.turn_on
                               data:
                                 entity_id: light.yee_group
-                                brightness: !lambda return (int)x;
+                        else:
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.yee_group
+                  widgets:
+                    - label:
+                        text: "Living Room"
+                        align: CENTER
+                        text_color: 0x000000
+
+              ############################################
+              # BRIGHTNESS SLIDER (DIRECTLY UNDER BUTTON)
+              ############################################
+              - slider:
+                  id: yee_slider
+                  min_value: 0
+                  max_value: 255
+                  width: 180
+                  x: 11          # SAME as button
+                  y: 60          # button y (10) + height (40) + gap (10)
+                  on_release:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.yee_group
+                          brightness: !lambda return (int)x;
+
