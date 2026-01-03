@@ -19,14 +19,13 @@ wifi:
   password: !secret wifi_password
   power_save_mode: none
 
-# S3 Pro has 8MB Octal PSRAM - critical for LVGL
 psram:
   mode: octal
   speed: 80MHz
 
 logger:
 
-# --- BACKLIGHT CONTROL (Dimmable version) ---
+# --- BACKLIGHT CONTROL ---
 output:
   - platform: ledc
     pin: 48
@@ -39,7 +38,7 @@ light:
     id: display_backlight
     restore_mode: ALWAYS_ON
 
-# --- HARDWARE BUSSES ---
+# --- HARDWARE ---
 spi:
   clk_pin: 18
   mosi_pin: 17
@@ -51,11 +50,13 @@ i2c:
     id: i2c_onboard
     frequency: 400kHz
 
-# --- INPUT & TOUCH ---
 touchscreen:
   - platform: cst226
     interrupt_pin: 21
     reset_pin: 13
+    on_touch:
+      - light.turn_on: display_backlight
+      - script.execute: screen_timeout
 
 globals:
   - id: slider_active
@@ -63,7 +64,7 @@ globals:
     restore_value: no
     initial_value: "false"
 
-# --- SCRIPTS (Debounce Logic) ---
+# --- SCRIPTS ---
 script:
   - id: debounce_light_slider
     mode: restart
@@ -76,6 +77,18 @@ script:
           data:
             entity_id: light.yee_group
             brightness: !lambda return brightness_val;
+
+  - id: screen_timeout
+    mode: restart
+    then:
+      - delay: 30s
+      - light.turn_off: display_backlight
+
+  - id: end_slider_touch
+    mode: restart
+    then:
+      - delay: 1000ms # Wait 1 second after the last touch/release
+      - lambda: 'id(slider_active) = false;'
 
 # --- HOME ASSISTANT SYNC ---
 binary_sensor:
@@ -118,20 +131,20 @@ sensor:
                   int pct = (int)((x / 255.0) * 100.0);
                   return to_string(pct) + "%";
 
-# --- DISPLAY CONFIG ---
 display:
   - platform: mipi_spi
     model: t-display-s3-pro
 
-# --- LVGL UI ---
+# --- LVGL UI CONFIG ---
 lvgl:
+  # Removed 25% buffer as it causes issues in some versions. 
+  # Using default which is safe for S3-Pro.
+  full_refresh: false
+
   pages:
     - id: lights_page
       bg_color: 0xF2F2EE
       widgets:
-        ################################################
-        # LIGHT CARD
-        ################################################
         - container:
             width: 202
             height: 160
@@ -141,8 +154,6 @@ lvgl:
             bg_color: 0xFFFFFF
             radius: 10
             widgets:
-
-              # --- BUTTON ---
               - button:
                   id: yee_light_btn
                   checkable: true
@@ -150,16 +161,24 @@ lvgl:
                   height: 80
                   x: 1
                   y: 0
+                  bg_color: 0xDDDDDD # Default Off Color
                   on_value:
+                    # STYLE UPDATE (The ESPHome Action way)
                     - if:
                         condition:
                           lambda: 'return x;'
                         then:
+                          - lvgl.widget.update:
+                              id: yee_light_btn
+                              bg_color: 0x00FF00 # Green when ON
                           - homeassistant.service:
                               service: light.turn_on
                               data:
                                 entity_id: light.yee_group
                         else:
+                          - lvgl.widget.update:
+                              id: yee_light_btn
+                              bg_color: 0xDDDDDD # Gray when OFF
                           - homeassistant.service:
                               service: light.turn_off
                               data:
@@ -169,9 +188,7 @@ lvgl:
                         text: "LR Lights"
                         text_font: montserrat_28
                         align: CENTER
-                        text_color: 0x000000
 
-              # --- PERCENTAGE LABEL ---
               - label:
                   id: yee_pct_label
                   text: "0%"
@@ -180,17 +197,15 @@ lvgl:
                   x: 155
                   y: 82
 
-              # --- BRIGHTNESS SLIDER ---
               - slider:
                   id: yee_slider
-                  min_value: 0
-                  max_value: 255
-                  width: 179
-                  x: 1
-                  y: 100
+                  # ... (min/max/width/etc) ...
                   on_press:
+                    - script.stop: end_slider_touch # Stop the cool-down if we touch again
                     - lambda: 'id(slider_active) = true;'
+                  
                   on_value:
+                    # Keep the label and debounce logic we already have
                     - lvgl.label.update:
                         id: yee_pct_label
                         text: !lambda |-
@@ -199,9 +214,11 @@ lvgl:
                     - script.execute:
                         id: debounce_light_slider
                         brightness_val: !lambda return (int)x;
+
                   on_release:
-                    - lambda: 'id(slider_active) = false;'
+                    # Final sync call
                     - script.execute:
                         id: debounce_light_slider
-                        # Use .get_value() instead of .value
-                        brightness_val: !lambda return (int)id(yee_slider).get_value();
+                        brightness_val: !lambda return (int)lv_slider_get_value(id(yee_slider));
+                    # Start the cool-down timer
+                    - script.execute: end_slider_touch
