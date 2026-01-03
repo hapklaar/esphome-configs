@@ -97,6 +97,10 @@ lvgl:
     - id: lights_page
       bg_color: 0xF2F2EE
       widgets:
+
+        # ===============================
+        # PAGE CONTAINER
+        # ===============================
         - container:
             width: 222
             height: 480
@@ -104,8 +108,15 @@ lvgl:
             layout:
               type: FLEX
               flex_flow: COLUMN
+              flex_align_main: START
+              flex_align_cross: CENTER
+              flex_align_track: START
 
             widgets:
+
+              # ===============================
+              # LIGHT CARD
+              # ===============================
               - container:
                   width: 202
                   height: 160
@@ -115,11 +126,15 @@ lvgl:
                   layout:
                     type: FLEX
                     flex_flow: COLUMN
+                    flex_align_main: START
+                    flex_align_cross: CENTER
+                    flex_align_track: START
 
                   widgets:
-                    ################################################
-                    # LIGHT BUTTON (ON / OFF, WITH LABEL INSIDE)
-                    ################################################
+
+                    ################################
+                    # LIGHT BUTTON (light_btn)
+                    ################################
                     - button:
                         id: yee_light_btn
                         checkable: true
@@ -145,17 +160,16 @@ lvgl:
                               align: CENTER
                               text_color: 0x000000
 
-                    ################################################
-                    # SPACER (5 px)
-                    ################################################
+                    ################################
+                    # SPACER (10 px)
+                    ################################
                     - container:
                         height: 10
                         bg_opa: 0
 
-                    ################################################
+                    ################################
                     # BRIGHTNESS SLIDER
-                    # (0 when OFF, 0–255 when ON)
-                    ################################################
+                    ################################
                     - slider:
                         id: yee_slider
                         min_value: 0
@@ -167,4 +181,3 @@ lvgl:
                               data:
                                 entity_id: light.yee_group
                                 brightness: !lambda return (int)x;
-
