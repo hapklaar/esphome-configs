@@ -61,12 +61,127 @@ display:
   - platform: mipi_spi
     model: t-display-s3-pro
 
-sensor:
-  - platform: homeassistant
-    id: shellypro3em_total_power
-    entity_id: sensor.441d6474d608_pro3em_active_power_c
-    unit_of_measurement: 'W'
-
-
-
+####################################################
+# LVGL USER INTERFACE
+####################################################
 lvgl:
+  pages:
+    - id: lights_page
+      bg_color: 0xF2F2EE
+      widgets:
+        - container:
+            width: 222
+            height: 480
+            pad_all: 10
+            pad_row: 16
+            scrollable: false
+            layout:
+              type: FLEX
+              flex_flow: COLUMN
+
+            widgets:
+
+              ################################################
+              # LIGHT 1
+              ################################################
+              - container:
+                  width: 202
+                  height: 90
+                  pad_all: 8
+                  bg_color: 0xFFFFFF
+                  radius: 10
+                  layout:
+                    type: FLEX
+                    flex_flow: COLUMN
+                  widgets:
+                    - switch:
+                        text: "Living Room"
+                        on_turn_on:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.yee_group
+                        on_turn_off:
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.living_room
+                    - slider:
+                        min_value: 1
+                        max_value: 100
+                        on_value:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.living_room
+                                brightness_pct: !lambda return x;
+
+              ################################################
+              # LIGHT 2
+              ################################################
+              - container:
+                  width: 202
+                  height: 90
+                  pad_all: 8
+                  bg_color: 0xFFFFFF
+                  radius: 10
+                  layout:
+                    type: FLEX
+                    flex_flow: COLUMN
+                  widgets:
+                    - switch:
+                        text: "Kitchen"
+                        on_turn_on:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.yee_group
+                        on_turn_off:
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.yee_group
+                    - slider:
+                        min_value: 1
+                        max_value: 100
+                        on_value:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.kitchen
+                                brightness_pct: !lambda return x;
+
+              ################################################
+              # LIGHT 3
+              ################################################
+              - container:
+                  width: 202
+                  height: 90
+                  pad_all: 8
+                  bg_color: 0xFFFFFF
+                  radius: 10
+                  layout:
+                    type: FLEX
+                    flex_flow: COLUMN
+                  widgets:
+                    - switch:
+                        text: "Bedroom"
+                        on_turn_on:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.yee_group
+                        on_turn_off:
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.yee_group
+                    - slider:
+                        min_value: 1
+                        max_value: 100
+                        on_value:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.bedroom
+                                brightness_pct: !lambda return x;
