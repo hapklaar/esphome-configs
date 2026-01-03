@@ -1,439 +1,73 @@
+# Lilygo T-Display-S3-Pro
+# To flash this to the device:
+# With the device plugged in via USB:
+#  - install ESPHome:
+#       pip install esphome
+#  - build and run:
+#       esphome run t-display-s3-pro.yaml
+
+
 esphome:
-  name: esphome-tdisplays3pro
-  friendly_name: T-Display-S3 Pro
-  platformio_options:
-    build_flags: 
-      - '-DBOARD_HAS_PSRAM'
-      - '-DUSING_DISPLAY_PRO_V1'                  ##https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/blob/9ec738e7be324d9897d71498f760474e2dd15669/platformio.ini
-      - '-DARDUINO_ESP32S3_DEV'
-      # - '-DARDUINO_USB_MODE=1'
-      - '-DARDUINO_RUNNING_CORE=1'
-      - '-DARDUINO_EVENT_RUNNING_CORE=1'
-      # - '-UARDUINO_USB_CDC_ON_BOOT'              ## Enable UARDUINO_USB_CDC_ON_BOOT will turn off printing and will not block when using the battery.
-      # - '-DCORE_DEBUG_LEVEL=1'
-    board_build.flash_mode: qio
-    board_build.f_flash: '80000000L'
-    board_build.partitions: 'default_16MB.csv' ##https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/blob/9ec738e7be324d9897d71498f760474e2dd15669/board/t-display-s3-pro.json
-    # board_build.partitions: 'huge_app.csv' ##https://github.com/Xinyuan-LilyGO/LilyGO-T-ETH-Series/blob/077f8e89705f89ab438918c78d2e22b570c186f5/platformio.ini
-    board_build.arduino.memory_type: 'qio_opi'
-    board_upload.maximum_size: '16777216'
-    board_upload.maximum_ram_size: '327680'
-    board_upload.speed: '921600'
+  name: t-display-s3-pro
 
 esp32:
-  board: esp32s3box
-  # variant: ESP32S3
+  board: esp32-s3-devkitc-1
   framework:
-    type: arduino
-    version: latest
-    platform_version: 6.7.0
-  flash_size: 16MB       
-
-external_components:
-#   - source: github://latonita/esphome-ltr303
-#     components: [ ltr_als_ps ]
-
-  - source: github://clydebarrow/esphome@cst226 ####https://community.home-assistant.io/t/any-way-to-get-the-new-t-display-s3-amoled-to-work-with-esphome/601414/20
-    # refresh: 10min
-    components: [ cst226 ]
-
-psram:
-  speed: 80MHz
-
-i2c:                                               
-   - id: bus_a
-     sda:
-      number: 5
-      id: sda_busa
-     scl: 
-      number: 6
-      id: scl_busa
-    #  scan: False
-    #  frequency: 100kHz
-   
-
-
-logger:
-  baud_rate: 0
-  level: DEBUG
-  logs:
-    # esp32_ble: DEBUG
-    # esp32_ble_tracker: DEBUG
-    # ble_dist: INFO
-    # sensor: INFO
-    # vl53l0x: NONE
-    light: INFO
-    ltr_als_ps: INFO
-    # ledc.output: INFO
-    # component: INFO
-    # ili9xxx: WARN
-    # tt21100: WARN
-    # tdisplays3: DEBUG
-    # touchscreen: WARN
-    # wifi: DEBUG
-    # es8311: WARN
-    # i2s_audio: DEBUG
-    # voice_assistant: DEBUG
-    # es7210: WARN
-    # graph: ERROR
+    type: esp-idf
 
 api:
   encryption:
-    key: !secret api
-  # on_client_disconnected:
-  #   - switch.turn_off: ble_active_scan
+    key: !secret api_secret
 
 ota:
   - platform: esphome
-    # safe_mode: true
-    password: !secret ota    
+    password: !secret ota_password
+
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  domain: !secret domain
-  fast_connect: on
-  #power_save_mode: none
-time:
-  - platform: homeassistant
-    id: time_ha
+  power_save_mode: none
 
-button:
+psram:
+  mode: octal
+  speed: 80MHz
 
-  - platform: restart
-    name: 'MCU Restart'
-    entity_category: diagnostic
-    icon: mdi:restart
+logger:
 
-  - platform: safe_mode
-    entity_category: diagnostic
-    name: 'MCU Restart in Safe Mode'
-  
-  - platform: factory_reset
-    disabled_by_default: True
-    name: 'MCU Factory Reset'
-    id: factory_reset_all
-
-
-output:
-  - platform: ledc
+power_supply:
+  - id: backlight
     pin: 48
-    id: gpio_48_backlight_pwm
-    channel: 1
-    frequency: 20000
-  - platform: ledc
-    pin: 38
-    id: gpio_38_cam_light_pwm
-    channel: 2
-
-light:
-  - platform: monochromatic
-    output: gpio_48_backlight_pwm
-    name: "Display Backlight"
-    id: back_light
-    restore_mode: ALWAYS_ON
-  - platform: monochromatic
-    output: gpio_38_cam_light_pwm
-    name: "CAM WLED"
-    id: WLED
-    restore_mode: ALWAYS_OFF
-
-
-sensor:                                                        
-  - platform: ltr_als_ps
-    address: 0x23
-    auto_mode: false
-    type: ALS_PS   # ALS, PS, ALS_PS
-
-# # gain and time ignored in auto mode
-    gain: 2x
-    integration_time: 100 ms
-
-    glass_attenuation_factor: 1.0
-    ambient_light:
-      name: Ambient light
-      id: illuminance
-# # Following sensors are not really of a lot of use, to be honest :)
-#     # full_spectrum_counts: Full spectrum counts
-#     # infrared_counts: Infrared counts
-#     # actual_gain: Actual gain
-#     # actual_integration_time: Actual integration time
-
-# # proximity section
-    ps_cooldown: 1 s
-    ps_high_threshold: 300          #590
-    ps_low_threshold: 10
-    on_ps_high_threshold:
-      then:
-        - delay: 50ms
-        # - logger.log: "Proximity high threshold"
-        - binary_sensor.template.publish:
-              id: proximity
-              state: true    #!lambda 'return id(some_sensor).state > 30;'
-    on_ps_low_threshold:
-      then:
-        - delay: 50ms
-        # - logger.log: "Proximity low threshold"
-        - binary_sensor.template.publish:
-              id: proximity
-              state: false    #!lambda 'return id(some_sensor).state > 30;'        
-#     # ps_counts: Proximity counts
-
-binary_sensor:                                                             
-  - platform: template
-    name: "Proximity"
-    id: proximity
-    device_class: motion
-    publish_initial_state: true
-    filters:
-      - delayed_off: 10s
-    on_press: 
-      then:
-        # - delay: 3s
-        # - binary_sensor.template.publish:
-        #       id: proximity
-        #       state: false    #!lambda 'return id(some_sensor).state > 30;'
-        - delay: 50ms
-        # - light.turn_on:
-        #     id: back_light
-    on_release: 
-      then:
-        - delay: 50ms
-        # - light.turn_off:
-        #     id: back_light         
-# these are the hardware "key" buttons at the right side
-  - platform: gpio
-    pin: 
-      number: 12
-      inverted: true
-    # internal: True
-    name: "Button 1"
-    id: button1
-
-
-  - platform: gpio
-    pin:
-      number: 16
-      inverted: true
-    name: "Button 2"
-    id: button2
-    # internal: True
-    # filters:
-    # - invert:
-    # on_press:
-    #   then:
-    #   - display.page.show_next: disp
-    #   - component.update: disp
-
-# esp32_camera_web_server:
-#   - port: 8080
-#     mode: stream
-#   - port: 8081
-#     mode: snapshot
-
-# esp32_camera:
-#   name: "CAM"
-#   id: cam
-#   #internal: False
-#   external_clock:
-#     pin: 11
-#     frequency: 20000000
-#   i2c_pins:
-#     sda: 5
-#     scl: 6
-#   data_pins: [45,41,40,42,1,3,10,4]
-#   vsync_pin: 7
-#   href_pin: 15
-#   pixel_clock_pin: 2
-#   # power_down_pin: 46
-#   reset_pin: 46
-#   #resolution: 800x600
-#   resolution: UXGA
-#   jpeg_quality: 11  # max. 63
-#   max_framerate: 13.0fps
-#   idle_framerate: 0.3fps
-#   vertical_flip: False
-#   horizontal_mirror: True
-#   brightness: 0 # -2 to 2
-#   contrast: 1 # -2 to 2
-#   # special_effect: none
-#   # special_effect: grayscale
-#   # exposure settings
-#   # aec_mode: auto
-#   # aec2: false
-#   # ae_level: 0
-#   # aec_value: 300
-#   # gain settings
-#   # agc_mode: auto
-#   # agc_gain_ceiling: 64x
-#   # agc_value: 0
-#   # white balance setting
-#   wb_mode: OFFICE                       
-
+    enable_on_boot: true
 
 spi:
-  mosi_pin: 17
   clk_pin: 18
-  # miso_pin: 8
-  # interface: hardware
+  mosi_pin: 17
+
+i2c:
+  - scl: 6
+    sda: 5
+    scan: true
+    id: i2c_onboard
+    frequency: 400kHz
 
 touchscreen:
   - platform: cst226
-    id: my_touchscreen
-    # interrupt_pin: 9
-    reset_pin: 2
-    on_update:
+    interrupt_pin: 21
+    reset_pin: 13
+    on_touch:
     - lambda: |-
-          for (auto touch: touches)  {
-              if (touch.state <= 2) {
-                 ESP_LOGI("Touch points:", "id=%d x=%d, y=%d", touch.id, touch.x, touch.y);
-              }
-          }
-                                    #define BOARD_SENSOR_IRQ    21
-                                    #define BOARD_TOUCH_RST     13
-                                    #define BOARD_TOUCH_IRQ     7
+          ESP_LOGI("cal", "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+              touch.x, touch.y, touch.x_raw, touch.y_raw);
+
+binary_sensor:
+  - platform: cst226
+    id: cst226_sensor
+    on_click:
+      - logger.log: Sensor clicked
+
 
 display:
-  - platform: ili9xxx
-    # update_interval: 2s
-    model: ST7796
-    dimensions:
-      height: 480
-      width: 222
-    #   height: 480
-    #   width: 222
-      offset_height: 0
-      offset_width: 49
-    # transform:
-    #   swap_xy: true
-    #   mirror_x: true             #####90 degrees - use swap_xy with mirror_x - 180 degrees - use mirror_x with mirror_y - 270 degrees - use swap_xy with mirror_y With 90 and 270 rotations you will also need to swap the height and width in dimensions.
-      # mirror_y: true
-    color_order: bgr    
-    data_rate: 80MHz
-    cs_pin: 39  ### https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/blob/9ec738e7be324d9897d71498f760474e2dd15669/examples/UnitTest/utilities.h
-    # cs_pin: 8  
-    dc_pin: 9
-    reset_pin: 47
-    # spi_mode: MODE3
-    invert_colors: true
-    pages:
-      - id: weather
-        lambda: |-
-          // clear screen
-          it.clear();
+  - platform: mipi_spi
+    model: t-display-s3-pro
 
-          // draw the time up top
-          std::string time = id(time_ha).now().strftime("%I%M");
-          //std::string dayofweek = id(time_ha).now().strftime("%a, %b %e");
-          it.print(0, 0, id(roboto), id(color_red), TextAlign::TOP_LEFT, time.c_str());
-          it.print(60, 60, id(roboto), id(color_green), TextAlign::TOP_LEFT, time.c_str());
-          it.print(0, 450, id(roboto), id(color_blue), TextAlign::TOP_LEFT, time.c_str());
-          //it.print(1, 0, id(font1), id(color_white), TextAlign::BOTTOM_CENTER, dayofweek.c_str());
-
-
-font:
-  - file: "gfonts://Roboto"
-    id: roboto
-    size: 30
- 
-
-color:
-  - id: color_light_grey
-    hex: BBBBBB   
-  - id: color_dark_grey
-    hex: 5F5F5F
-  - id: color_white
-    hex: FFFFFF   
-  - id: color_red
-    hex: FF0000
-  - id: color_green
-    hex: 14FF00
-  - id: color_yellow
-    hex: FFFF00
-  - id: color_blue
-    hex: 0000FF
-
-
-# font:
-#   - file: "gfonts://Roboto"
-#     id: roboto
-#     size: 30
-
-
-
-
-# ##### https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/blob/9ec738e7be324d9897d71498f760474e2dd15669/examples/UnitTest/utilities.h
-# /**
-#  * @file      utilities.h
-#  * @author    Lewis He (lewishe@outlook.com)
-#  * @license   MIT
-#  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd
-#  * @date      2023-09-25
-#  *
-#  */
-# #pragma once
-# // https://www.lilygo.cc/products/t-display-s3-pro
-# // T-Dispaly-Pro pinmap
-
-
-# //! Using T-Display-Pro V1.0 , uncomment use V1.1 ,
-# //! The difference between V1.0 and V1.1 is the backlight driver.
-# // #define USING_DISPLAY_PRO_V1
-
-
-# // LTR553 , TOUCH , SY6970 , Camera share I2C Bus
-# #define BOARD_I2C_SDA       5
-# #define BOARD_I2C_SCL       6
-
-# // SD , TFT share SPI Bus
-# #define BOARD_SPI_MISO      8
-# #define BOARD_SPI_MOSI      17
-# #define BOARD_SPI_SCK       18
-# #define BOARD_TFT_CS        39
-# #define BOARD_TFT_RST       47
-# #define BOARD_TFT_DC        9
-# #define BOARD_TFT_BL        48
-# #define BOARD_SD_CS         14
-# #define BOARD_SENSOR_IRQ    21
-# #define BOARD_TOUCH_RST     13
-# #define BOARD_TOUCH_IRQ     7
-# #define BOARD_TFT_WIDTH     222
-# #define BOARD_TFT_HEIHT     480
-
-# // BUTTON Pinmap
-# #define BOARD_USER_BUTTON   {0 /*btn1*/,12/*btn2*/,16/*btn3*/}
-# #define BOARD_USER_BTN_NUM  3
-
-# // Camera Shield pinmap
-# #define CAMERA_PIN_RESET    (-1)
-# #define CAMERA_PIN_SIOD     BOARD_I2C_SDA
-# #define CAMERA_PIN_SIOC     BOARD_I2C_SCL
-# #define CAMERA_PIN_VSYNC    (7)
-# #define CAMERA_PIN_PWDN     (46)
-# #define CAMERA_PIN_HREF     (15)
-# #define CAMERA_PIN_Y9       (4)
-# #define CAMERA_PIN_XCLK     (11)
-# #define CAMERA_PIN_Y8       (10)
-# #define CAMERA_PIN_Y7       (3)
-# #define CAMERA_PIN_Y6       (1)
-# #define CAMERA_PIN_Y5       (42)
-# #define CAMERA_PIN_Y4       (40)
-# #define CAMERA_PIN_Y3       (41)
-# #define CAMERA_PIN_Y2       (45)
-# #define CAMERA_PIN_PCLK     (2)
-# #define CAMERA_WHITH_LED    (38)
-# #define XCLK_FREQ_HZ        20000000
-
-
-# #define CAMERA_LEC_CH               0
-# #define LEDC_TFT_CH                 1
-# #define LEDC_WHITE_CH               2
-
-# // #define LEDC_IR_CH          1
-# // #define CAMERA_IR_LED       (46)
-
-
-# #ifdef USING_DISPLAY_PRO_V1
-# #define BRIGHTNESS_MAX_LEVEL        255
-# #else
-# #define BRIGHTNESS_MAX_LEVEL        16
-# #endif
+lvgl:
