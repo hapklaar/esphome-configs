@@ -76,11 +76,11 @@ sensor:
     entity_id: sensor.atc_9c3e_temperature
     on_value:
       - lvgl.indicator.update:
-          id: temperature_needle
+          id: outdoor_temperature_needle
           value: !lambda return x * 10;
 
       - lvgl.label.update:
-          id: temperature_text
+          id: outdoor_temperature_text
           text: !lambda |-
             if (isnan(x)) {
               return std::string("-.-°C");
@@ -89,55 +89,118 @@ sensor:
             snprintf(buf, sizeof(buf), "%.1f°C", x);
             return std::string(buf);
 
+  - platform: homeassistant
+    id: indoor_temperature
+    entity_id: sensor.atc_8153_temperature   # <-- adjust to your HA entity
+    on_value:
+      - lvgl.indicator.update:
+          id: indoor_temperature_needle
+          value: !lambda return x * 10;
+
+      - lvgl.label.update:
+          id: indoor_temperature_text
+          text: !lambda |-
+            if (isnan(x)) return std::string("-.-°C");
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.1f°C", x);
+            return std::string(buf);
 
 lvgl:
-    pages:
-      - id: meter_page
-        widgets:
-          - meter:
-              align: CENTER
-              height: 180
-              width: 180
-              scales:
-                - range_from: -100 # scale for the needle value
-                  range_to: 400
-                  angle_range: 240
-                  rotation: 150
-                  indicators:
-                    - line:
-                        id: temperature_needle
-                        width: 2
-                        color: 0xFF0000
-                        r_mod: -4
-                    - tick_style:
-                        start_value: -10
-                        end_value: 40
-                        color_start: 0x0000bd
-                        color_end: 0xbd0000
-                        width: 1
-                - range_from: -10 # scale for the value labels
-                  range_to: 40
-                  angle_range: 240
-                  rotation: 150
-                  ticks:
-                    width: 1
-                    count: 51
-                    length: 10
-                    color: 0x000000
-                    major:
-                      stride: 5
-                      width: 2
-                      length: 10
-                      color: 0x404040
-                      label_gap: 10
-              widgets:
-                - label:
-                    id: temperature_text
-                    text: "-.-°C"
-                    align: CENTER
-                    y: 45
-                - label:
-                    text: "Outdoor"
-                    align: CENTER
-                    y: 65
-  
+  pages:
+    - id: meter_page
+      bg_color: 0x000000
+      widgets:
+
+        # ===== INDOOR (TOP) =====
+        - meter:
+            id: indoor_meter
+            align: CENTER
+            y: -100
+            height: 180
+            width: 180
+            bg_opa: 0
+            scales:
+              - range_from: -100
+                range_to: 400
+                angle_range: 240
+                rotation: 150
+                indicators:
+                  - line:
+                      id: indoor_temperature_needle
+                      width: 3
+                      color: 0x3BFF3B
+                      r_mod: -4
+              - range_from: -10
+                range_to: 40
+                angle_range: 240
+                rotation: 150
+                ticks:
+                  width: 1
+                  count: 51
+                  length: 8
+                  color: 0x404040
+                  major:
+                    stride: 5
+                    width: 2
+                    length: 12
+                    color: 0x808080
+                    label_gap: 10
+            widgets:
+              - label:
+                  id: indoor_temperature_text
+                  text: "-.-°C"
+                  align: CENTER
+                  y: 45
+                  text_color: 0xFFFFFF
+              - label:
+                  text: "Indoor"
+                  align: CENTER
+                  y: 65
+                  text_color: 0xAAAAAA
+
+        # ===== OUTDOOR (BOTTOM) =====
+        - meter:
+            align: CENTER
+            y: 100
+            height: 180
+            width: 180
+            bg_opa: 0
+            scales:
+              - range_from: -100
+                range_to: 400
+                angle_range: 240
+                rotation: 150
+                indicators:
+                  - line:
+                      id: outdoor_temperature_needle
+                      width: 3
+                      color: 0xFF3B3B
+                      r_mod: -4
+              - range_from: -10
+                range_to: 40
+                angle_range: 240
+                rotation: 150
+                ticks:
+                  width: 1
+                  count: 51
+                  length: 8
+                  color: 0x404040
+                  major:
+                    stride: 5
+                    width: 2
+                    length: 12
+                    color: 0x808080
+                    label_gap: 10
+            widgets:
+              - label:
+                  id: outdoor_temperature_text
+                  text: "-.-°C"
+                  align: CENTER
+                  y: 45
+                  text_color: 0xFFFFFF
+              - label:
+                  text: "Outdoor"
+                  align: CENTER
+                  y: 65
+                  text_color: 0xAAAAAA
+
