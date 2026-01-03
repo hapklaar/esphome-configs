@@ -78,11 +78,18 @@ sensor:
       - lvgl.indicator.update:
           id: temperature_needle
           value: !lambda return x * 10;
+
       - lvgl.label.update:
           id: temperature_text
-          text:
-            format: "%.1f°C"
-            args: [ 'x' ]
+          text: !lambda |-
+            if (isnan(x)) {
+              return std::string("-.-°C");
+            }
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%.1f°C", x);
+            return std::string(buf);
+
+
 lvgl:
     pages:
       - id: meter_page
