@@ -76,8 +76,6 @@ binary_sensor:
                 id: yee_slider
                 value: 0
 
-
-
 sensor:
   - platform: homeassistant
     id: yee_light_brightness
@@ -88,11 +86,20 @@ sensor:
           condition:
             binary_sensor.is_on: yee_light_state
           then:
-            - lvgl.slider.update:
-                id: yee_slider
-                value: !lambda return (int)x;
+            - if:
+                condition:
+                  lambda: 'return !id(slider_active);'
+                then:
+                  - lvgl.slider.update:
+                      id: yee_slider
+                      value: !lambda return (int)x;
 
 
+globals:
+  - id: slider_active
+    type: bool
+    restore_value: no
+    initial_value: "false"
 
 display:
   - platform: mipi_spi
@@ -171,12 +178,22 @@ lvgl:
                   id: yee_slider
                   min_value: 0
                   max_value: 255
+                  width: 179
+                  x: 1
+                  y: 100
+
+                  on_press:
+                    - lambda: |-
+                        id(slider_active) = true;
 
                   on_release:
+                    - lambda: |-
+                        id(slider_active) = false;
                     - homeassistant.service:
                         service: light.turn_on
                         data:
                           entity_id: light.yee_group
                           brightness: !lambda return (int)x;
+
 
 
