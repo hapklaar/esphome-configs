@@ -108,7 +108,7 @@ sensor:
 lvgl:
   pages:
     - id: meter_page
-      bg_color: 0xF2F2EE   # off-white / warm light gray
+      bg_color: 0xDDDDDD  
       widgets:
 
         # ===== INDOOR (TOP) =====
@@ -128,9 +128,15 @@ lvgl:
                   - line:
                       id: indoor_temperature_needle
                       width: 3
-                      color: 0x2E7D32   # muted green
+                      color: 0x3bb606  # muted green
                       r_mod: -4
-              - range_from: -10
+                  - tick_style:
+                      start_value: 0
+                      end_value: 40
+                      color_start: 0x0000bd
+                      color_end: 0xbd0000
+                      width: 1
+              - range_from: 0
                 range_to: 40
                 angle_range: 240
                 rotation: 150
@@ -174,9 +180,15 @@ lvgl:
                   - line:
                       id: outdoor_temperature_needle
                       width: 3
-                      color: 0xC62828   # muted red
+                      color: 0x3C9FF9 #blue
                       r_mod: -4
-              - range_from: -10
+                  - tick_style:
+                      start_value: -20
+                      end_value: 40
+                      color_start: 0x0000bd
+                      color_end: 0xbd0000
+                      width: 1
+              - range_from: -20
                 range_to: 40
                 angle_range: 240
                 rotation: 150
