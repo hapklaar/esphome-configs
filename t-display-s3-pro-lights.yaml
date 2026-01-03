@@ -71,9 +71,18 @@ sensor:
     entity_id: light.yee_group
     attribute: brightness
     on_value:
-      - lvgl.slider.update:
-          id: yee_slider
-          value: !lambda return (int)x;
+      - if:
+          condition:
+            binary_sensor.is_on: yee_light_state
+          then:
+            - lvgl.slider.update:
+                id: yee_slider
+                value: !lambda return (int)x;
+          else:
+            - lvgl.slider.update:
+                id: yee_slider
+                value: 0
+
 
 
 display:
@@ -91,7 +100,7 @@ lvgl:
         - container:
             width: 222
             height: 480
-            pad_all: 10
+            pad_all: 3
             layout:
               type: FLEX
               flex_flow: COLUMN
@@ -99,7 +108,7 @@ lvgl:
             widgets:
               - container:
                   width: 202
-                  height: 140
+                  height: 160
                   pad_all: 10
                   bg_color: 0xFFFFFF
                   radius: 10
@@ -108,20 +117,18 @@ lvgl:
                     flex_flow: COLUMN
 
                   widgets:
-                    - label:
-                        text: "Living Room"
-                        text_color: 0x000000
-
-                    # ===== LIGHT BUTTON =====
+                    ################################################
+                    # LIGHT BUTTON (ON / OFF, WITH LABEL INSIDE)
+                    ################################################
                     - button:
                         id: yee_light_btn
                         checkable: true
                         width: 180
                         height: 40
-                        on_click:
+                        on_value:
                           - if:
                               condition:
-                                lambda: 'return lvgl::widget::is_checked(id(yee_light_btn));'
+                                lambda: 'return x;'
                               then:
                                 - homeassistant.service:
                                     service: light.turn_on
@@ -132,15 +139,32 @@ lvgl:
                                     service: light.turn_off
                                     data:
                                       entity_id: light.yee_group
+                        widgets:
+                          - label:
+                              text: "Living Room"
+                              align: CENTER
+                              text_color: 0x000000
 
-                    # ===== BRIGHTNESS SLIDER =====
+                    ################################################
+                    # SPACER (5 px)
+                    ################################################
+                    - container:
+                        height: 10
+                        bg_opa: 0
+
+                    ################################################
+                    # BRIGHTNESS SLIDER
+                    # (0 when OFF, 0–255 when ON)
+                    ################################################
                     - slider:
                         id: yee_slider
                         min_value: 0
                         max_value: 255
+                        width: 180
                         on_release:
                           - homeassistant.service:
                               service: light.turn_on
                               data:
                                 entity_id: light.yee_group
                                 brightness: !lambda return (int)x;
+
