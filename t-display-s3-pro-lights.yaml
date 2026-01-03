@@ -56,6 +56,25 @@ binary_sensor:
     on_click:
       - logger.log: Sensor clicked
 
+  - platform: homeassistant
+    id: yee_light_state
+    entity_id: light.yee_group
+    on_state:
+      - lvgl.button.update:
+          id: yee_light_btn
+          state:
+            checked: !lambda return x;
+
+sensor:
+  - platform: homeassistant
+    id: yee_light_brightness
+    entity_id: light.yee_group
+    attribute: brightness
+    on_value:
+      - lvgl.slider.update:
+          id: yee_slider
+          value: !lambda return (int)x;
+
 
 display:
   - platform: mipi_spi
@@ -73,75 +92,36 @@ lvgl:
             width: 222
             height: 480
             pad_all: 10
-            scrollable: false
             layout:
               type: FLEX
               flex_flow: COLUMN
 
             widgets:
-
-              ################################
-              # LIGHT 1
-              ################################
               - container:
                   width: 202
-                  height: 100
-                  pad_all: 8
+                  height: 140
+                  pad_all: 10
                   bg_color: 0xFFFFFF
                   radius: 10
                   layout:
                     type: FLEX
                     flex_flow: COLUMN
+
                   widgets:
                     - label:
                         text: "Living Room"
                         text_color: 0x000000
-                    - switch:
-                        on_value:
-                          - if:
-                              condition:
-                                lambda: 'return x;'
-                              then:
-                                - homeassistant.service:
-                                    service: light.turn_on
-                                    data:
-                                      entity_id: light.yee_group
-                              else:
-                                - homeassistant.service:
-                                    service: light.turn_off
-                                    data:
-                                      entity_id: light.yee_group
-                    - slider:
-                        min_value: 1
-                        max_value: 100
-                        on_value:
-                          - homeassistant.service:
-                              service: light.turn_on
-                              data:
-                                entity_id: light.yee_group
-                                brightness_pct: !lambda return x;
 
-              ################################
-              # LIGHT 2
-              ################################
-              - container:
-                  width: 202
-                  height: 100
-                  pad_all: 8
-                  bg_color: 0xFFFFFF
-                  radius: 10
-                  layout:
-                    type: FLEX
-                    flex_flow: COLUMN
-                  widgets:
-                    - label:
-                        text: "Kitchen"
-                        text_color: 0x000000
-                    - switch:
-                        on_value:
+                    # ===== LIGHT BUTTON =====
+                    - button:
+                        id: yee_light_btn
+                        checkable: true
+                        width: 180
+                        height: 40
+                        on_click:
                           - if:
                               condition:
-                                lambda: 'return x;'
+                                lambda: 'return lvgl::widget::is_checked(id(yee_light_btn));'
                               then:
                                 - homeassistant.service:
                                     service: light.turn_on
@@ -152,53 +132,15 @@ lvgl:
                                     service: light.turn_off
                                     data:
                                       entity_id: light.yee_group
-                    - slider:
-                        min_value: 1
-                        max_value: 100
-                        on_value:
-                          - homeassistant.service:
-                              service: light.turn_on
-                              data:
-                                entity_id: light.yee_group
-                                brightness_pct: !lambda return x;
 
-              ################################
-              # LIGHT 3
-              ################################
-              - container:
-                  width: 202
-                  height: 100
-                  pad_all: 8
-                  bg_color: 0xFFFFFF
-                  radius: 10
-                  layout:
-                    type: FLEX
-                    flex_flow: COLUMN
-                  widgets:
-                    - label:
-                        text: "Bedroom"
-                        text_color: 0x000000
-                    - switch:
-                        on_value:
-                          - if:
-                              condition:
-                                lambda: 'return x;'
-                              then:
-                                - homeassistant.service:
-                                    service: light.turn_on
-                                    data:
-                                      entity_id: light.yee_group
-                              else:
-                                - homeassistant.service:
-                                    service: light.turn_off
-                                    data:
-                                      entity_id: light.yee_group
+                    # ===== BRIGHTNESS SLIDER =====
                     - slider:
-                        min_value: 1
-                        max_value: 100
-                        on_value:
+                        id: yee_slider
+                        min_value: 0
+                        max_value: 255
+                        on_release:
                           - homeassistant.service:
                               service: light.turn_on
                               data:
                                 entity_id: light.yee_group
-                                brightness_pct: !lambda return x;
+                                brightness: !lambda return (int)x;
