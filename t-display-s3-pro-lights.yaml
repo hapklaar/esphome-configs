@@ -245,6 +245,12 @@ sensor:
           id: power_label
           text: !lambda return str_sprintf("%.0f W", x);
 
+  - platform: ltr_als_ps
+    address: 0x23
+    update_interval: 5s
+    ambient_light:
+      name: "Ambient Light"
+      id: display_ambient_light
 
 ######################################
 # LVGL UI
