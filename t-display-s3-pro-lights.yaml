@@ -1,5 +1,9 @@
 esphome:
   name: t-display-s3-pro-lights
+  on_boot:
+    priority: -100
+    then:
+      - script.execute: backlight_wake
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -92,10 +96,10 @@ script:
   - id: backlight_idle_timer
     mode: restart
     then:
-      - delay: 30s
+      - delay: 10s
       - light.turn_on:
           id: display_backlight
-          brightness: 30%
+          brightness: 20%
 
   - id: backlight_wake
     mode: restart
@@ -111,7 +115,7 @@ script:
     parameters:
       brightness_val: int
     then:
-      - delay: 200ms
+      - delay: 100ms
       - homeassistant.service:
           service: light.turn_on
           data:
@@ -130,7 +134,7 @@ script:
     parameters:
       brightness_val: int
     then:
-      - delay: 200ms
+      - delay: 100ms
       - homeassistant.service:
           service: light.turn_on
           data:
