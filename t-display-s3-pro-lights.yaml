@@ -38,11 +38,12 @@ light:
   - platform: monochromatic
     output: backlight_pwm
     id: display_backlight
+    name: "Display Backlight"
     restore_mode: ALWAYS_ON
     default_transition_length: 0s
 
 ######################################
-# BUSSES / DISPLAY
+# SPI / I2C / DISPLAY
 ######################################
 spi:
   clk_pin: 18
@@ -83,21 +84,11 @@ globals:
     restore_value: no
     initial_value: "false"
 
-  - id: daily_energy_low
-    type: float
-    restore_value: no
-    initial_value: "0"
-
-  - id: daily_energy_high
-    type: float
-    restore_value: no
-    initial_value: "0"
-
 ######################################
 # SCRIPTS
 ######################################
 script:
-  # Backlight dimming
+  # -------- BACKLIGHT --------
   - id: backlight_idle_timer
     mode: restart
     then:
@@ -114,7 +105,7 @@ script:
           brightness: 100%
       - script.execute: backlight_idle_timer
 
-  # Living Room debounce
+  # -------- LIVING ROOM --------
   - id: debounce_lr
     mode: restart
     parameters:
@@ -133,7 +124,7 @@ script:
       - delay: 1000ms
       - lambda: 'id(slider_active_lr) = false;'
 
-  # Hallway debounce
+  # -------- HALLWAY --------
   - id: debounce_hw
     mode: restart
     parameters:
@@ -197,48 +188,59 @@ binary_sensor:
                 text: "0%"
 
 sensor:
-  # Live power
   - platform: homeassistant
-    id: power_usage
-    entity_id: sensor.441d6474d608_pro3em_active_power_c
+    id: lr_brightness
+    entity_id: light.yee_group
+    attribute: brightness
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+              return !isnan(x) &&
+                     id(lr_light_state).state &&
+                     !id(slider_active_lr);
+          then:
+            - lvgl.slider.update:
+                id: lr_slider
+                value: !lambda return (int)x;
+            - lvgl.label.update:
+                id: lr_pct
+                text: !lambda |-
+                  int pct = (int)((x / 255.0) * 100.0);
+                  return to_string(pct) + "%";
+
+  - platform: homeassistant
+    id: hw_brightness
+    entity_id: light.hallway_dimmer_light
+    attribute: brightness
+    on_value:
+      - if:
+          condition:
+            lambda: |-
+              return !isnan(x) &&
+                     id(hw_light_state).state &&
+                     !id(slider_active_hw);
+          then:
+            - lvgl.slider.update:
+                id: hw_slider
+                value: !lambda return (int)x;
+            - lvgl.label.update:
+                id: hw_pct
+                text: !lambda |-
+                  int pct = (int)((x / 255.0) * 100.0);
+                  return to_string(pct) + "%";
+
+  - platform: homeassistant
+    id: house_power
+    entity_id: sensor.441d6474d608_pro3em_active_power_c # Replace with your actual HA power sensor
     on_value:
       - lvgl.indicator.update:
           id: power_needle
           value: !lambda return x;
       - lvgl.label.update:
           id: power_label
-          text: !lambda |-
-            char buf[16];
-            snprintf(buf, sizeof(buf), "%.0f W", x);
-            return std::string(buf);
+          text: !lambda return str_sprintf("%.0f W", x);
 
-  # Daily low tariff
-  - platform: homeassistant
-    id: daily_low
-    entity_id: sensor.daily_electricity_low_v2
-    on_value:
-      - lambda: 'id(daily_energy_low) = x;'
-      - lvgl.label.update:
-          id: daily_energy_label
-          text: !lambda |-
-            float total = id(daily_energy_low) + id(daily_energy_high);
-            char buf[24];
-            snprintf(buf, sizeof(buf), "%.2f kWh today", total);
-            return std::string(buf);
-
-  # Daily high tariff
-  - platform: homeassistant
-    id: daily_high
-    entity_id: sensor.daily_electricity_high_v2
-    on_value:
-      - lambda: 'id(daily_energy_high) = x;'
-      - lvgl.label.update:
-          id: daily_energy_label
-          text: !lambda |-
-            float total = id(daily_energy_low) + id(daily_energy_high);
-            char buf[24];
-            snprintf(buf, sizeof(buf), "%.2f kWh today", total);
-            return std::string(buf);
 
 ######################################
 # LVGL UI
@@ -249,9 +251,7 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
 
-        ################################################
-        # LIVING ROOM
-        ################################################
+        # ---------- LIVING ROOM ----------
         - container:
             width: 202
             height: 160
@@ -261,6 +261,7 @@ lvgl:
             bg_color: 0xFFFFFF
             radius: 10
             widgets:
+
               - button:
                   id: lr_btn
                   checkable: true
@@ -324,9 +325,7 @@ lvgl:
                         brightness_val: !lambda return (int)lv_slider_get_value(id(lr_slider));
                     - script.execute: end_slider_lr
 
-        ################################################
-        # HALLWAY
-        ################################################
+        # ---------- HALLWAY ----------
         - container:
             width: 202
             height: 160
@@ -336,6 +335,7 @@ lvgl:
             bg_color: 0xFFFFFF
             radius: 10
             widgets:
+
               - button:
                   id: hw_btn
                   checkable: true
@@ -399,52 +399,61 @@ lvgl:
                         brightness_val: !lambda return (int)lv_slider_get_value(id(hw_slider));
                     - script.execute: end_slider_hw
 
-        ################################################
-        # POWER GAUGE + DAILY ENERGY
-        ################################################
-        - meter:
-            width: 200
-            height: 120
-            x: 11
-            y: 360
-            scales:
-              - range_from: 0
-                range_to: 6000
-                angle_range: 180
-                rotation: 180
-                indicators:
-                  - line:
-                      id: power_needle
-                      width: 3
-                      color: 0xFF3B3B
-                      r_mod: -10
-              - range_from: 0
-                range_to: 6000
-                angle_range: 180
-                rotation: 180
-                ticks:
-                  count: 7
-                  length: 8
-                  width: 2
-                  color: 0x606060
-                  major:
-                    stride: 1000
-                    length: 12
-                    width: 3
-                    color: 0x202020
-                    label_gap: 6
+# ---------- POWER METER (GAUGE) ----------
+        - container:
+            width: 202
+            height: 160
+            x: 10
+            y: 370
+            pad_all: 5
+            bg_color: 0xFFFFFF
+            radius: 10
             widgets:
+              - label:
+                  text: "Power Usage"
+                  align: TOP_MID
+                  y: 5
+                  text_font: montserrat_14
+                  text_color: 0x808080
+
+              - meter:
+                  id: my_meter
+                  width: 160
+                  height: 160
+                  align: CENTER
+                  y: 10
+                  bg_opa: TRANSP
+                  scales:
+                    - range_from: 0
+                      range_to: 5000
+                      angle_range: 180
+                      rotation: 180
+                      ticks:
+                        count: 0  # Hide default ticks for a cleaner look
+                      indicators:
+                        # The background arc (gray)
+                        - arc:
+                            width: 15
+                            color: 0xE0E0E0
+                            start_value: 0
+                            end_value: 5000
+                        # The colored "power" arc (blue)
+                        - arc:
+                            width: 15
+                            color: 0x2196F3
+                            start_value: 0
+                            end_value: 5000
+                        # The actual needle
+                        - line:
+                            id: power_needle
+                            width: 4
+                            color: 0x333333
+                            r_mod: -10
+
               - label:
                   id: power_label
                   text: "0 W"
                   align: CENTER
-                  y: -10
-                  text_font: montserrat_18
-
-              - label:
-                  id: daily_energy_label
-                  text: "0.00 kWh today"
-                  align: CENTER
-                  y: 20
-                  text_font: montserrat_14
-                  text_color: 0x606060
+                  y: 35
+                  text_font: montserrat_20
+                  text_color: 0x000000
