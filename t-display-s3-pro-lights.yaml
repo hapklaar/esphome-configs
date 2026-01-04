@@ -431,19 +431,25 @@ lvgl:
                       ticks:
                         count: 0  # Hide default ticks for a cleaner look
                       indicators:
-                        # The background arc (gray)
+                        # Segment 1: Green (0 - 1000W)
                         - arc:
                             width: 15
-                            color: 0xE0E0E0
+                            color: 0x4CAF50 
                             start_value: 0
-                            end_value: 5000
-                        # The colored "power" arc (blue)
+                            end_value: 1000
+                        # Segment 2: Yellow (1000 - 2000W)
                         - arc:
                             width: 15
-                            color: 0x2196F3
-                            start_value: 0
+                            color: 0xFFEB3B
+                            start_value: 1000
+                            end_value: 2000
+                        # Segment 3: Red (2000 - 5000W)
+                        - arc:
+                            width: 15
+                            color: 0xF44336
+                            start_value: 2000
                             end_value: 5000
-                        # The actual needle
+                        # The Needle
                         - line:
                             id: power_needle
                             width: 4
