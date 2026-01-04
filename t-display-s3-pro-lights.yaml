@@ -42,6 +42,7 @@ light:
   - platform: monochromatic
     output: backlight_pwm
     id: display_backlight
+    gamma_correct: 2.2
     name: "Display Backlight"
     restore_mode: ALWAYS_ON
     default_transition_length: 0s
@@ -119,8 +120,8 @@ script:
           then:
             - light.turn_on:
                 id: display_backlight
-                brightness: 100%
-                transition_length: 200ms
+                brightness: 80%
+                transition_length: 0s
             - lambda: |-
                 id(backlight_awake) = true;
             - lvgl.resume:
@@ -143,7 +144,7 @@ script:
   - id: end_slider_lr
     mode: restart
     then:
-      - delay: 1000ms
+      - delay: 500ms
       - lambda: 'id(slider_active_lr) = false;'
 
   # -------- HALLWAY --------
@@ -313,13 +314,14 @@ lvgl:
                                 entity_id: light.yee_group
                   widgets:
                     - label:
-                        text: "Living Room"
+                        text: "LR Lights"
+                        text_font: montserrat_20
                         align: CENTER
 
               - label:
                   id: lr_pct
                   text: "0%"
-                  text_font: montserrat_14
+                  text_font: montserrat_18
                   text_color: 0x808080
                   x: 155
                   y: 82
@@ -388,12 +390,13 @@ lvgl:
                   widgets:
                     - label:
                         text: "Hallway"
+                        text_font: montserrat_20
                         align: CENTER
 
               - label:
                   id: hw_pct
                   text: "0%"
-                  text_font: montserrat_14
+                  text_font: montserrat_18
                   text_color: 0x808080
                   x: 155
                   y: 82
