@@ -45,16 +45,6 @@ touchscreen:
   - platform: cst226
     interrupt_pin: 21
     reset_pin: 13
-    on_touch:
-      - lambda: |-
-          ESP_LOGI(
-            "cal",
-            "x=%d, y=%d, x_raw=%d, y_raw=%0d",
-            touch.x,
-            touch.y,
-            touch.x_raw,
-            touch.y_raw
-          );
 
 display:
   - platform: mipi_spi
@@ -64,7 +54,12 @@ display:
 # GLOBALS
 ######################################
 globals:
-  - id: slider_active
+  - id: slider_active_lr
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: slider_active_hw
     type: bool
     restore_value: no
     initial_value: "false"
@@ -73,8 +68,7 @@ globals:
 # SCRIPTS
 ######################################
 script:
-  # Debounce brightness updates sent to Home Assistant
-  - id: debounce_light_slider
+  - id: debounce_lr
     mode: restart
     parameters:
       brightness_val: int
@@ -86,58 +80,110 @@ script:
             entity_id: light.yee_group
             brightness: !lambda return brightness_val;
 
-  # Cool-down window after last touch/release
-  - id: end_slider_touch
+  - id: end_slider_lr
     mode: restart
     then:
       - delay: 1000ms
-      - lambda: |-
-          id(slider_active) = false;
+      - lambda: 'id(slider_active_lr) = false;'
+
+  - id: debounce_hw
+    mode: restart
+    parameters:
+      brightness_val: int
+    then:
+      - delay: 200ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: light.hallway_dimmer_light
+            brightness: !lambda return brightness_val;
+
+  - id: end_slider_hw
+    mode: restart
+    then:
+      - delay: 1000ms
+      - lambda: 'id(slider_active_hw) = false;'
 
 ######################################
 # HOME ASSISTANT ENTITIES
 ######################################
 binary_sensor:
   - platform: homeassistant
-    id: yee_light_state
+    id: lr_light_state
     entity_id: light.yee_group
     trigger_on_initial_state: true
     on_state:
-      # Sync button state
       - lvgl.button.update:
-          id: yee_light_btn
+          id: lr_btn
           state:
             checked: !lambda return x;
-
-      # Light OFF → force slider to 0
       - if:
           condition:
             lambda: 'return !x;'
           then:
             - lvgl.slider.update:
-                id: yee_slider
+                id: lr_slider
                 value: 0
+            - lvgl.label.update:
+                id: lr_pct
+                text: "0%"
+
+  - platform: homeassistant
+    id: hw_light_state
+    entity_id: light.hallway_dimmer_light
+    trigger_on_initial_state: true
+    on_state:
+      - lvgl.button.update:
+          id: hw_btn
+          state:
+            checked: !lambda return x;
+      - if:
+          condition:
+            lambda: 'return !x;'
+          then:
+            - lvgl.slider.update:
+                id: hw_slider
+                value: 0
+            - lvgl.label.update:
+                id: hw_pct
+                text: "0%"
 
 sensor:
   - platform: homeassistant
-    id: yee_light_brightness
+    id: lr_brightness
     entity_id: light.yee_group
     attribute: brightness
     on_value:
-      # Only accept HA brightness when:
-      # - light is ON
-      # - slider is not in active or cooldown phase
       - if:
           condition:
-            binary_sensor.is_on: yee_light_state
+            lambda: 'return !id(slider_active_lr);'
           then:
-            - if:
-                condition:
-                  lambda: 'return !id(slider_active);'
-                then:
-                  - lvgl.slider.update:
-                      id: yee_slider
-                      value: !lambda return (int)x;
+            - lvgl.slider.update:
+                id: lr_slider
+                value: !lambda return (int)x;
+            - lvgl.label.update:
+                id: lr_pct
+                text: !lambda |-
+                  int pct = (int)((x / 255.0) * 100.0);
+                  return to_string(pct) + "%";
+
+  - platform: homeassistant
+    id: hw_brightness
+    entity_id: light.hallway_dimmer_light
+    attribute: brightness
+    on_value:
+      - if:
+          condition:
+            lambda: 'return !id(slider_active_hw);'
+          then:
+            - lvgl.slider.update:
+                id: hw_slider
+                value: !lambda return (int)x;
+            - lvgl.label.update:
+                id: hw_pct
+                text: !lambda |-
+                  int pct = (int)((x / 255.0) * 100.0);
+                  return to_string(pct) + "%";
 
 ######################################
 # LVGL UI
@@ -148,9 +194,9 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
 
-        ############################################
-        # LIGHT CARD
-        ############################################
+        ################################################
+        # LIVING ROOM
+        ################################################
         - container:
             width: 202
             height: 160
@@ -159,17 +205,13 @@ lvgl:
             pad_all: 10
             bg_color: 0xFFFFFF
             radius: 10
-
             widgets:
 
-              ########################################
-              # LIGHT BUTTON
-              ########################################
               - button:
-                  id: yee_light_btn
+                  id: lr_btn
                   checkable: true
                   width: 180
-                  height: 80
+                  height: 70
                   x: 1
                   y: 0
                   on_value:
@@ -188,37 +230,110 @@ lvgl:
                                 entity_id: light.yee_group
                   widgets:
                     - label:
-                        text: "LR Lights"
-                        text_font: montserrat_28
+                        text: "Living Room"
                         align: CENTER
-                        text_color: 0x000000
 
-              ########################################
-              # BRIGHTNESS SLIDER
-              ########################################
+              - label:
+                  id: lr_pct
+                  text: "0%"
+                  text_font: montserrat_14
+                  text_color: 0x808080
+                  x: 155
+                  y: 82
+
               - slider:
-                  id: yee_slider
+                  id: lr_slider
                   min_value: 0
                   max_value: 255
                   width: 180
                   x: 1
                   y: 100
-
                   on_press:
-                    - script.stop: end_slider_touch
-                    - lambda: |-
-                        id(slider_active) = true;
-
+                    - script.stop: end_slider_lr
+                    - lambda: 'id(slider_active_lr) = true;'
                   on_value:
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: !lambda |-
+                          int pct = (int)((x / 255.0) * 100.0);
+                          return to_string(pct) + "%";
                     - script.execute:
-                        id: debounce_light_slider
+                        id: debounce_lr
                         brightness_val: !lambda return (int)x;
-
                   on_release:
-                    # Final sync with actual slider value
                     - script.execute:
-                        id: debounce_light_slider
-                        brightness_val: !lambda |-
-                          return (int)lv_slider_get_value(id(yee_slider));
-                    # Start cool-down window
-                    - script.execute: end_slider_touch
+                        id: debounce_lr
+                        brightness_val: !lambda return (int)lv_slider_get_value(id(lr_slider));
+                    - script.execute: end_slider_lr
+
+        ################################################
+        # HALLWAY
+        ################################################
+        - container:
+            width: 202
+            height: 160
+            x: 10
+            y: 190
+            pad_all: 10
+            bg_color: 0xFFFFFF
+            radius: 10
+            widgets:
+
+              - button:
+                  id: hw_btn
+                  checkable: true
+                  width: 180
+                  height: 70
+                  x: 1
+                  y: 0
+                  on_value:
+                    - if:
+                        condition:
+                          lambda: 'return x;'
+                        then:
+                          - homeassistant.service:
+                              service: light.turn_on
+                              data:
+                                entity_id: light.hallway_dimmer_light
+                        else:
+                          - homeassistant.service:
+                              service: light.turn_off
+                              data:
+                                entity_id: light.hallway_dimmer_light
+                  widgets:
+                    - label:
+                        text: "Hallway"
+                        align: CENTER
+
+              - label:
+                  id: hw_pct
+                  text: "0%"
+                  text_font: montserrat_14
+                  text_color: 0x808080
+                  x: 155
+                  y: 82
+
+              - slider:
+                  id: hw_slider
+                  min_value: 0
+                  max_value: 255
+                  width: 180
+                  x: 1
+                  y: 100
+                  on_press:
+                    - script.stop: end_slider_hw
+                    - lambda: 'id(slider_active_hw) = true;'
+                  on_value:
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: !lambda |-
+                          int pct = (int)((x / 255.0) * 100.0);
+                          return to_string(pct) + "%";
+                    - script.execute:
+                        id: debounce_hw
+                        brightness_val: !lambda return (int)x;
+                  on_release:
+                    - script.execute:
+                        id: debounce_hw
+                        brightness_val: !lambda return (int)lv_slider_get_value(id(hw_slider));
+                    - script.execute: end_slider_hw
