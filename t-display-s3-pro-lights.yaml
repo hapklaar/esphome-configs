@@ -25,11 +25,26 @@ psram:
 
 logger:
 
-power_supply:
-  - id: backlight
+######################################
+# BACKLIGHT (PWM DIMMABLE)
+######################################
+output:
+  - platform: ledc
     pin: 48
-    enable_on_boot: true
+    id: backlight_pwm
+    frequency: 5000 Hz
 
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    id: display_backlight
+    name: "Display Backlight"
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+
+######################################
+# SPI / I2C / DISPLAY
+######################################
 spi:
   clk_pin: 18
   mosi_pin: 17
@@ -41,14 +56,19 @@ i2c:
     id: i2c_onboard
     frequency: 400kHz
 
+display:
+  - platform: mipi_spi
+    model: t-display-s3-pro
+
+######################################
+# TOUCHSCREEN (WAKE BACKLIGHT)
+######################################
 touchscreen:
   - platform: cst226
     interrupt_pin: 21
     reset_pin: 13
-
-display:
-  - platform: mipi_spi
-    model: t-display-s3-pro
+    on_touch:
+      - script.execute: backlight_wake
 
 ######################################
 # GLOBALS
@@ -68,6 +88,24 @@ globals:
 # SCRIPTS
 ######################################
 script:
+  # -------- BACKLIGHT --------
+  - id: backlight_idle_timer
+    mode: restart
+    then:
+      - delay: 30s
+      - light.turn_on:
+          id: display_backlight
+          brightness: 30%
+
+  - id: backlight_wake
+    mode: restart
+    then:
+      - light.turn_on:
+          id: display_backlight
+          brightness: 100%
+      - script.execute: backlight_idle_timer
+
+  # -------- LIVING ROOM --------
   - id: debounce_lr
     mode: restart
     parameters:
@@ -86,6 +124,7 @@ script:
       - delay: 1000ms
       - lambda: 'id(slider_active_lr) = false;'
 
+  # -------- HALLWAY --------
   - id: debounce_hw
     mode: restart
     parameters:
@@ -156,7 +195,10 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: 'return !id(slider_active_lr);'
+            lambda: |-
+              return !isnan(x) &&
+                     id(lr_light_state).state &&
+                     !id(slider_active_lr);
           then:
             - lvgl.slider.update:
                 id: lr_slider
@@ -174,7 +216,10 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: 'return !id(slider_active_hw);'
+            lambda: |-
+              return !isnan(x) &&
+                     id(hw_light_state).state &&
+                     !id(slider_active_hw);
           then:
             - lvgl.slider.update:
                 id: hw_slider
@@ -194,9 +239,7 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
 
-        ################################################
-        # LIVING ROOM
-        ################################################
+        # ---------- LIVING ROOM ----------
         - container:
             width: 202
             height: 160
@@ -257,18 +300,20 @@ lvgl:
                         text: !lambda |-
                           int pct = (int)((x / 255.0) * 100.0);
                           return to_string(pct) + "%";
-                    - script.execute:
-                        id: debounce_lr
-                        brightness_val: !lambda return (int)x;
+                    - if:
+                        condition:
+                          binary_sensor.is_on: lr_light_state
+                        then:
+                          - script.execute:
+                              id: debounce_lr
+                              brightness_val: !lambda return (int)x;
                   on_release:
                     - script.execute:
                         id: debounce_lr
                         brightness_val: !lambda return (int)lv_slider_get_value(id(lr_slider));
                     - script.execute: end_slider_lr
 
-        ################################################
-        # HALLWAY
-        ################################################
+        # ---------- HALLWAY ----------
         - container:
             width: 202
             height: 160
@@ -329,9 +374,13 @@ lvgl:
                         text: !lambda |-
                           int pct = (int)((x / 255.0) * 100.0);
                           return to_string(pct) + "%";
-                    - script.execute:
-                        id: debounce_hw
-                        brightness_val: !lambda return (int)x;
+                    - if:
+                        condition:
+                          binary_sensor.is_on: hw_light_state
+                        then:
+                          - script.execute:
+                              id: debounce_hw
+                              brightness_val: !lambda return (int)x;
                   on_release:
                     - script.execute:
                         id: debounce_hw
