@@ -45,23 +45,59 @@ touchscreen:
   - platform: cst226
     interrupt_pin: 21
     reset_pin: 13
-    # on_touch:
-    #   - lambda: |-
-    #       ESP_LOGI(
-    #         "cal",
-    #         "x=%d, y=%d, x_raw=%d, y_raw=%0d",
-    #         touch.x,
-    #         touch.y,
-    #         touch.x_raw,
-    #         touch.y_raw
-    #       );
+    on_touch:
+      - lambda: |-
+          ESP_LOGI(
+            "cal",
+            "x=%d, y=%d, x_raw=%d, y_raw=%0d",
+            touch.x,
+            touch.y,
+            touch.x_raw,
+            touch.y_raw
+          );
 
+display:
+  - platform: mipi_spi
+    model: t-display-s3-pro
+
+######################################
+# GLOBALS
+######################################
+globals:
+  - id: slider_active
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+######################################
+# SCRIPTS
+######################################
+script:
+  # Debounce brightness updates sent to Home Assistant
+  - id: debounce_light_slider
+    mode: restart
+    parameters:
+      brightness_val: int
+    then:
+      - delay: 200ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: light.yee_group
+            brightness: !lambda return brightness_val;
+
+  # Cool-down window after last touch/release
+  - id: end_slider_touch
+    mode: restart
+    then:
+      - delay: 1000ms
+      - lambda: |-
+          id(slider_active) = false;
+
+######################################
+# HOME ASSISTANT ENTITIES
+######################################
 binary_sensor:
-  - platform: cst226
-    id: cst226_sensor
-    on_click:
-      - logger.log: Sensor clicked
-
   - platform: homeassistant
     id: yee_light_state
     entity_id: light.yee_group
@@ -88,33 +124,20 @@ sensor:
     entity_id: light.yee_group
     attribute: brightness
     on_value:
+      # Only accept HA brightness when:
+      # - light is ON
+      # - slider is not in active or cooldown phase
       - if:
           condition:
             binary_sensor.is_on: yee_light_state
           then:
-            - lvgl.slider.update:
-                id: yee_slider
-                value: !lambda return (int)x;
-
-display:
-  - platform: mipi_spi
-    model: t-display-s3-pro
-
-######################################
-# SCRIPT-BASED DEBOUNCE
-######################################
-script:
-  - id: debounce_light_slider
-    mode: restart
-    parameters:
-      brightness_val: int
-    then:
-      - delay: 200ms
-      - homeassistant.service:
-          service: light.turn_on
-          data:
-            entity_id: light.yee_group
-            brightness: !lambda return brightness_val;
+            - if:
+                condition:
+                  lambda: 'return !id(slider_active);'
+                then:
+                  - lvgl.slider.update:
+                      id: yee_slider
+                      value: !lambda return (int)x;
 
 ######################################
 # LVGL UI
@@ -125,9 +148,9 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
 
-        ################################################
+        ############################################
         # LIGHT CARD
-        ################################################
+        ############################################
         - container:
             width: 202
             height: 160
@@ -139,9 +162,9 @@ lvgl:
 
             widgets:
 
-              ############################################
+              ########################################
               # LIGHT BUTTON
-              ############################################
+              ########################################
               - button:
                   id: yee_light_btn
                   checkable: true
@@ -170,9 +193,9 @@ lvgl:
                         align: CENTER
                         text_color: 0x000000
 
-              ############################################
-              # BRIGHTNESS SLIDER (DEBOUNCED)
-              ############################################
+              ########################################
+              # BRIGHTNESS SLIDER
+              ########################################
               - slider:
                   id: yee_slider
                   min_value: 0
@@ -180,7 +203,22 @@ lvgl:
                   width: 180
                   x: 1
                   y: 100
+
+                  on_press:
+                    - script.stop: end_slider_touch
+                    - lambda: |-
+                        id(slider_active) = true;
+
                   on_value:
                     - script.execute:
                         id: debounce_light_slider
                         brightness_val: !lambda return (int)x;
+
+                  on_release:
+                    # Final sync with actual slider value
+                    - script.execute:
+                        id: debounce_light_slider
+                        brightness_val: !lambda |-
+                          return (int)lv_slider_get_value(id(yee_slider));
+                    # Start cool-down window
+                    - script.execute: end_slider_touch
