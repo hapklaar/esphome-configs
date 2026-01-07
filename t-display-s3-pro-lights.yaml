@@ -109,24 +109,17 @@ script:
           transition_length: 3s
       - lambda: |-
           id(backlight_awake) = false;
-      - lvgl.pause:
 
   - id: backlight_wake
     mode: restart
     then:
-      - if:
-          condition:
-            lambda: 'return !id(backlight_awake);'
-          then:
-            - light.turn_on:
-                id: display_backlight
-                brightness: 80%
-                transition_length: 0s
-            - lambda: |-
-                id(backlight_awake) = true;
-            - lvgl.resume:
+      - light.turn_on:
+          id: display_backlight
+          brightness: 80%
+          transition_length: 0s
+      - lambda: |-
+          id(backlight_awake) = true;
       - script.execute: backlight_idle_timer
-
 
   # -------- LIVING ROOM --------
   - id: debounce_lr
