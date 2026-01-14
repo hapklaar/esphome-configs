@@ -259,13 +259,22 @@ sensor:
 
   - platform: ltr_als_ps
     address: 0x23
-    update_interval: 5s
+    update_interval: 1s
     ambient_light:
       name: "Ambient Light"
       id: display_ambient_light
     ps_counts:
       name: "Proximity Counts"
       id: display_proximity
+
+    ps_cooldown: 1 s
+    ps_high_threshold: 300          #590
+    ps_low_threshold: 10
+    on_ps_high_threshold:
+      then:
+        - script.execute: backlight_wake
+#    on_ps_low_threshold:
+
 
 
 ######################################
