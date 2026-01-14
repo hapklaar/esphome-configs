@@ -259,7 +259,7 @@ sensor:
 
   - platform: ltr_als_ps
     address: 0x23
-    update_interval: 1s
+    update_interval: 10s
     ambient_light:
       name: "Ambient Light"
       id: display_ambient_light
@@ -267,8 +267,8 @@ sensor:
       name: "Proximity Counts"
       id: display_proximity
 
-    ps_cooldown: 1 s
-    ps_high_threshold: 300          #590
+    ps_cooldown: 5 s
+    ps_high_threshold: 50
     ps_low_threshold: 10
     on_ps_high_threshold:
       then:
