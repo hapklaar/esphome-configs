@@ -98,14 +98,10 @@ dsmr:
 
 sensor:
   - platform: dsmr
-    energy_delivered_lux:
-      name: "Energy Consumed Luxembourg"
     energy_delivered_tariff1:
       name: "Energy Consumed Tariff 1"
     energy_delivered_tariff2:
       name: "Energy Consumed Tariff 2"
-    energy_returned_lux:
-      name: "Energy Produced Luxembourg"
     energy_returned_tariff1:
       name: "Energy Produced Tariff 1"
     energy_returned_tariff2:
@@ -154,8 +150,6 @@ sensor:
       accuracy_decimals: 3
     gas_delivered:
       name: "Gas Consumed"
-    gas_delivered_be:
-      name: "Gas Consumed Belgium"
   - platform: uptime
     name: "SlimmeLezer Uptime"
   - platform: wifi_signal
@@ -168,8 +162,6 @@ text_sensor:
       name: "DSMR Identification"
     p1_version:
       name: "DSMR Version"
-    p1_version_be:
-      name: "DSMR Version Belgium"
 #    timestamp:
 #      name: "Timestamp"
   - platform: wifi_info
