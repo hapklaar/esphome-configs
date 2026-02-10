@@ -101,7 +101,7 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_power_production
-    entity_id: sensor.electricity_meter_power_production
+    entity_id: sensor.power_produced
     unit_of_measurement: 'W'
     filters:
       - multiply: 1000
@@ -109,7 +109,7 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_power_consumption
-    entity_id: sensor.electricity_meter_power_consumption
+    entity_id: sensor.power_consumed
     unit_of_measurement: 'W'
     filters:
       - multiply: 1000
@@ -117,7 +117,7 @@ sensor:
 
   - platform: homeassistant
     id: dsmr_total_power
-    entity_id: sensor.dsmr_total_sg_mqtt
+    entity_id: sensor.ecotracker_current_power
     unit_of_measurement: 'W'
 
   - platform: homeassistant
@@ -204,23 +204,23 @@ display:
             float pwr = id(shellypro3em_total_power).state;
               if (pwr > 1000.0) 
                 {
-                it.printf(268, 0, id(font_bebas_230), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                it.printf(268, 0, id(font_bebas_230), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                 } 
               else
                 {
                 if (pwr > 750.0) 
                   {
-                  it.printf(268, 0, id(font_bebas_230), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                  it.printf(268, 0, id(font_bebas_230), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                   } 
               else 
                 {
                 if (pwr < 0.0)
                   {
-                  it.printf(268, 0, id(font_bebas_230), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                  it.printf(268, 0, id(font_bebas_230), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                   }
               else
                   {
-                  it.printf(268, 0, id(font_bebas_230), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                  it.printf(268, 0, id(font_bebas_230), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                   }
                 }
               }
@@ -244,23 +244,23 @@ display:
             float pwr = id(shellypro3em_total_power).state;
               if (pwr > 1000.0) 
                 {
-                it.printf(268, 0, id(font_bebas_160), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                it.printf(268, 0, id(font_bebas_160), id(color_red), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                 } 
               else
                 {
                 if (pwr > 750.0) 
                   {
-                  it.printf(268, 0, id(font_bebas_160), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                  it.printf(268, 0, id(font_bebas_160), id(color_orange), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                   } 
               else 
                 {
                 if (pwr < 0.0)
                   {
-                  it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                  it.printf(268, 0, id(font_bebas_160), id(color_blue), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                   }
               else
                   {
-                  it.printf(268, 0, id(font_bebas_160), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(shellypro3em_total_power).state);
+                  it.printf(268, 0, id(font_bebas_160), id(color_green), TextAlign::CENTER_HORIZONTAL, "%.0f W", id(dsmr_total_power).state);
                   }
                 }
               }
