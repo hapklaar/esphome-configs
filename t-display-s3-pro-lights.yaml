@@ -5,8 +5,9 @@ esphome:
     build_flags: ["-DLV_USE_CHART=1"]
     board_build.flash_mode: dio
   on_boot:
-    priority: 100
+    priority: -10
     then:
+      - delay: 500ms
       - switch.turn_on: display_power
       - light.turn_on: { id: display_backlight, brightness: 100% }
       - script.execute: setup_chart
@@ -155,17 +156,17 @@ lvgl:
             width: 180
             height: 190
             x: 0
-            y: 34
+            y: 37
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
             outline_width: 0
             widgets:
-              - { label: { id: y_5k, text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
-              - { label: { id: y_4k, text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
-              - { label: { id: y_3k, text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
-              - { label: { id: y_2k, text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
-              - { label: { id: y_1k, text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
+              - { label: { id: y_5k, text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 0 } }
+              - { label: { id: y_4k, text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 40 } }
+              - { label: { id: y_3k, text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 80 } }
+              - { label: { id: y_2k, text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 108 } }
+              - { label: { id: y_1k, text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 144 } }
 
         # ----- MAIN POWER -----
         - label:
@@ -215,17 +216,7 @@ script:
             lv_obj_move_background(chart);
             lv_chart_set_div_line_count(chart, 9, 0);  // 9 inner lines → 10 segments (0–5000 in 500W steps)
 
-            int h = lv_obj_get_height(chart), pt = lv_obj_get_style_pad_top(chart, LV_PART_MAIN), pb = lv_obj_get_style_pad_bottom(chart, LV_PART_MAIN);
-            int drawable = h - pt - pb;
-            int seg = drawable / 10;   // 10 equal 500W segments
-
-            // With 9 inner grid lines, LVGL spacing = drawable / 10
-            // Bottom edge = 0W, top edge = 5000W
-            lv_obj_set_y(id(y_5k), pt);
-            lv_obj_set_y(id(y_4k), pt + drawable - 2 * seg);
-            lv_obj_set_y(id(y_3k), pt + drawable - 4 * seg);
-            lv_obj_set_y(id(y_2k), pt + drawable - 6 * seg);
-            lv_obj_set_y(id(y_1k), pt + drawable - 8 * seg);          // 1000W
+            // Y-axis labels will be positioned manually via fixed Y coordinates in YAML
           }
 
 sy6970:
