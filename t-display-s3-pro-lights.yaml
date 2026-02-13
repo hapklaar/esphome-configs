@@ -224,6 +224,12 @@ sy6970:
   i2c_id: i2c_bus
   update_interval: 5s
 
+binary_sensor:
+  - platform: template
+    id: usb_present
+    lambda: |-
+      return id(usb_voltage).state > 4.5;
+
 interval:
   - interval: 1s
     then:
@@ -243,6 +249,12 @@ time:
           - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
 
 sensor:
+  - platform: sy6970
+    vbus_voltage:
+      id: usb_voltage
+      filters:
+        - throttle: 1s
+
   - platform: homeassistant
     id: solar_power
     entity_id: sensor.dds238_2_solar_power
@@ -267,11 +279,15 @@ sensor:
             id(battery_percent) = pct;
         - lambda: |-
             const char* icon;
-            if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
-            else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
-            else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
-            else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
-            else icon = LV_SYMBOL_BATTERY_FULL;
+            if (id(usb_present).state) {
+              icon = "";  // lightning bolt when USB connected
+            } else {
+              if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
+              else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
+              else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
+              else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
+              else icon = LV_SYMBOL_BATTERY_FULL;
+            }
             lv_label_set_text(id(batt_icon_p1), icon);
         - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
         - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
