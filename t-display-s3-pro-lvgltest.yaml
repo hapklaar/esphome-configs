@@ -93,26 +93,6 @@ font:
     id: font_arial_20
     size: 20
 
-# ================= BATTERY (SY6970) =================
-sensor:
-  - platform: sy6970
-    i2c_id: i2c_bus
-    battery_voltage:
-      id: battery_voltage
-      name: "Battery Voltage"
-      on_value:
-        - lambda: |-
-            float pct = (x - 3.0f) / (4.2f - 3.0f) * 100.0f;
-            if (pct < 0) pct = 0;
-            if (pct > 100) pct = 100;
-            id(battery_percent) = pct;
-        - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
-        - lvgl.label.update: { id: batt_v_p2, text: !lambda 'return str_sprintf("%.2fV", x);' }
-        - lvgl.label.update: { id: batt_v_p3, text: !lambda 'return str_sprintf("%.2fV", x);' }
-        - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
-        - lvgl.label.update: { id: batt_pct_p2, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
-        - lvgl.label.update: { id: batt_pct_p3, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
-
 # ================= GLOBALS =================
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
@@ -232,7 +212,30 @@ time:
           - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
 
 sensor:
-    - platform: homeassistant
+  # Battery voltage via onboard divider (GPIO4, 2:1 divider on T-Display S3 Pro)
+  - platform: adc
+    pin: GPIO4
+    id: battery_voltage
+    name: "Battery Voltage"
+    attenuation: 11db
+    update_interval: 30s
+    filters:
+      - multiply: 2.0   # Compensate 2:1 divider
+    on_value:
+      - lambda: |-
+          float pct = (x - 3.0f) / (4.2f - 3.0f) * 100.0f;
+          if (pct < 0) pct = 0;
+          if (pct > 100) pct = 100;
+          id(battery_percent) = pct;
+      - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
+      - lvgl.label.update: { id: batt_v_p2, text: !lambda 'return str_sprintf("%.2fV", x);' }
+      - lvgl.label.update: { id: batt_v_p3, text: !lambda 'return str_sprintf("%.2fV", x);' }
+      - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
+      - lvgl.label.update: { id: batt_pct_p2, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
+      - lvgl.label.update: { id: batt_pct_p3, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
+
+
+  - platform: homeassistant
     id: main_power
     entity_id: sensor.ecotracker_current_power
     on_value:
