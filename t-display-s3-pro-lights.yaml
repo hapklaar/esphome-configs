@@ -163,8 +163,8 @@ lvgl:
             id: chart_container
             width: 180
             height: 190
-            x: 0
-            y: 45
+            x: -10
+            y: 40
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
@@ -238,7 +238,7 @@ script:
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
             // Ensure chart is behind Y-axis labels
             lv_obj_move_background(chart);
-            lv_chart_set_div_line_count(chart, 11, 0);  // 10 horizontal lines (every 500W), no vertical lines
+            lv_chart_set_div_line_count(chart, 12, 0);  // 11 horizontal lines (every 500W), no vertical lines
             // Remove point markers
             lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
             // Dark grey grid lines
