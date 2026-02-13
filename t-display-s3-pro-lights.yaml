@@ -87,11 +87,16 @@ touchscreen:
 
 font:
 #  - file: 'fonts/Oswald-Bold.ttf'
-  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'
     id: font_power
     size: 96
     bpp: 4
     glyphs: "0123456789.- W"
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'
+    id: font_axis
+    size: 12
+    bpp: 4
+    glyphs: "0123456789kW"
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
@@ -157,49 +162,49 @@ lvgl:
         - obj:
             id: chart_container
             width: 180
-            height: 188
-            x: 5
-            y: 34
+            height: 193
+            x: 0
+            y: 40
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
             outline_width: 0
             widgets:
               - label:
-                  text: "5000"
-                  text_font: montserrat_14
+                  text: "5kW"
+                  text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 2
+                  y: -26
               - label:
-                  text: "4000"
-                  text_font: montserrat_14
+                  text: "4kW"
+                  text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 40
+                  y: 12
               - label:
-                  text: "3000"
-                  text_font: montserrat_14
+                  text: "3kW"
+                  text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 77
+                  y: 49
               - label:
-                  text: "2000"
-                  text_font: montserrat_14
+                  text: "2kW"
+                  text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 115
+                  y: 87
               - label:
-                  text: "1000"
-                  text_font: montserrat_14
+                  text: "1kW"
+                  text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 152
+                  y: 124
         - label:
             id: solar_pwr_p1
             text: "---W"
