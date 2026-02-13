@@ -173,16 +173,19 @@ script:
           if (id(chart_obj) == nullptr) {
             auto chart = lv_chart_create(lv_scr_act());
             id(chart_obj) = chart;
-            lv_obj_set_size(chart, 150, 140);
+            lv_obj_set_size(chart, 160, 170);
             lv_obj_set_pos(chart, 5, 45);
             lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(chart, 60);
-            lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, -2000, 4000);
+            lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
             lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_MAIN);
             lv_obj_set_style_border_width(chart, 1, LV_PART_MAIN);
             lv_chart_set_div_line_count(chart, 3, 5);
+            // Dark grey grid lines
+            lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
+            lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
             id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
-            id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x2196F3), LV_CHART_AXIS_PRIMARY_Y);
+            id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
           }
 
 sy6970:
@@ -208,6 +211,11 @@ sensor:
           condition: { lambda: 'return !isnan(x);' }
           then:
             - lvgl.label.update: { id: solar_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+            - lambda: |-
+                if (id(chart_obj) != nullptr) {
+                  lv_chart_set_next_value(id(chart_obj), id(chart_solar), (lv_coord_t)x);
+                  lv_chart_refresh(id(chart_obj));
+                }
 
   - platform: sy6970
     battery_voltage:
