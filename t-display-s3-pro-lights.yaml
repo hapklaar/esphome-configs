@@ -162,9 +162,9 @@ lvgl:
         - obj:
             id: chart_container
             width: 180
-            height: 190
+            height: 194
             x: -10
-            y: 40
+            y: 34
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
@@ -176,35 +176,35 @@ lvgl:
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: -20
+                  y: 0
               - label:
                   text: "4kW"
                   text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 12
+                  y: 38
               - label:
                   text: "3kW"
                   text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 48
+                  y: 76
               - label:
                   text: "2kW"
                   text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 86
+                  y: 114
               - label:
                   text: "1kW"
                   text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 124
+                  y: 152
         - label:
             id: solar_pwr_p1
             text: "---W"
@@ -238,7 +238,7 @@ script:
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
             // Ensure chart is behind Y-axis labels
             lv_obj_move_background(chart);
-            lv_chart_set_div_line_count(chart, 12, 0);  // 11 horizontal lines (every 500W), no vertical lines
+            lv_chart_set_div_line_count(chart, 11, 0);  // 0..5000W in 500W steps (11 lines, 10 segments)
             // Remove point markers
             lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
             // Dark grey grid lines
