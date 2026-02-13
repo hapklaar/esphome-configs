@@ -7,14 +7,13 @@ esphome:
     build_unflags: -Werror=all
     board_build.flash_mode: dio
   on_boot:
-    # Priority 100 is "Very Early" - essential for AMOLED power sequencing
     priority: 100 
     then:
       - switch.turn_on: display_power
       - light.turn_on:
           id: display_backlight
           brightness: 100%
-      - delay: 500ms
+      - delay: 1s
       - script.execute: setup_chart
 
 esp32:
@@ -72,20 +71,22 @@ display:
   - platform: mipi_spi
     id: my_display
     model: t-display-s3-pro
+    rotation: 90°
+    dimensions:
+      width: 480
+      height: 222
 
 touchscreen:
   - platform: cst226
     interrupt_pin: 21 
     reset_pin: 13
+    display: my_display
 
 # --- ASSETS ---
 font:
   - file: 'fonts/BebasNeue-Regular.ttf'
-    id: font_bebas_160
-    size: 160
-  - file: 'fonts/BebasNeue-Regular.ttf'
-    id: font_bebas_230
-    size: 230
+    id: font_bebas_80
+    size: 80
   - file: 'fonts/arial.ttf'
     id: font_arial_20
     size: 20
@@ -108,6 +109,7 @@ globals:
 # --- LVGL UI ---
 lvgl:
   log_level: DEBUG
+  
   pages:
     - id: page1
       bg_color: 0x000000
@@ -116,39 +118,53 @@ lvgl:
       widgets:
         - obj: &header_bar
             width: 100%
-            height: 30
+            height: 40
             bg_color: 0x2828FF
+            radius: 0
+            align: TOP_MID
             widgets:
               - label: { id: time_p1, text: "---", align: CENTER, text_font: font_arial_20 }
+              - label: { id: vcc_p1, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 }
         - label:
             id: main_pwr_p1
             text: "--- W"
-            text_font: font_bebas_230
+            text_font: font_bebas_80
             align: CENTER
+            y: 20
 
     - id: page2
       bg_color: 0x000000
       on_focus:
         - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
+        - obj: 
+            <<: *header_bar
+            widgets:
+              - label: { id: time_p2, text: "---", align: CENTER, text_font: font_arial_20 }
+              - label: { id: vcc_p2, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 }
         - label:
             id: main_pwr_p2
             text: "--- W"
-            text_font: font_bebas_160
+            text_font: font_bebas_80
             align: TOP_MID
-            y: 35
+            y: 50
 
     - id: page3
       bg_color: 0x000000
       on_focus:
         - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
+        - obj: 
+            <<: *header_bar
+            widgets:
+              - label: { id: time_p3, text: "---", align: CENTER, text_font: font_arial_20 }
+              - label: { id: vcc_p3, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 }
         - label:
             id: solar_pwr_p3
             text: "--- W"
-            text_font: font_bebas_160
+            text_font: font_bebas_80
             align: TOP_MID
-            y: 35
+            y: 50
 
 # --- SCRIPTS ---
 script:
@@ -157,10 +173,13 @@ script:
       - lambda: |-
           if (id(my_chart) == nullptr) {
             id(my_chart) = lv_chart_create(lv_scr_act());
-            lv_obj_set_size(id(my_chart), 450, 120);
-            lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, -10);
+            lv_obj_set_size(id(my_chart), 460, 100);
+            lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, -5);
             lv_chart_set_type(id(my_chart), LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(id(my_chart), 60);
+            
+            lv_obj_set_style_bg_opa(id(my_chart), 0, 0);
+            lv_obj_set_style_border_width(id(my_chart), 0, 0);
             
             id(ser_cons) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
             id(ser_prod) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
@@ -169,8 +188,27 @@ script:
             lv_obj_add_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);
           }
 
-# --- SENSORS ---
+# --- SENSORS & TIME ---
+time:
+  - platform: homeassistant
+    id: esptime
+    on_time:
+      - seconds: 0
+        then:
+          - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
+          - lvgl.label.update: { id: time_p2, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
+          - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
+
 sensor:
+  - platform: adc
+    pin: GPIO04
+    id: vcc
+    update_interval: 60s
+    on_value:
+      - lvgl.label.update: { id: vcc_p1, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
+      - lvgl.label.update: { id: vcc_p2, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
+      - lvgl.label.update: { id: vcc_p3, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
+
   - platform: homeassistant
     id: dsmr_power_production
     entity_id: sensor.power_produced
@@ -206,7 +244,3 @@ binary_sensor:
     id: button_next_page
     on_press:
       - lvgl.page.next:
-
-time:
-  - platform: homeassistant
-    id: esptime
