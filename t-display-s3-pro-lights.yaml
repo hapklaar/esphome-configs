@@ -106,6 +106,7 @@ lvgl:
   pages:
     - id: page1
       bg_color: 0x000000
+      scrollable: false
       widgets:
         - obj:
             width: 100%
@@ -145,10 +146,18 @@ lvgl:
             x: -10
             y: 11
             text_align: RIGHT
-
+        - label:
+            id: solar_pwr_p1
+            text: "--- W"
+            text_font: font_power
+            align: TOP_RIGHT
+            x: -10
+            y: 100
+            text_align: RIGHT
+            text_color: 0x2196F3
 sy6970:
   i2c_id: i2c_bus
-  update_interval: 30s
+  update_interval: 5s
 
 time:
   - platform: homeassistant
@@ -159,6 +168,17 @@ time:
           - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
 
 sensor:
+  - platform: homeassistant
+    id: solar_power
+    entity_id: sensor.dds238_2_solar_power
+    filters:
+      - throttle: 1s
+    on_value:
+      - if:
+          condition: { lambda: 'return !isnan(x);' }
+          then:
+            - lvgl.label.update: { id: solar_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+
   - platform: sy6970
     battery_voltage:
       id: battery_voltage
@@ -190,21 +210,22 @@ sensor:
           then:
             - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
             - lambda: |-
-                // Smooth gradient color
+                // Static color thresholds
                 lv_color_t c;
                 if (x < 0) {
-                  // Export power = blue gradient (0 to -2000W)
-                  float t = fminf(fabsf(x) / 2000.0f, 1.0f);
-                  uint8_t r = (uint8_t)(79  * (1.0f - t));
-                  uint8_t g = (uint8_t)(195 * (1.0f - t));
-                  uint8_t b = 247;
-                  c = lv_color_make(r, g, b);
+                  // -2000W to 0W = Blue
+                  c = lv_color_hex(0x2196F3);
+                } else if (x <= 1000) {
+                  // 0 to 1000W = Green
+                  c = lv_color_hex(0x4CAF50);
+                } else if (x <= 1500) {
+                  // 1000 to 1500W = Yellow
+                  c = lv_color_hex(0xFFEB3B);
+                } else if (x <= 2000) {
+                  // 1500 to 2000W = Orange
+                  c = lv_color_hex(0xFF9800);
                 } else {
-                  // Import power gradient: Green -> Orange -> Red (0–3600W)
-                  float t = fminf(x / 3600.0f, 1.0f);
-                  uint8_t r = (uint8_t)(76  + (244 - 76)  * t);
-                  uint8_t g = (uint8_t)(175 - (175 - 67) * t);
-                  uint8_t b = (uint8_t)(80  - 80 * t);
-                  c = lv_color_make(r, g, b);
+                  // Above 2000W = Red
+                  c = lv_color_hex(0xF44336);
                 }
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
