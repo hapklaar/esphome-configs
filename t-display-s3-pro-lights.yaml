@@ -9,6 +9,7 @@ esphome:
     then:
       - switch.turn_on: display_power
       - light.turn_on: { id: display_backlight, brightness: 100% }
+      - script.execute: setup_chart
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -94,6 +95,9 @@ font:
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
+  - { id: chart_obj, type: lv_obj_t*, initial_value: 'nullptr' }
+  - { id: chart_main, type: lv_chart_series_t*, initial_value: 'nullptr' }
+  - { id: chart_solar, type: lv_chart_series_t*, initial_value: 'nullptr' }
 
 lvgl:
   displays:
@@ -101,7 +105,7 @@ lvgl:
   touchscreens:
     - touchscreen_id: my_touch
   full_refresh: false
-  buffer_size: 100%
+  buffer_size: 25%
   update_interval: 50ms
   pages:
     - id: page1
@@ -146,6 +150,13 @@ lvgl:
             x: -10
             y: 11
             text_align: RIGHT
+        - obj:
+            id: chart_container
+            width: 150
+            height: 140
+            x: 5
+            y: 45
+            bg_opa: 0
         - label:
             id: solar_pwr_p1
             text: "--- W"
@@ -155,6 +166,25 @@ lvgl:
             y: 100
             text_align: RIGHT
             text_color: 0x2196F3
+script:
+  - id: setup_chart
+    then:
+      - lambda: |-
+          if (id(chart_obj) == nullptr) {
+            auto chart = lv_chart_create(lv_scr_act());
+            id(chart_obj) = chart;
+            lv_obj_set_size(chart, 150, 140);
+            lv_obj_set_pos(chart, 5, 45);
+            lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
+            lv_chart_set_point_count(chart, 60);
+            lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, -2000, 4000);
+            lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_MAIN);
+            lv_obj_set_style_border_width(chart, 1, LV_PART_MAIN);
+            lv_chart_set_div_line_count(chart, 3, 5);
+            id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
+            id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x2196F3), LV_CHART_AXIS_PRIMARY_Y);
+          }
+
 sy6970:
   i2c_id: i2c_bus
   update_interval: 5s
@@ -229,3 +259,7 @@ sensor:
                   c = lv_color_hex(0xF44336);
                 }
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
+                if (id(chart_obj) != nullptr) {
+                  lv_chart_set_next_value(id(chart_obj), id(chart_main), (lv_coord_t)x);
+                  lv_chart_refresh(id(chart_obj));
+                }
