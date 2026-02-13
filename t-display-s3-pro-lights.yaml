@@ -152,11 +152,13 @@ lvgl:
             text_align: RIGHT
         - obj:
             id: chart_container
-            width: 150
-            height: 140
+            width: 160
+            height: 160
             x: 5
-            y: 45
-            bg_opa: 0
+            y: 34
+            bg_color: 0x000000
+            bg_opa: COVER
+            scrollable: false
         - label:
             id: solar_pwr_p1
             text: "--- W"
@@ -171,15 +173,20 @@ script:
     then:
       - lambda: |-
           if (id(chart_obj) == nullptr) {
-            auto chart = lv_chart_create(lv_scr_act());
+            auto chart = lv_chart_create(id(chart_container));
             id(chart_obj) = chart;
-            lv_obj_set_size(chart, 160, 170);
-            lv_obj_set_pos(chart, 5, 45);
+            lv_obj_set_size(chart, 160, 160);
+            lv_obj_set_pos(chart, 0, 0);
+            lv_obj_set_style_pad_all(chart, 0, LV_PART_MAIN);
             lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(chart, 60);
             lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
-            lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_MAIN);
-            lv_obj_set_style_border_width(chart, 1, LV_PART_MAIN);
+            // Black background, no borders
+            lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
+            lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
+            lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
             lv_chart_set_div_line_count(chart, 3, 5);
             // Dark grey grid lines
             lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
