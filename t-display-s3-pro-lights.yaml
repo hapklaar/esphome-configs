@@ -170,10 +170,10 @@ lvgl:
             border_width: 0
             outline_width: 0
             widgets:
-              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: -10 } }
-              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 33 } }
-              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 76 } }
-              - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 118 } }
+              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 24 } }
+              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 58 } }
+              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 92 } }
+              - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 126 } }
         - label:
             id: solar_pwr_p1
             text: "---W"
@@ -206,7 +206,7 @@ script:
             lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
-            lv_chart_set_div_line_count(chart, 9, 0);  // 9 horizontal lines (every 500W), no vertical lines
+            lv_chart_set_div_line_count(chart, 11, 0);  // 9 horizontal lines (every 500W), no vertical lines
             // Remove point markers
             lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
             // Dark grey grid lines
