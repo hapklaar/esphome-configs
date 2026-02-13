@@ -170,9 +170,9 @@ lvgl:
             border_width: 0
             outline_width: 0
             widgets:
-              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 0 } }
-              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 7 } }
-              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 74 } }
+              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: -10 } }
+              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 33 } }
+              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 76 } }
               - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 118 } }
         - label:
             id: solar_pwr_p1
