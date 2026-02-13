@@ -1,14 +1,23 @@
 esphome:
-  name: t-display-s3-pro-lights
+  name: t-display-s3-pro-lvgltest
+  friendly_name: "T-Display S3 Pro Power Monitor"
+  platformio_options:
+    build_flags: ["-DLV_USE_CHART=1"]
+    board_build.flash_mode: dio
   on_boot:
-    priority: -100
+    priority: 100
     then:
-      - script.execute: backlight_wake
+      - switch.turn_on: display_power
+      - light.turn_on: { id: display_backlight, brightness: 100% }
 
 esp32:
   board: esp32-s3-devkitc-1
   framework:
     type: esp-idf
+
+external_components:
+  - source: github://esphome/esphome@dev
+    components: [sy6970]
 
 api:
   encryption:
@@ -22,7 +31,6 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
-  min_auth_mode: WPA2
 
 psram:
   mode: octal
@@ -30,461 +38,169 @@ psram:
 
 logger:
 
-######################################
-# BACKLIGHT (PWM DIMMABLE)
-######################################
+spi:
+  id: spi_bus
+  clk_pin: 18
+  mosi_pin: 17
+  miso_pin: 16
+
+i2c:
+  id: i2c_bus
+  sda: 5
+  scl: 6
+
 output:
   - platform: ledc
     pin: 48
     id: backlight_pwm
-    frequency: 5000 Hz
 
 light:
   - platform: monochromatic
     output: backlight_pwm
     id: display_backlight
-    gamma_correct: 2.2
-    name: "Display Backlight"
+
+switch:
+  - platform: gpio
+    pin: 15
+    id: display_power
     restore_mode: ALWAYS_ON
-    default_transition_length: 0s
-
-######################################
-# SPI / I2C / DISPLAY
-######################################
-spi:
-  clk_pin: 18
-  mosi_pin: 17
-
-i2c:
-  - scl: 6
-    sda: 5
-    scan: true
-    id: i2c_onboard
-    frequency: 100kHz
 
 display:
   - platform: mipi_spi
+    id: my_display
     model: t-display-s3-pro
+    spi_id: spi_bus
+    data_rate: 80MHz
+    rotation: 90
+    
 
-######################################
-# TOUCHSCREEN (WAKE BACKLIGHT)
-######################################
 touchscreen:
   - platform: cst226
+    id: my_touch
     interrupt_pin: 21
     reset_pin: 13
-    on_touch:
-      - script.execute: backlight_wake
+    display: my_display
 
-######################################
-# GLOBALS
-######################################
+font:
+  - file: 'fonts/Oswald-Bold.ttf'
+    id: font_power
+    size: 96
+    bpp: 4
+    glyphs: "0123456789.- W"
+
 globals:
-  - id: slider_active_lr
-    type: bool
-    restore_value: no
-    initial_value: "false"
+  - { id: battery_percent, type: float, initial_value: '0.0' }
 
-  - id: slider_active_hw
-    type: bool
-    restore_value: no
-    initial_value: "false"
+lvgl:
+  displays:
+    - my_display
+  touchscreens:
+    - touchscreen_id: my_touch
+  full_refresh: false
+  buffer_size: 100%
+  update_interval: 50ms
+  pages:
+    - id: page1
+      bg_color: 0x000000
+      widgets:
+        - obj:
+            width: 100%
+            height: 34
+            bg_color: 0x4A90FF
+            align: TOP_MID
+            widgets:
+              - label:
+                  id: time_p1
+                  text: "--:--:--"
+                  text_font: montserrat_22
+                  align: LEFT_MID
+                  x: 10
+              - label:
+                  id: batt_v_p1
+                  text: "--.-V"
+                  text_font: montserrat_22
+                  align: RIGHT_MID
+                  x: -110
+              - label:
+                  id: batt_pct_p1
+                  text: "--%"
+                  text_font: montserrat_22
+                  align: RIGHT_MID
+                  x: -40
+              - label:
+                  id: batt_icon_p1
+                  text: ""
+                  text_font: montserrat_22
+                  align: RIGHT_MID
+                  x: -10
+        - label:
+            id: main_pwr_p1
+            text: "--- W"
+            text_font: font_power
+            align: TOP_RIGHT
+            x: -10
+            y: 34
+            text_align: RIGHT
 
-  - id: backlight_awake
-    type: bool
-    restore_value: no
-    initial_value: "true"
+sy6970:
+  i2c_id: i2c_bus
+  update_interval: 30s
 
-######################################
-# SCRIPTS
-######################################
-script:
-  # -------- BACKLIGHT --------
-  - id: backlight_idle_timer
-    mode: restart
-    then:
-      - delay: 10s
-      - light.turn_on:
-          id: display_backlight
-          brightness: 20%
-          transition_length: 3s
-      - lambda: |-
-          id(backlight_awake) = false;
-
-  - id: backlight_wake
-    mode: restart
-    then:
-      - light.turn_on:
-          id: display_backlight
-          brightness: 80%
-          transition_length: 0s
-      - lambda: |-
-          id(backlight_awake) = true;
-      - script.execute: backlight_idle_timer
-
-  # -------- LIVING ROOM --------
-  - id: debounce_lr
-    mode: restart
-    parameters:
-      brightness_val: int
-    then:
-      - delay: 100ms
-      - homeassistant.service:
-          service: light.turn_on
-          data:
-            entity_id: light.yee_group
-            brightness: !lambda return brightness_val;
-
-  - id: end_slider_lr
-    mode: restart
-    then:
-      - delay: 500ms
-      - lambda: 'id(slider_active_lr) = false;'
-
-  # -------- HALLWAY --------
-  - id: debounce_hw
-    mode: restart
-    parameters:
-      brightness_val: int
-    then:
-      - delay: 100ms
-      - homeassistant.service:
-          service: light.turn_on
-          data:
-            entity_id: light.hallway_dimmer_light
-            brightness: !lambda return brightness_val;
-
-  - id: end_slider_hw
-    mode: restart
-    then:
-      - delay: 1000ms
-      - lambda: 'id(slider_active_hw) = false;'
-
-######################################
-# HOME ASSISTANT ENTITIES
-######################################
-binary_sensor:
+time:
   - platform: homeassistant
-    id: lr_light_state
-    entity_id: light.yee_group
-    trigger_on_initial_state: true
-    on_state:
-      - lvgl.button.update:
-          id: lr_btn
-          state:
-            checked: !lambda return x;
-      - if:
-          condition:
-            lambda: 'return !x;'
-          then:
-            - lvgl.slider.update:
-                id: lr_slider
-                value: 0
-            - lvgl.label.update:
-                id: lr_pct
-                text: "0%"
-
-  - platform: homeassistant
-    id: hw_light_state
-    entity_id: light.hallway_dimmer_light
-    trigger_on_initial_state: true
-    on_state:
-      - lvgl.button.update:
-          id: hw_btn
-          state:
-            checked: !lambda return x;
-      - if:
-          condition:
-            lambda: 'return !x;'
-          then:
-            - lvgl.slider.update:
-                id: hw_slider
-                value: 0
-            - lvgl.label.update:
-                id: hw_pct
-                text: "0%"
+    id: esptime
+    on_time:
+      - seconds: /1
+        then:
+          - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
 
 sensor:
+  - platform: sy6970
+    battery_voltage:
+      id: battery_voltage
+      on_value:
+        - lambda: |-
+            float pct = (x - 3.0f) / 1.2f * 100.0f;
+            if (pct < 0) pct = 0;
+            if (pct > 100) pct = 100;
+            id(battery_percent) = pct;
+        - lambda: |-
+            const char* icon;
+            if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
+            else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
+            else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
+            else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
+            else icon = LV_SYMBOL_BATTERY_FULL;
+            lv_label_set_text(id(batt_icon_p1), icon);
+        - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
+        - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
+
   - platform: homeassistant
-    id: lr_brightness
-    entity_id: light.yee_group
-    attribute: brightness
+    id: main_power
+    entity_id: sensor.ecotracker_current_power
+    filters:
+      - throttle: 1s
     on_value:
       - if:
-          condition:
-            lambda: |-
-              return !isnan(x) &&
-                     id(lr_light_state).state &&
-                     !id(slider_active_lr);
+          condition: { lambda: 'return !isnan(x);' }
           then:
-            - lvgl.slider.update:
-                id: lr_slider
-                value: !lambda return (int)x;
-            - lvgl.label.update:
-                id: lr_pct
-                text: !lambda |-
-                  int pct = (int)((x / 255.0) * 100.0);
-                  return to_string(pct) + "%";
-
-  - platform: homeassistant
-    id: hw_brightness
-    entity_id: light.hallway_dimmer_light
-    attribute: brightness
-    on_value:
-      - if:
-          condition:
-            lambda: |-
-              return !isnan(x) &&
-                     id(hw_light_state).state &&
-                     !id(slider_active_hw);
-          then:
-            - lvgl.slider.update:
-                id: hw_slider
-                value: !lambda return (int)x;
-            - lvgl.label.update:
-                id: hw_pct
-                text: !lambda |-
-                  int pct = (int)((x / 255.0) * 100.0);
-                  return to_string(pct) + "%";
-
-  - platform: homeassistant
-    id: house_power
-    entity_id: sensor.441d6474d608_pro3em_active_power_c # Replace with your actual HA power sensor
-    on_value:
-      - lvgl.indicator.update:
-          id: power_needle
-          value: !lambda return x;
-      - lvgl.label.update:
-          id: power_label
-          text: !lambda return str_sprintf("%.0f W", x);
-
-  - platform: ltr_als_ps
-    address: 0x23
-    update_interval: 5s
-    ambient_light:
-      name: "Ambient Light"
-      id: display_ambient_light
-
-######################################
-# LVGL UI
-######################################
-lvgl:
-  pages:
-    - id: lights_page
-      bg_color: 0xF2F2EE
-      widgets:
-
-        # ---------- LIVING ROOM ----------
-        - container:
-            width: 202
-            height: 140
-            x: 10
-            y: 10
-            pad_all: 10
-            bg_color: 0xFFFFFF
-            radius: 10
-            widgets:
-
-              - button:
-                  id: lr_btn
-                  checkable: true
-                  width: 180
-                  height: 70
-                  x: 1
-                  y: 0
-                  on_value:
-                    - if:
-                        condition:
-                          lambda: 'return x;'
-                        then:
-                          - homeassistant.service:
-                              service: light.turn_on
-                              data:
-                                entity_id: light.yee_group
-                        else:
-                          - homeassistant.service:
-                              service: light.turn_off
-                              data:
-                                entity_id: light.yee_group
-                  widgets:
-                    - label:
-                        text: "LR Lights"
-                        text_font: montserrat_20
-                        align: CENTER
-
-              - label:
-                  id: lr_pct
-                  text: "0%"
-                  text_font: montserrat_18
-                  text_color: 0x808080
-                  x: 155
-                  y: 82
-
-              - slider:
-                  id: lr_slider
-                  min_value: 0
-                  max_value: 255
-                  width: 180
-                  x: 1
-                  y: 100
-                  on_press:
-                    - script.stop: end_slider_lr
-                    - lambda: 'id(slider_active_lr) = true;'
-                  on_value:
-                    - lvgl.label.update:
-                        id: lr_pct
-                        text: !lambda |-
-                          int pct = (int)((x / 255.0) * 100.0);
-                          return to_string(pct) + "%";
-                    - if:
-                        condition:
-                          binary_sensor.is_on: lr_light_state
-                        then:
-                          - script.execute:
-                              id: debounce_lr
-                              brightness_val: !lambda return (int)x;
-                  on_release:
-                    - script.execute:
-                        id: debounce_lr
-                        brightness_val: !lambda return (int)lv_slider_get_value(id(lr_slider));
-                    - script.execute: end_slider_lr
-
-        # ---------- HALLWAY ----------
-        - container:
-            width: 202
-            height: 140
-            x: 10
-            y: 180
-            pad_all: 10
-            bg_color: 0xFFFFFF
-            radius: 10
-            widgets:
-
-              - button:
-                  id: hw_btn
-                  checkable: true
-                  width: 180
-                  height: 70
-                  x: 1
-                  y: 0
-                  on_value:
-                    - if:
-                        condition:
-                          lambda: 'return x;'
-                        then:
-                          - homeassistant.service:
-                              service: light.turn_on
-                              data:
-                                entity_id: light.hallway_dimmer_light
-                        else:
-                          - homeassistant.service:
-                              service: light.turn_off
-                              data:
-                                entity_id: light.hallway_dimmer_light
-                  widgets:
-                    - label:
-                        text: "Hallway"
-                        text_font: montserrat_20
-                        align: CENTER
-
-              - label:
-                  id: hw_pct
-                  text: "0%"
-                  text_font: montserrat_18
-                  text_color: 0x808080
-                  x: 155
-                  y: 82
-
-              - slider:
-                  id: hw_slider
-                  min_value: 0
-                  max_value: 255
-                  width: 180
-                  x: 1
-                  y: 100
-                  on_press:
-                    - script.stop: end_slider_hw
-                    - lambda: 'id(slider_active_hw) = true;'
-                  on_value:
-                    - lvgl.label.update:
-                        id: hw_pct
-                        text: !lambda |-
-                          int pct = (int)((x / 255.0) * 100.0);
-                          return to_string(pct) + "%";
-                    - if:
-                        condition:
-                          binary_sensor.is_on: hw_light_state
-                        then:
-                          - script.execute:
-                              id: debounce_hw
-                              brightness_val: !lambda return (int)x;
-                  on_release:
-                    - script.execute:
-                        id: debounce_hw
-                        brightness_val: !lambda return (int)lv_slider_get_value(id(hw_slider));
-                    - script.execute: end_slider_hw
-
-# ---------- POWER METER (GAUGE) ----------
-        - container:
-            width: 202
-            height: 140
-            x: 10
-            y: 330
-            pad_all: 5
-            bg_color: 0xFFFFFF
-            radius: 10
-            widgets:
-              # - label:
-              #     text: "Power Usage"
-              #     align: TOP_MID
-              #     y: 0
-              #     text_font: montserrat_14
-              #     text_color: 0x808080
-
-              - meter:
-                  id: my_meter
-                  width: 160
-                  height: 110
-                  align: CENTER
-                  y: 10
-                  bg_opa: TRANSP
-                  scales:
-                    - range_from: 0
-                      range_to: 5000
-                      angle_range: 180
-                      rotation: 180
-                      ticks:
-                        count: 0  # Hide default ticks for a cleaner look
-                      indicators:
-                        # Segment 1: Green (0 - 1000W)
-                        - arc:
-                            width: 15
-                            color: 0x4CAF50 
-                            start_value: 0
-                            end_value: 1000
-                        # Segment 2: Yellow (1000 - 2000W)
-                        - arc:
-                            width: 15
-                            color: 0xFFEB3B
-                            start_value: 1000
-                            end_value: 2000
-                        # Segment 3: Red (2000 - 5000W)
-                        - arc:
-                            width: 15
-                            color: 0xF44336
-                            start_value: 2000
-                            end_value: 5000
-                        # The Needle
-                        - line:
-                            id: power_needle
-                            width: 4
-                            color: 0x333333
-                            r_mod: -10
-
-              - label:
-                  id: power_label
-                  text: "0 W"
-                  align: CENTER
-                  y: 52
-                  text_font: montserrat_20
-                  text_color: 0x000000
+            - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+            - lambda: |-
+                // Smooth gradient color
+                lv_color_t c;
+                if (x < 0) {
+                  // Export power = blue gradient (0 to -2000W)
+                  float t = fminf(fabsf(x) / 2000.0f, 1.0f);
+                  uint8_t r = (uint8_t)(79  * (1.0f - t));
+                  uint8_t g = (uint8_t)(195 * (1.0f - t));
+                  uint8_t b = 247;
+                  c = lv_color_make(r, g, b);
+                } else {
+                  // Import power gradient: Green -> Orange -> Red (0–3600W)
+                  float t = fminf(x / 3600.0f, 1.0f);
+                  uint8_t r = (uint8_t)(76  + (244 - 76)  * t);
+                  uint8_t g = (uint8_t)(175 - (175 - 67) * t);
+                  uint8_t b = (uint8_t)(80  - 80 * t);
+                  c = lv_color_make(r, g, b);
+                }
+                lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
