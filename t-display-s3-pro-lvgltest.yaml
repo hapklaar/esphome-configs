@@ -3,7 +3,6 @@ esphome:
   friendly_name: "T-Display S3 Pro Power Monitor"
   platformio_options:
     build_flags: ["-DLV_USE_CHART=1"]
-    build_unflags: ["-Werror=all"]
     board_build.flash_mode: dio
   on_boot:
     priority: 100
@@ -20,8 +19,7 @@ esp32:
 
 external_components:
   - source: github://esphome/esphome@dev
-    components: [ sy6970 ]
-    refresh: 0s
+    components: [sy6970]
 
 api:
   encryption:
@@ -35,7 +33,6 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
   power_save_mode: none
-  min_auth_mode: WPA2
 
 psram:
   mode: octal
@@ -43,7 +40,6 @@ psram:
 
 logger:
 
-# ================= BUS =================
 spi:
   clk_pin: 18
   mosi_pin: 17
@@ -53,10 +49,7 @@ i2c:
   id: i2c_bus
   sda: 5
   scl: 6
-  scan: true
-  frequency: 100kHz
 
-# ================= HARDWARE =================
 output:
   - platform: ledc
     pin: 48
@@ -66,7 +59,6 @@ light:
   - platform: monochromatic
     output: backlight_pwm
     id: display_backlight
-    restore_mode: RESTORE_DEFAULT_ON
 
 switch:
   - platform: gpio
@@ -80,9 +72,6 @@ display:
     model: t-display-s3-pro
     rotation: 90
 
-######################################
-# TOUCHSCREEN
-######################################
 touchscreen:
   - platform: cst226
     id: my_touch
@@ -90,7 +79,6 @@ touchscreen:
     reset_pin: 13
     display: my_display
 
-# ================= ASSETS =================
 font:
   - file: 'fonts/BebasNeue-Regular.ttf'
     id: font_bebas_80
@@ -99,7 +87,6 @@ font:
     id: font_arial_20
     size: 20
 
-# ================= GLOBALS =================
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
   - { id: my_chart, type: lv_obj_t*, initial_value: 'nullptr' }
@@ -107,106 +94,84 @@ globals:
   - { id: ser_prod, type: lv_chart_series_t*, initial_value: 'nullptr' }
   - { id: ser_solar, type: lv_chart_series_t*, initial_value: 'nullptr' }
 
-# ================= LVGL =================
 lvgl:
-  log_level: DEBUG
   touchscreens:
     - touchscreen_id: my_touch
   buffer_size: 25%
-  draw_rounding: 2
-  # full_refresh removed (panel geometry corrected)
   pages:
     - id: page1
       bg_color: 0x000000
-      on_focus:
-        - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
-        - obj: &header_bar
+        - obj:
             width: 100%
             height: 40
             bg_color: 0x2828FF
             align: TOP_MID
+            layout: { type: FLEX, flex_flow: ROW, flex_align_main: SPACE_BETWEEN, flex_align_cross: CENTER }
+            pad_left: 10
+            pad_right: 10
             widgets:
-              - label: { id: time_p1, text: "---", align: LEFT_MID, x: 10, text_font: font_arial_20 }
-              - label: { text: " | ", align: LEFT_MID, x: 70, text_font: font_arial_20 }
-              - label: { id: batt_v_p1, text: "--.-V", align: LEFT_MID, x: 100, text_font: font_arial_20 }
-              - label: { text: " | ", align: LEFT_MID, x: 180, text_font: font_arial_20 }
-              - label: { id: batt_pct_p1, text: "--%", align: LEFT_MID, x: 210, text_font: font_arial_20 }
-        - obj: &center_container
+              - label: { id: time_p1, text: "--:--:--", text_font: font_arial_20 }
+              - obj:
+                  layout: { type: FLEX, flex_flow: ROW }
+                  bg_opa: 0
+                  widgets:
+                    - label: { id: batt_v_p1, text: "--.-V", text_font: font_arial_20 }
+                    - label: { text: " ", text_font: font_arial_20 }
+                    - label: { id: batt_pct_p1, text: "--%", text_font: font_arial_20 }
+        - obj:
             width: 100%
             height: 180
             align: TOP_MID
             y: 40
-            bg_opa: 0
             layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
+            bg_opa: 0
             widgets:
-              - label: { id: main_pwr_p1, text: "--- W", text_font: font_bebas_80, align: CENTER }
+              - label: { id: main_pwr_p1, text: "--- W", text_font: font_bebas_80 }
 
     - id: page2
       bg_color: 0x000000
-      on_focus:
-        - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
-        - obj: { <<: *header_bar, widgets: [
-            { label: { id: time_p2, text: "---", align: LEFT_MID, x: 10, text_font: font_arial_20 } },
-            { label: { text: " | ", align: LEFT_MID, x: 70, text_font: font_arial_20 } },
-            { label: { id: batt_v_p2, text: "--.-V", align: LEFT_MID, x: 100, text_font: font_arial_20 } },
-            { label: { text: " | ", align: LEFT_MID, x: 180, text_font: font_arial_20 } },
-            { label: { id: batt_pct_p2, text: "--%", align: LEFT_MID, x: 210, text_font: font_arial_20 } }
-          ] }
-        - obj: { <<: *center_container, height: 80, widgets: [
-            { label: { id: main_pwr_p2, text: "--- W", text_font: font_bebas_80 } }
-          ] }
+        - obj:
+            width: 100%
+            height: 80
+            align: CENTER
+            layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
+            bg_opa: 0
+            widgets:
+              - label: { id: main_pwr_p2, text: "--- W", text_font: font_bebas_80 }
 
     - id: page3
       bg_color: 0x000000
-      on_focus:
-        - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
-        - obj: { <<: *header_bar, widgets: [
-            { label: { id: time_p3, text: "---", align: LEFT_MID, x: 10, text_font: font_arial_20 } },
-            { label: { text: " | ", align: LEFT_MID, x: 70, text_font: font_arial_20 } },
-            { label: { id: batt_v_p3, text: "--.-V", align: LEFT_MID, x: 100, text_font: font_arial_20 } },
-            { label: { text: " | ", align: LEFT_MID, x: 180, text_font: font_arial_20 } },
-            { label: { id: batt_pct_p3, text: "--%", align: LEFT_MID, x: 210, text_font: font_arial_20 } }
-          ] }
-        - obj: { <<: *center_container, height: 80, widgets: [
-            { label: { id: solar_pwr_p3, text: "--- W", text_font: font_bebas_80 } }
-          ] }
+        - obj:
+            width: 100%
+            height: 80
+            align: CENTER
+            layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
+            bg_opa: 0
+            widgets:
+              - label: { id: solar_pwr_p3, text: "--- W", text_font: font_bebas_80 }
 
-# ================= CHART =================
 script:
   - id: setup_chart
     then:
       - lambda: |-
-          if (id(my_chart) == nullptr) {
-            lv_obj_t * parent = id(page2).obj;   // attach chart strictly to page2
-
-            id(my_chart) = lv_chart_create(parent);
+          if (!id(my_chart)) {
+            id(my_chart) = lv_chart_create(id(page2).obj);
             lv_obj_set_size(id(my_chart), 480, 100);
             lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, 0);
-
-            lv_chart_set_type(id(my_chart), LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(id(my_chart), 60);
             lv_chart_set_range(id(my_chart), LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
-
-            lv_obj_set_style_bg_opa(id(my_chart), 40, 0);
-            lv_obj_set_style_bg_color(id(my_chart), lv_color_hex(0x111111), 0);
-            lv_obj_set_style_border_width(id(my_chart), 1, 0);
-            lv_obj_set_style_border_color(id(my_chart), lv_color_hex(0x444444), 0);
-            lv_chart_set_div_line_count(id(my_chart), 3, 5);
-
-            id(ser_cons) = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
-            id(ser_prod) = lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
+            id(ser_cons)  = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
+            id(ser_prod)  = lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
             id(ser_solar) = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF9900), LV_CHART_AXIS_PRIMARY_Y);
-
-            lv_obj_set_style_line_width(id(my_chart), 2, LV_PART_ITEMS);
-            // chart starts visible
-
-            lv_chart_refresh(id(my_chart));
           }
 
-# ================= DATA =================
+sy6970:
+  i2c_id: i2c_bus
+  update_interval: 30s
+
 time:
   - platform: homeassistant
     id: esptime
@@ -214,82 +179,46 @@ time:
       - seconds: /1
         then:
           - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
-          - lvgl.label.update: { id: time_p2, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
-          - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
-          - lvgl.label.update: { id: time_p2, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
-          - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
-
-sy6970:
-  i2c_id: i2c_bus
-  update_interval: 30s
 
 sensor:
   - platform: sy6970
     battery_voltage:
       id: battery_voltage
-      name: "Battery Voltage"
       on_value:
         - lambda: |-
-            float pct = (x - 3.0f) / (4.2f - 3.0f) * 100.0f;
+            float pct = (x - 3.0f) / 1.2f * 100.0f;
             if (pct < 0) pct = 0;
             if (pct > 100) pct = 100;
             id(battery_percent) = pct;
         - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
-        - lvgl.label.update: { id: batt_v_p2, text: !lambda 'return str_sprintf("%.2fV", x);' }
-        - lvgl.label.update: { id: batt_v_p3, text: !lambda 'return str_sprintf("%.2fV", x);' }
         - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
-        - lvgl.label.update: { id: batt_pct_p2, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
-        - lvgl.label.update: { id: batt_pct_p3, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
-
 
   - platform: homeassistant
     id: main_power
     entity_id: sensor.ecotracker_current_power
     on_value:
       - if:
-          condition:
-            lambda: 'return !isnan(x);'
+          condition: { lambda: 'return !isnan(x);' }
           then:
             - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
             - lambda: |-
-                lv_color_t color;
-                if (x < 0) {
-                  color = lv_color_hex(0x4FC3F7);   // light blue (export)
-                } else if (x <= 500) {
-                  color = lv_color_hex(0x4CAF50);   // green
-                } else if (x <= 1000) {
-                  color = lv_color_hex(0xFF9800);   // orange
-                } else {
-                  color = lv_color_hex(0xF44336);   // red
-                }
-                lv_obj_set_style_text_color(id(main_pwr_p1), color, LV_PART_MAIN);
+                lv_color_t c;
+                if (x < 0) c = lv_color_hex(0x4FC3F7);
+                else if (x <= 500) c = lv_color_hex(0x4CAF50);
+                else if (x <= 1000) c = lv_color_hex(0xFF9800);
+                else c = lv_color_hex(0xF44336);
+                lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
             - lvgl.label.update: { id: main_pwr_p2, text: !lambda 'return str_sprintf("%.0f W", x);' }
-            - lambda: |-
-                if(id(my_chart)) {
-                  if (x >= 0) {
-                    lv_chart_set_next_value(id(my_chart), id(ser_cons), (int32_t)x);
-                    lv_chart_set_next_value(id(my_chart), id(ser_prod), 0);
-                  } else {
-                    lv_chart_set_next_value(id(my_chart), id(ser_cons), 0);
-                    lv_chart_set_next_value(id(my_chart), id(ser_prod), (int32_t)abs(x));
-                  }
-                  lv_chart_refresh(id(my_chart));
-                }
 
   - platform: homeassistant
     id: solar_power
     entity_id: sensor.dds238_2_solar_energy_power
     on_value:
       - lvgl.label.update: { id: solar_pwr_p3, text: !lambda 'return str_sprintf("%.0f W", x);' }
-      - lambda: |-
-          if(id(my_chart) && id(ser_solar) && !isnan(x)) {
-            lv_chart_set_next_value(id(my_chart), id(ser_solar), (int32_t)x);
-            lv_chart_refresh(id(my_chart));
-          }
 
 binary_sensor:
   - platform: gpio
-    pin: { number: GPIO00, inverted: true, mode: INPUT_PULLUP }
     id: button_next_page
+    pin: { number: GPIO00, inverted: true, mode: INPUT_PULLUP }
     on_press:
       - lvgl.page.next:
