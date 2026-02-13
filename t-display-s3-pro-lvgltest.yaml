@@ -78,9 +78,11 @@ touchscreen:
     display: my_display
 
 font:
-  - file: 'fonts/BebasNeue-Regular.ttf'
-    id: font_bebas_80
-    size: 80
+  - file: 'fonts/Oswald-Bold.ttf'
+    id: font_power
+    size: 96
+    bpp: 4
+    glyphs: "0123456789.- W"
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
@@ -136,7 +138,7 @@ lvgl:
               - label:
                   id: main_pwr_p1
                   text: "--- W"
-                  text_font: font_bebas_80
+                  text_font: font_power
                   width: 100%
                   align: CENTER
                   text_align: CENTER
@@ -183,9 +185,21 @@ sensor:
           then:
             - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
             - lambda: |-
+                // Smooth gradient color
                 lv_color_t c;
-                if (x < 0) c = lv_color_hex(0x4FC3F7);
-                else if (x <= 500) c = lv_color_hex(0x4CAF50);
-                else if (x <= 1000) c = lv_color_hex(0xFF9800);
-                else c = lv_color_hex(0xF44336);
+                if (x < 0) {
+                  // Export power = blue gradient (0 to -2000W)
+                  float t = fminf(fabsf(x) / 2000.0f, 1.0f);
+                  uint8_t r = (uint8_t)(79  * (1.0f - t));
+                  uint8_t g = (uint8_t)(195 * (1.0f - t));
+                  uint8_t b = 247;
+                  c = lv_color_make(r, g, b);
+                } else {
+                  // Import power gradient: Green -> Orange -> Red (0–3600W)
+                  float t = fminf(x / 3600.0f, 1.0f);
+                  uint8_t r = (uint8_t)(76  + (244 - 76)  * t);
+                  uint8_t g = (uint8_t)(175 - (175 - 67) * t);
+                  uint8_t b = (uint8_t)(80  - 80 * t);
+                  c = lv_color_make(r, g, b);
+                }
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
