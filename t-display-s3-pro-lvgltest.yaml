@@ -81,9 +81,6 @@ font:
   - file: 'fonts/BebasNeue-Regular.ttf'
     id: font_bebas_80
     size: 80
-  - file: 'fonts/arial.ttf'
-    id: font_arial_20
-    size: 20
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
@@ -100,26 +97,33 @@ lvgl:
       widgets:
         - obj:
             width: 100%
-            height: 40
-            bg_color: 0x2828FF
+            height: 34
+            bg_color: 0x4A90FF
             align: TOP_MID
-            layout: { type: FLEX, flex_flow: ROW, flex_align_main: SPACE_BETWEEN, flex_align_cross: CENTER }
-            pad_left: 10
-            pad_right: 10
             widgets:
-              - label: { id: time_p1, text: "--:--:--", text_font: font_arial_20 }
-              - obj:
-                  layout: { type: FLEX, flex_flow: ROW }
-                  bg_opa: 0
-                  widgets:
-                    - label: { id: batt_v_p1, text: "--.-V", text_font: font_arial_20 }
-                    - label: { text: " ", text_font: font_arial_20 }
-                    - label: { id: batt_pct_p1, text: "--%", text_font: font_arial_20 }
+              - label:
+                  id: time_p1
+                  text: "--:--:--"
+                  text_font: montserrat_20
+                  align: LEFT_MID
+                  x: 10
+              - label:
+                  id: batt_v_p1
+                  text: "--.-V"
+                  text_font: montserrat_20
+                  align: RIGHT_MID
+                  x: -70
+              - label:
+                  id: batt_pct_p1
+                  text: "--%"
+                  text_font: montserrat_20
+                  align: RIGHT_MID
+                  x: -10
         - obj:
             width: 100%
             height: 180
             align: TOP_MID
-            y: 40
+            y: 34
             layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
             bg_opa: 0
             widgets:
