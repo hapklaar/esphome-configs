@@ -152,7 +152,7 @@ lvgl:
             text_font: font_power
             align: TOP_RIGHT
             x: -10
-            y: 11
+            y: 20
             text_align: RIGHT
         - obj:
             id: chart_container
@@ -164,13 +164,49 @@ lvgl:
             bg_opa: COVER
             border_width: 0
             outline_width: 0
+            widgets:
+              - label:
+                  text: "5000"
+                  text_font: montserrat_14
+                  text_color: 0xFFFFFF
+                  align: TOP_LEFT
+                  x: 2
+                  y: 2
+              - label:
+                  text: "4000"
+                  text_font: montserrat_14
+                  text_color: 0xFFFFFF
+                  align: TOP_LEFT
+                  x: 2
+                  y: 40
+              - label:
+                  text: "3000"
+                  text_font: montserrat_14
+                  text_color: 0xFFFFFF
+                  align: TOP_LEFT
+                  x: 2
+                  y: 77
+              - label:
+                  text: "2000"
+                  text_font: montserrat_14
+                  text_color: 0xFFFFFF
+                  align: TOP_LEFT
+                  x: 2
+                  y: 115
+              - label:
+                  text: "1000"
+                  text_font: montserrat_14
+                  text_color: 0xFFFFFF
+                  align: TOP_LEFT
+                  x: 2
+                  y: 152
         - label:
             id: solar_pwr_p1
             text: "---W"
             text_font: font_power
             align: TOP_RIGHT
             x: -10
-            y: 105
+            y: 110
             text_align: RIGHT
             text_color: 0x2196F3
 script:
@@ -195,6 +231,8 @@ script:
             lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
+            // Ensure chart is behind Y-axis labels
+            lv_obj_move_background(chart);
             lv_chart_set_div_line_count(chart, 10, 0);  // 10 horizontal lines (every 500W), no vertical lines
             // Remove point markers
             lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
@@ -240,7 +278,7 @@ sensor:
       - if:
           condition: { lambda: 'return !isnan(x);' }
           then:
-            - lvgl.label.update: { id: solar_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+            - lvgl.label.update: { id: solar_pwr_p1, text: !lambda 'return str_sprintf("%.0fW", x);' }
             - lambda: |-
                 id(last_solar_power) = x;
 
