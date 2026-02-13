@@ -71,12 +71,18 @@ display:
   - platform: mipi_spi
     id: my_display
     model: t-display-s3-pro
-    cs_pin: 39
-    dc_pin: 9
-    rotation: 90°
-    dimensions: { width: 480, height: 222 }
+    rotation: 90
 
+######################################
+# TOUCHSCREEN
+######################################
 touchscreen:
+  - platform: cst226
+    interrupt_pin: 21
+    reset_pin: 13
+    display: my_display
+
+
   - platform: cst226
     interrupt_pin: 21
     reset_pin: 13
@@ -103,11 +109,12 @@ lvgl:
   log_level: DEBUG
   buffer_size: 25%
   draw_rounding: 2
+  # full_refresh removed (panel geometry corrected)
   pages:
     - id: page1
       bg_color: 0x000000
       on_focus:
-        - lambda: 'if(id(my_chart)) // chart starts visible);'
+        - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
         - obj: &header_bar
             width: 100%
@@ -159,11 +166,11 @@ script:
     then:
       - lambda: |-
           if (id(my_chart) == nullptr) {
-            lv_obj_t * parent = lv_scr_act();   // FIXED (was lv_layer_top)
+            lv_obj_t * parent = id(page2).obj;   // attach chart strictly to page2
 
             id(my_chart) = lv_chart_create(parent);
-            lv_obj_set_size(id(my_chart), 460, 100);
-            lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, -5);
+            lv_obj_set_size(id(my_chart), 480, 100);
+            lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, 0);
 
             lv_chart_set_type(id(my_chart), LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(id(my_chart), 60);
@@ -180,7 +187,7 @@ script:
             id(ser_solar) = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF9900), LV_CHART_AXIS_PRIMARY_Y);
 
             lv_obj_set_style_line_width(id(my_chart), 2, LV_PART_ITEMS);
-            lv_obj_add_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);
+            // chart starts visible
 
             lv_chart_refresh(id(my_chart));
           }
