@@ -51,9 +51,10 @@ spi:
 
 i2c:
   id: i2c_bus
-  sda: 10
-  scl: 11
+  sda: 5
+  scl: 6
   scan: true
+  frequency: 100kHz
 
 # ================= HARDWARE =================
 output:
@@ -139,7 +140,7 @@ lvgl:
             bg_opa: 0
             layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
             widgets:
-              - label: { id: main_pwr_p1, text: "--- W", text_font: font_bebas_80 }
+              - label: { id: main_pwr_p1, text: "--- W", text_font: font_bebas_80, align: CENTER }
 
     - id: page2
       bg_color: 0x000000
@@ -247,6 +248,18 @@ sensor:
             lambda: 'return !isnan(x);'
           then:
             - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+            - lambda: |-
+                lv_color_t color;
+                if (x < 0) {
+                  color = lv_color_hex(0x4FC3F7);   // light blue (export)
+                } else if (x <= 500) {
+                  color = lv_color_hex(0x4CAF50);   // green
+                } else if (x <= 1000) {
+                  color = lv_color_hex(0xFF9800);   // orange
+                } else {
+                  color = lv_color_hex(0xF44336);   // red
+                }
+                lv_obj_set_style_text_color(id(main_pwr_p1), color, LV_PART_MAIN);
             - lvgl.label.update: { id: main_pwr_p2, text: !lambda 'return str_sprintf("%.0f W", x);' }
             - lambda: |-
                 if(id(my_chart)) {
