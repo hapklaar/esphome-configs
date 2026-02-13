@@ -1,104 +1,28 @@
 esphome:
   name: tdisplay-s3-amoled-temp
-  friendly_name: tdisplay-s3-amoled-temp
-  platformio_options:
-    build_unflags: -Werror=all
-    board_build.flash_mode: dio
   on_boot:
     priority: -60 
     then:
       - lambda: |-
+          // Create chart
           id(my_chart) = lv_chart_create(lv_scr_act());
           lv_obj_set_size(id(my_chart), 450, 120);
           lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, -10);
           lv_chart_set_type(id(my_chart), LV_CHART_TYPE_LINE);
           lv_chart_set_point_count(id(my_chart), 60);
+          
+          // Styling
           lv_obj_set_style_bg_opa(id(my_chart), 0, 0);
           lv_obj_set_style_border_width(id(my_chart), 0, 0);
           
-          id(ser_cons) = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
-          id(ser_prod) = lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
-          id(ser_solar) = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF9900), LV_CHART_AXIS_PRIMARY_Y);
+          // Series assignment (casting to void* for the globals)
+          id(ser_cons) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
+          id(ser_prod) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
+          id(ser_solar) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0xFF9900), LV_CHART_AXIS_PRIMARY_Y);
           
           lv_obj_add_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);
-      - script.execute: backlight_wake
 
-esp32:
-  board: esp32-s3-devkitc-1
-  variant: esp32s3
-  framework:
-    type: esp-idf
-
-# --- CONNECTIVITY ---
-api:
-  encryption:
-    key: !secret api_secret
-
-ota:
-  - platform: esphome
-    password: !secret ota_password
-
-wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-  power_save_mode: none
-
-captive_portal:
-web_server:
-  port: 80
-logger:
-  level: DEBUG
-
-# --- HARDWARE ---
-psram:
-  mode: octal
-  speed: 80MHz
-
-spi:
-  clk_pin: 18
-  mosi_pin: 17
-
-i2c:
-  - scl: 6
-    sda: 5
-    id: i2c_onboard
-    frequency: 100kHz
-
-output:
-  - platform: ledc
-    pin: 48
-    id: backlight_pwm
-    frequency: 5000 Hz
-
-light:
-  - platform: monochromatic
-    output: backlight_pwm
-    id: display_backlight
-    restore_mode: ALWAYS_ON
-
-display:
-  - platform: mipi_spi
-    id: my_display
-    model: t-display-s3-pro
-
-touchscreen:
-  - platform: cst226
-    interrupt_pin: 21  # GPIO21 is the Touch Interrupt
-    reset_pin: 13
-    on_touch:
-      - script.execute: backlight_wake
-
-# --- ASSETS ---
-font:
-  - file: 'fonts/BebasNeue-Regular.ttf'
-    id: font_bebas_160
-    size: 160
-  - file: 'fonts/BebasNeue-Regular.ttf'
-    id: font_bebas_230
-    size: 230
-  - file: 'fonts/arial.ttf'
-    id: font_arial_20
-    size: 20
+# ... hardware/connectivity (same as before) ...
 
 # --- GLOBALS ---
 globals:
@@ -106,75 +30,22 @@ globals:
     type: lv_obj_t*
     initial_value: 'nullptr'
   - id: ser_cons
-    type: lv_chart_series_t*
+    type: void*
     initial_value: 'nullptr'
   - id: ser_prod
-    type: lv_chart_series_t*
+    type: void*
     initial_value: 'nullptr'
   - id: ser_solar
-    type: lv_chart_series_t*
+    type: void*
     initial_value: 'nullptr'
-
-# --- DATA UPDATES ---
-time:
-  - platform: homeassistant
-    id: esptime
-    on_time:
-      - seconds: 0
-        then:
-          - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%c");' }
-          - lvgl.label.update: { id: time_p2, text: !lambda 'return id(esptime).now().strftime("%c");' }
-          - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%c");' }
-
-sensor:
-  - platform: adc
-    pin: GPIO04
-    id: vcc
-    update_interval: 10s
-    on_value:
-      - lvgl.label.update: { id: vcc_p1, text: !lambda 'return str_sprintf("%.2f V", x);' }
-      - lvgl.label.update: { id: vcc_p2, text: !lambda 'return str_sprintf("%.2f V", x);' }
-      - lvgl.label.update: { id: vcc_p3, text: !lambda 'return str_sprintf("%.2f V", x);' }
-
-  - platform: homeassistant
-    id: dsmr_power_production
-    entity_id: sensor.power_produced
-    on_value:
-      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), id(ser_prod), x * 1000.0);'
-
-  - platform: homeassistant
-    id: dsmr_power_consumption
-    entity_id: sensor.power_consumed
-    on_value:
-      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), id(ser_cons), x * 1000.0);'
-
-  - platform: homeassistant
-    id: dsmr_total_power
-    entity_id: sensor.ecotracker_current_power
-    on_value:
-      - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
-      - lvgl.label.update: { id: main_pwr_p2, text: !lambda 'return str_sprintf("%.0f W", x);' }
-
-  - platform: homeassistant
-    id: solar_power
-    entity_id: sensor.dds238_2_solar_energy_power
-    on_value:
-      - lvgl.label.update: { id: solar_pwr_p3, text: !lambda 'return str_sprintf("%.0f W", x);' }
-      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), id(ser_solar), x);'
-
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: GPIO00 # Changed from 21 to avoid conflict
-      inverted: true
-      mode: INPUT_PULLUP
-    id: button_next_page
-    on_press:
-      - lvgl.page.next:
 
 # --- LVGL UI ---
 lvgl:
   log_level: DEBUG
+  # THE CRITICAL SECTION
+  widgets:
+    - chart: # Added colon to make it a dictionary key
+
   pages:
     - id: page1
       bg_color: 0x000000
@@ -184,62 +55,25 @@ lvgl:
         - obj: &header_bar
             width: 100%
             height: 30
-            bg_color: 0x2828FF
-            radius: 0
-            widgets:
-              - label: { id: time_p1, text: "---", align: CENTER, text_font: font_arial_20 }
-              - label: { id: vcc_p1, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 }
-        - label:
-            id: main_pwr_p1
-            text: "--- W"
-            text_font: font_bebas_230
-            align: CENTER
-            y: 10
+            # ... header widgets ...
 
     - id: page2
       bg_color: 0x000000
       on_focus:
         - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
-      widgets:
-        - obj: 
-            <<: *header_bar
-            widgets:
-              - label: { id: time_p2, text: "---", align: CENTER, text_font: font_arial_20 }
-              - label: { id: vcc_p2, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 }
-        - label:
-            id: main_pwr_p2
-            text: "--- W"
-            text_font: font_bebas_160
-            align: TOP_MID
-            y: 35
+      # ... page 2 widgets ...
 
     - id: page3
       bg_color: 0x000000
       on_focus:
         - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
-      widgets:
-        - obj: 
-            <<: *header_bar
-            widgets:
-              - label: { id: time_p3, text: "---", align: CENTER, text_font: font_arial_20 }
-              - label: { id: vcc_p3, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 }
-        - label:
-            id: solar_pwr_p3
-            text: "--- W"
-            text_color: 0x0000FF 
-            text_font: font_bebas_160
-            align: TOP_MID
-            y: 35
+      # ... page 3 widgets ...
 
-# --- BACKLIGHT ---
-script:
-  - id: backlight_idle_timer
-    mode: restart
-    then:
-      - delay: 30s
-      - light.turn_on: { id: display_backlight, brightness: 10%, transition_length: 2s }
-  - id: backlight_wake
-    mode: restart
-    then:
-      - light.turn_on: { id: display_backlight, brightness: 80%, transition_length: 0s }
-      - script.execute: backlight_idle_timer
+# --- SENSORS ---
+sensor:
+  - platform: homeassistant
+    id: power_prod
+    entity_id: sensor.power_produced
+    on_value:
+      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), (lv_chart_series_t*)id(ser_prod), x * 1000.0);'
+# ... rest of sensors ...
