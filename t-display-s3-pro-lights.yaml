@@ -53,11 +53,15 @@ output:
   - platform: ledc
     pin: 48
     id: backlight_pwm
+    frequency: 5000 Hz
 
 light:
   - platform: monochromatic
     output: backlight_pwm
     id: display_backlight
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+    gamma_correct: 1.0
 
 switch:
   - platform: gpio
