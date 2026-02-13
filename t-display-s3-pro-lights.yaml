@@ -5,11 +5,10 @@ esphome:
     build_flags: ["-DLV_USE_CHART=1"]
     board_build.flash_mode: dio
   on_boot:
-    priority: -10
+    priority: 100
     then:
       - switch.turn_on: display_power
       - light.turn_on: { id: display_backlight, brightness: 100% }
-      - delay: 500ms
       - script.execute: setup_chart
 
 esp32:
@@ -88,16 +87,11 @@ touchscreen:
 
 font:
 #  - file: 'fonts/Oswald-Bold.ttf'
-  - file: 'fonts/GoogleSansCode-SemiBold.ttf'
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
     id: font_power
     size: 96
     bpp: 4
     glyphs: "0123456789.- W"
-  - file: 'fonts/GoogleSansCode-SemiBold.ttf'
-    id: font_axis
-    size: 12
-    bpp: 4
-    glyphs: "0123456789kW"
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
@@ -120,7 +114,6 @@ lvgl:
       bg_color: 0x000000
       scrollable: false
       widgets:
-        # ----- HEADER -----
         - obj:
             width: 100%
             height: 34
@@ -132,108 +125,87 @@ lvgl:
               - label:
                   id: time_p1
                   text: "--:--:--"
+                  text_font: montserrat_22
                   align: LEFT_MID
-                  x: 6
+                  x: 10
               - label:
                   id: batt_v_p1
                   text: "--.-V"
+                  text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -50
+                  x: -110
               - label:
                   id: batt_pct_p1
                   text: "--%"
+                  text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -10
+                  x: -40
               - label:
                   id: batt_icon_p1
                   text: ""
+                  text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -80
-
-        # ----- CONTENT AREA (below header) -----
+                  x: -10
+        - label:
+            id: main_pwr_p1
+            text: "---W"
+            text_font: font_power
+            align: TOP_RIGHT
+            x: -10
+            y: 20
+            text_align: RIGHT
         - obj:
-            id: content_container
-            width: 100%
-            height: 190
+            id: chart_container
+            width: 180
+            height: 188
+            x: 5
             y: 34
-            bg_opa: TRANSP
-            layout:
-              type: flex
-              flex_flow: ROW
-              flex_align_main: START
-              flex_align_cross: START
-            widgets:
-
-              # ----- CHART CONTAINER (LEFT) -----
-              - obj:
-                  id: chart_container
-                  width: 180
-                  height: 100%
-                  bg_color: 0x000000
-                  bg_opa: COVER
-                  border_width: 0
-                  outline_width: 0
-                  widgets:
-                    - { label: { id: y_5k, text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 0 } }
-                    - { label: { id: y_4k, text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 38 } }
-                    - { label: { id: y_3k, text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 76 } }
-                    - { label: { id: y_2k, text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 114 } }
-                    - { label: { id: y_1k, text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2, y: 152 } }
-
-              # ----- POWER READOUT AREA (RIGHT) -----
-              - obj:
-                  id: power_container
-                  width: 100%
-                  height: 100%
-                  bg_opa: TRANSP
-                  widgets:
-                    - label:
-                        id: main_pwr_p1
-                        text: "---W"
-                        text_font: font_power
-                        align: TOP_RIGHT
-                        x: -10
-                        y: 16
-                        text_align: RIGHT
-
-                    - label:
-                        id: solar_pwr_p1
-                        text: "---W"
-                        text_font: font_power
-                        align: TOP_RIGHT
-                        x: -10
-                        y: 96
-                        text_align: RIGHT
-                        text_color: 0x2196F3
+            bg_color: 0x000000
+            bg_opa: COVER
+            border_width: 0
+            outline_width: 0
+        - label:
+            id: solar_pwr_p1
+            text: "---W"
+            text_font: font_power
+            align: TOP_RIGHT
+            x: -10
+            y: 110
+            text_align: RIGHT
+            text_color: 0x2196F3
 script:
   - id: setup_chart
     then:
       - lambda: |-
           if (id(chart_obj) == nullptr) {
-            auto chart = lv_chart_create(id(chart_container)); id(chart_obj) = chart;
-            lv_obj_set_size(chart, lv_pct(100), lv_pct(100)); lv_obj_center(chart);
+            auto chart = lv_chart_create(id(chart_container));
+            id(chart_obj) = chart;
+            lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
+            lv_obj_center(chart);
             lv_obj_set_style_pad_all(chart, 0, LV_PART_MAIN);
-            lv_chart_set_type(chart, LV_CHART_TYPE_LINE); lv_chart_set_point_count(chart, 60);
+            lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
+            lv_chart_set_point_count(chart, 60);
             id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
             id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
             lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
             lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
+            // Black background, no borders
             lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
             lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
+            lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
+            lv_chart_set_div_line_count(chart, 10, 0);  // 10 horizontal lines (every 500W), no vertical lines
+            // Remove point markers
+            lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
+            // Dark grey grid lines
+            lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
+            lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
+            // Remove any remaining default borders from other parts
             lv_obj_set_style_border_width(chart, 0, LV_PART_ITEMS);
             lv_obj_set_style_border_width(chart, 0, LV_PART_INDICATOR);
             lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_ITEMS);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_ITEMS);
-            lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
-            lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
-            lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
-            lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
-            lv_obj_move_background(chart);
-            lv_chart_set_div_line_count(chart, 9, 0);  // 9 inner lines → 10 segments (0–5000 in 500W steps)
-
-            // Y-axis labels will be positioned manually via fixed Y coordinates in YAML
           }
 
 sy6970:
@@ -270,7 +242,27 @@ sensor:
           then:
             - lvgl.label.update: { id: solar_pwr_p1, text: !lambda 'return str_sprintf("%.0fW", x);' }
             - lambda: |-
-                 id(last_solar_power) = x;
+                id(last_solar_power) = x;
+
+  - platform: sy6970
+    battery_voltage:
+      id: battery_voltage
+      on_value:
+        - lambda: |-
+            float pct = (x - 3.0f) / 1.2f * 100.0f;
+            if (pct < 0) pct = 0;
+            if (pct > 100) pct = 100;
+            id(battery_percent) = pct;
+        - lambda: |-
+            const char* icon;
+            if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
+            else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
+            else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
+            else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
+            else icon = LV_SYMBOL_BATTERY_FULL;
+            lv_label_set_text(id(batt_icon_p1), icon);
+        - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
+        - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
 
   - platform: homeassistant
     id: main_power
@@ -298,24 +290,3 @@ sensor:
                 }
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
                 id(last_main_power) = x;
-
-  - platform: sy6970
-    battery_voltage:
-      id: battery_voltage
-      on_value:
-        - lambda: |-
-            float pct = (x - 3.0f) / 1.2f * 100.0f;
-            if (pct < 0) pct = 0;
-            if (pct > 100) pct = 100;
-            id(battery_percent) = pct;
-        - lambda: |-
-            const char* icon;
-            if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
-            else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
-            else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
-            else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
-            else icon = LV_SYMBOL_BATTERY_FULL;
-            lv_label_set_text(id(batt_icon_p1), icon);
-        - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
-        - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
-
