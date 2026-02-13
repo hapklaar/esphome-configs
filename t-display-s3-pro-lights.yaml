@@ -153,7 +153,7 @@ lvgl:
         - obj:
             id: chart_container
             width: 160
-            height: 190
+            height: 188
             x: 5
             y: 34
             bg_color: 0x000000
@@ -174,12 +174,15 @@ script:
           if (id(chart_obj) == nullptr) {
             auto chart = lv_chart_create(id(chart_container));
             id(chart_obj) = chart;
-            lv_obj_set_size(chart, 160, 190);
+            lv_obj_set_size(chart, 150, 170);
             lv_obj_set_pos(chart, 0, 0);
             lv_obj_set_style_pad_all(chart, 0, LV_PART_MAIN);
             lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(chart, 60);
+            id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
+            id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
             lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
+            lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
             // Black background, no borders
             lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
@@ -190,8 +193,6 @@ script:
             // Dark grey grid lines
             lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
-            id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
-            id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
           }
 
 sy6970:
