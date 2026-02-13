@@ -211,14 +211,17 @@ time:
   - platform: homeassistant
     id: esptime
     on_time:
-      - seconds: 0
+      - seconds: /1
         then:
-          - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
+          - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
+          - lvgl.label.update: { id: time_p2, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
+          - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
           - lvgl.label.update: { id: time_p2, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
           - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
 
 sy6970:
   i2c_id: i2c_bus
+  update_interval: 30s
 
 sensor:
   - platform: sy6970
