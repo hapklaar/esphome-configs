@@ -2,30 +2,15 @@ esphome:
   name: t-display-s3-pro-lvgltest
   friendly_name: t-display-s3-pro-lvgltest
   platformio_options:
-    # This forces the compiler to include the LVGL chart module code
+    # Forces LVGL to compile the chart code
     build_flags: 
       - -DLV_USE_CHART=1
     build_unflags: -Werror=all
     board_build.flash_mode: dio
   on_boot:
-    priority: -60 
+    priority: -100 # Low priority ensures LVGL component is already started
     then:
-      - lambda: |-
-          // Create the chart manually on the active screen
-          id(my_chart) = lv_chart_create(lv_scr_act());
-          lv_obj_set_size(id(my_chart), 450, 120);
-          lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, -10);
-          lv_chart_set_type(id(my_chart), LV_CHART_TYPE_LINE);
-          lv_chart_set_point_count(id(my_chart), 60);
-          
-          lv_obj_set_style_bg_opa(id(my_chart), 0, 0);
-          lv_obj_set_style_border_width(id(my_chart), 0, 0);
-          
-          id(ser_cons) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
-          id(ser_prod) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
-          id(ser_solar) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0xFF9900), LV_CHART_AXIS_PRIMARY_Y);
-          
-          lv_obj_add_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);
+      - script.execute: setup_chart
       - script.execute: backlight_wake
 
 esp32:
@@ -112,59 +97,10 @@ globals:
     type: void*
     initial_value: 'nullptr'
 
-# --- DATA UPDATES ---
-sensor:
-  - platform: adc
-    pin: GPIO04
-    id: vcc
-    update_interval: 10s
-    on_value:
-      - lvgl.label.update: { id: vcc_p1, text: !lambda 'return str_sprintf("%.2f V", x);' }
-      - lvgl.label.update: { id: vcc_p2, text: !lambda 'return str_sprintf("%.2f V", x);' }
-      - lvgl.label.update: { id: vcc_p3, text: !lambda 'return str_sprintf("%.2f V", x);' }
-
-  - platform: homeassistant
-    id: dsmr_power_production
-    entity_id: sensor.power_produced
-    on_value:
-      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), (lv_chart_series_t*)id(ser_prod), x * 1000.0);'
-
-  - platform: homeassistant
-    id: dsmr_power_consumption
-    entity_id: sensor.power_consumed
-    on_value:
-      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), (lv_chart_series_t*)id(ser_cons), x * 1000.0);'
-
-  - platform: homeassistant
-    id: dsmr_total_power
-    entity_id: sensor.ecotracker_current_power
-    on_value:
-      - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
-      - lvgl.label.update: { id: main_pwr_p2, text: !lambda 'return str_sprintf("%.0f W", x);' }
-
-  - platform: homeassistant
-    id: solar_power
-    entity_id: sensor.dds238_2_solar_energy_power
-    on_value:
-      - lvgl.label.update: { id: solar_pwr_p3, text: !lambda 'return str_sprintf("%.0f W", x);' }
-      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), (lv_chart_series_t*)id(ser_solar), x);'
-
-binary_sensor:
-  - platform: gpio
-    pin:
-      number: GPIO00
-      inverted: true
-      mode: INPUT_PULLUP
-    id: button_next_page
-    on_press:
-      - lvgl.page.next:
-
 # --- LVGL UI ---
 lvgl:
   log_level: DEBUG
-  # The 'widgets' key is removed to avoid the 'Unknown widget' error.
-  # The chart is now enabled via build_flags at the top.
-
+  # No 'widgets' or 'on_setup' keys here to avoid validation errors
   pages:
     - id: page1
       bg_color: 0x000000
@@ -221,11 +157,79 @@ lvgl:
             align: TOP_MID
             y: 35
 
+# --- SENSORS ---
+sensor:
+  - platform: adc
+    pin: GPIO04
+    id: vcc
+    update_interval: 10s
+    on_value:
+      - lvgl.label.update: { id: vcc_p1, text: !lambda 'return str_sprintf("%.2f V", x);' }
+      - lvgl.label.update: { id: vcc_p2, text: !lambda 'return str_sprintf("%.2f V", x);' }
+      - lvgl.label.update: { id: vcc_p3, text: !lambda 'return str_sprintf("%.2f V", x);' }
+
+  - platform: homeassistant
+    id: dsmr_power_production
+    entity_id: sensor.power_produced
+    on_value:
+      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), (lv_chart_series_t*)id(ser_prod), x * 1000.0);'
+
+  - platform: homeassistant
+    id: dsmr_power_consumption
+    entity_id: sensor.power_consumed
+    on_value:
+      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), (lv_chart_series_t*)id(ser_cons), x * 1000.0);'
+
+  - platform: homeassistant
+    id: dsmr_total_power
+    entity_id: sensor.ecotracker_current_power
+    on_value:
+      - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+      - lvgl.label.update: { id: main_pwr_p2, text: !lambda 'return str_sprintf("%.0f W", x);' }
+
+  - platform: homeassistant
+    id: solar_power
+    entity_id: sensor.dds238_2_solar_energy_power
+    on_value:
+      - lvgl.label.update: { id: solar_pwr_p3, text: !lambda 'return str_sprintf("%.0f W", x);' }
+      - lambda: 'if(id(my_chart)) lv_chart_set_next_value(id(my_chart), (lv_chart_series_t*)id(ser_solar), x);'
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO00
+      inverted: true
+      mode: INPUT_PULLUP
+    id: button_next_page
+    on_press:
+      - lvgl.page.next:
+
 time:
   - platform: homeassistant
     id: esptime
 
+# --- SCRIPTS ---
 script:
+  - id: setup_chart
+    then:
+      - lambda: |-
+          // Create the chart on the active screen
+          id(my_chart) = lv_chart_create(lv_scr_act());
+          lv_obj_set_size(id(my_chart), 450, 120);
+          lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, -10);
+          lv_chart_set_type(id(my_chart), LV_CHART_TYPE_LINE);
+          lv_chart_set_point_count(id(my_chart), 60);
+          
+          lv_obj_set_style_bg_opa(id(my_chart), 0, 0);
+          lv_obj_set_style_border_width(id(my_chart), 0, 0);
+          
+          id(ser_cons) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
+          id(ser_prod) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
+          id(ser_solar) = (void*)lv_chart_add_series(id(my_chart), lv_color_hex(0xFF9900), LV_CHART_AXIS_PRIMARY_Y);
+          
+          // Start hidden because Page 1 is active first
+          lv_obj_add_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);
+
   - id: backlight_idle_timer
     mode: restart
     then:
