@@ -92,6 +92,11 @@ font:
     size: 96
     bpp: 4
     glyphs: "0123456789.- W"
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
+    id: font_axis
+    size: 12
+    bpp: 4
+    glyphs: "12345kW"
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
@@ -108,7 +113,7 @@ lvgl:
     - touchscreen_id: my_touch
   full_refresh: false
   buffer_size: 25%
-  update_interval: 50ms
+  update_interval: 500ms
   pages:
     - id: page1
       bg_color: 0x000000
@@ -157,13 +162,19 @@ lvgl:
         - obj:
             id: chart_container
             width: 180
-            height: 188
+            height: 194
             x: 5
-            y: 34
+            y: 37
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
             outline_width: 0
+            widgets:
+              - { label: { text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 2 } }
+              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 40 } }
+              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 78 } }
+              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 116 } }
+              - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 154 } }
         - label:
             id: solar_pwr_p1
             text: "---W"
