@@ -9,8 +9,6 @@ esphome:
     then:
       - switch.turn_on: display_power
       - light.turn_on: { id: display_backlight, brightness: 100% }
-      - delay: 1s
-      - script.execute: setup_chart
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -89,12 +87,10 @@ font:
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
-  - { id: my_chart, type: lv_obj_t*, initial_value: 'nullptr' }
-  - { id: ser_cons, type: lv_chart_series_t*, initial_value: 'nullptr' }
-  - { id: ser_prod, type: lv_chart_series_t*, initial_value: 'nullptr' }
-  - { id: ser_solar, type: lv_chart_series_t*, initial_value: 'nullptr' }
 
 lvgl:
+  displays:
+    - my_display
   touchscreens:
     - touchscreen_id: my_touch
   buffer_size: 25%
@@ -127,46 +123,13 @@ lvgl:
             layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
             bg_opa: 0
             widgets:
-              - label: { id: main_pwr_p1, text: "--- W", text_font: font_bebas_80 }
-
-    - id: page2
-      bg_color: 0x000000
-      widgets:
-        - obj:
-            width: 100%
-            height: 80
-            align: CENTER
-            layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
-            bg_opa: 0
-            widgets:
-              - label: { id: main_pwr_p2, text: "--- W", text_font: font_bebas_80 }
-
-    - id: page3
-      bg_color: 0x000000
-      widgets:
-        - obj:
-            width: 100%
-            height: 80
-            align: CENTER
-            layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
-            bg_opa: 0
-            widgets:
-              - label: { id: solar_pwr_p3, text: "--- W", text_font: font_bebas_80 }
-
-script:
-  - id: setup_chart
-    then:
-      - lambda: |-
-          if (!id(my_chart)) {
-            id(my_chart) = lv_chart_create(id(page2).obj);
-            lv_obj_set_size(id(my_chart), 480, 100);
-            lv_obj_align(id(my_chart), LV_ALIGN_BOTTOM_MID, 0, 0);
-            lv_chart_set_point_count(id(my_chart), 60);
-            lv_chart_set_range(id(my_chart), LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
-            id(ser_cons)  = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF0000), LV_CHART_AXIS_PRIMARY_Y);
-            id(ser_prod)  = lv_chart_add_series(id(my_chart), lv_color_hex(0x00FF00), LV_CHART_AXIS_PRIMARY_Y);
-            id(ser_solar) = lv_chart_add_series(id(my_chart), lv_color_hex(0xFF9900), LV_CHART_AXIS_PRIMARY_Y);
-          }
+              - label:
+                  id: main_pwr_p1
+                  text: "--- W"
+                  text_font: font_bebas_80
+                  width: 100%
+                  align: CENTER
+                  text_align: CENTER
 
 sy6970:
   i2c_id: i2c_bus
@@ -208,17 +171,3 @@ sensor:
                 else if (x <= 1000) c = lv_color_hex(0xFF9800);
                 else c = lv_color_hex(0xF44336);
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
-            - lvgl.label.update: { id: main_pwr_p2, text: !lambda 'return str_sprintf("%.0f W", x);' }
-
-  - platform: homeassistant
-    id: solar_power
-    entity_id: sensor.dds238_2_solar_energy_power
-    on_value:
-      - lvgl.label.update: { id: solar_pwr_p3, text: !lambda 'return str_sprintf("%.0f W", x);' }
-
-binary_sensor:
-  - platform: gpio
-    id: button_next_page
-    pin: { number: GPIO00, inverted: true, mode: INPUT_PULLUP }
-    on_press:
-      - lvgl.page.next:
