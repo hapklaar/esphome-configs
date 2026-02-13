@@ -119,6 +119,7 @@ lvgl:
       bg_color: 0x000000
       scrollable: false
       widgets:
+        # ----- HEADER -----
         - obj:
             width: 100%
             height: 34
@@ -130,88 +131,60 @@ lvgl:
               - label:
                   id: time_p1
                   text: "--:--:--"
-                  text_font: montserrat_22
                   align: LEFT_MID
-                  x: 10
+                  x: 6
               - label:
                   id: batt_v_p1
                   text: "--.-V"
-                  text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -110
+                  x: -50
               - label:
                   id: batt_pct_p1
                   text: "--%"
-                  text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -40
+                  x: -10
               - label:
                   id: batt_icon_p1
                   text: ""
-                  text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -10
-        - label:
-            id: main_pwr_p1
-            text: "---W"
-            text_font: font_power
-            align: TOP_RIGHT
-            x: -10
-            y: 20
-            text_align: RIGHT
+                  x: -80
+
+        # ----- CHART CONTAINER -----
         - obj:
             id: chart_container
             width: 180
-            height: 194
-            x: -10
+            height: 190
+            x: 0
             y: 34
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
             outline_width: 0
             widgets:
-              - label:
-                  text: "5kW"
-                  text_font: font_axis
-                  text_color: 0xFFFFFF
-                  align: TOP_LEFT
-                  x: 2
-                  y: 0
-              - label:
-                  text: "4kW"
-                  text_font: font_axis
-                  text_color: 0xFFFFFF
-                  align: TOP_LEFT
-                  x: 2
-                  y: 38
-              - label:
-                  text: "3kW"
-                  text_font: font_axis
-                  text_color: 0xFFFFFF
-                  align: TOP_LEFT
-                  x: 2
-                  y: 76
-              - label:
-                  text: "2kW"
-                  text_font: font_axis
-                  text_color: 0xFFFFFF
-                  align: TOP_LEFT
-                  x: 2
-                  y: 114
-              - label:
-                  text: "1kW"
-                  text_font: font_axis
-                  text_color: 0xFFFFFF
-                  align: TOP_LEFT
-                  x: 2
-                  y: 152
+              - { label: { id: y_5k, text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
+              - { label: { id: y_4k, text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
+              - { label: { id: y_3k, text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
+              - { label: { id: y_2k, text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
+              - { label: { id: y_1k, text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, align: TOP_LEFT, x: 2 } }
+
+        # ----- MAIN POWER -----
+        - label:
+            id: main_pwr_p1
+            text: "---W"
+            text_font: font_power
+            align: TOP_RIGHT
+            x: -10
+            y: 50
+            text_align: RIGHT
+
+        # ----- SOLAR POWER -----
         - label:
             id: solar_pwr_p1
             text: "---W"
             text_font: font_power
             align: TOP_RIGHT
             x: -10
-            y: 110
+            y: 130
             text_align: RIGHT
             text_color: 0x2196F3
 script:
@@ -219,36 +192,34 @@ script:
     then:
       - lambda: |-
           if (id(chart_obj) == nullptr) {
-            auto chart = lv_chart_create(id(chart_container));
-            id(chart_obj) = chart;
-            lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
-            lv_obj_center(chart);
+            auto chart = lv_chart_create(id(chart_container)); id(chart_obj) = chart;
+            lv_obj_set_size(chart, lv_pct(100), lv_pct(100)); lv_obj_center(chart);
             lv_obj_set_style_pad_all(chart, 0, LV_PART_MAIN);
-            lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
-            lv_chart_set_point_count(chart, 60);
+            lv_chart_set_type(chart, LV_CHART_TYPE_LINE); lv_chart_set_point_count(chart, 60);
             id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
             id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
             lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
             lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
-            // Black background, no borders
             lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
             lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
-            lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
-            // Ensure chart is behind Y-axis labels
-            lv_obj_move_background(chart);
-            lv_chart_set_div_line_count(chart, 11, 0);  // 0..5000W in 500W steps (11 lines, 10 segments)
-            // Remove point markers
-            lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
-            // Dark grey grid lines
-            lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
-            lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
-            // Remove any remaining default borders from other parts
             lv_obj_set_style_border_width(chart, 0, LV_PART_ITEMS);
             lv_obj_set_style_border_width(chart, 0, LV_PART_INDICATOR);
             lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_ITEMS);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_ITEMS);
+            lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
+            lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
+            lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
+            lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
+            lv_obj_move_background(chart);
+            lv_chart_set_div_line_count(chart, 11, 0);
+
+            int h = lv_obj_get_height(chart), pt = lv_obj_get_style_pad_top(chart, LV_PART_MAIN), pb = lv_obj_get_style_pad_bottom(chart, LV_PART_MAIN);
+            int seg = (h - pt - pb) / 10;
+            lv_obj_set_y(id(y_5k), pt + 0 * seg); lv_obj_set_y(id(y_4k), pt + 2 * seg);
+            lv_obj_set_y(id(y_3k), pt + 4 * seg); lv_obj_set_y(id(y_2k), pt + 6 * seg);
+            lv_obj_set_y(id(y_1k), pt + 8 * seg);
           }
 
 sy6970:
