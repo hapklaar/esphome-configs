@@ -98,6 +98,8 @@ globals:
   - { id: chart_obj, type: lv_obj_t*, initial_value: 'nullptr' }
   - { id: chart_main, type: lv_chart_series_t*, initial_value: 'nullptr' }
   - { id: chart_solar, type: lv_chart_series_t*, initial_value: 'nullptr' }
+  - { id: last_main_power, type: float, initial_value: '0.0' }
+  - { id: last_solar_power, type: float, initial_value: '0.0' }
 
 lvgl:
   displays:
@@ -168,7 +170,7 @@ lvgl:
             text_font: font_power
             align: TOP_RIGHT
             x: -10
-            y: 100
+            y: 105
             text_align: RIGHT
             text_color: 0x2196F3
 script:
@@ -194,6 +196,8 @@ script:
             lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
             lv_chart_set_div_line_count(chart, 10, 0);  // 10 horizontal lines (every 500W), no vertical lines
+            // Remove point markers
+            lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
             // Dark grey grid lines
             lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
@@ -207,6 +211,16 @@ script:
 sy6970:
   i2c_id: i2c_bus
   update_interval: 5s
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          if (id(chart_obj) != nullptr) {
+            lv_chart_set_next_value(id(chart_obj), id(chart_main), (lv_coord_t)id(last_main_power));
+            lv_chart_set_next_value(id(chart_obj), id(chart_solar), (lv_coord_t)id(last_solar_power));
+            lv_chart_refresh(id(chart_obj));
+          }
 
 time:
   - platform: homeassistant
@@ -228,10 +242,7 @@ sensor:
           then:
             - lvgl.label.update: { id: solar_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
             - lambda: |-
-                if (id(chart_obj) != nullptr) {
-                  lv_chart_set_next_value(id(chart_obj), id(chart_solar), (lv_coord_t)x);
-                  lv_chart_refresh(id(chart_obj));
-                }
+                id(last_solar_power) = x;
 
   - platform: sy6970
     battery_voltage:
@@ -267,23 +278,15 @@ sensor:
                 // Static color thresholds
                 lv_color_t c;
                 if (x < 0) {
-                  // -2000W to 0W = Blue
                   c = lv_color_hex(0x2196F3);
                 } else if (x <= 1000) {
-                  // 0 to 1000W = Green
                   c = lv_color_hex(0x4CAF50);
                 } else if (x <= 1500) {
-                  // 1000 to 1500W = Yellow
                   c = lv_color_hex(0xFFEB3B);
                 } else if (x <= 2000) {
-                  // 1500 to 2000W = Orange
                   c = lv_color_hex(0xFF9800);
                 } else {
-                  // Above 2000W = Red
                   c = lv_color_hex(0xF44336);
                 }
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
-                if (id(chart_obj) != nullptr) {
-                  lv_chart_set_next_value(id(chart_obj), id(chart_main), (lv_coord_t)x);
-                  lv_chart_refresh(id(chart_obj));
-                }
+                id(last_main_power) = x;
