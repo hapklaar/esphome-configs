@@ -87,7 +87,8 @@ touchscreen:
     display: my_display
 
 font:
-  - file: 'fonts/Oswald-Bold.ttf'
+#  - file: 'fonts/Oswald-Bold.ttf'
+  - file: 'fonts/GoogleSansCode-SemiBoldItalic.ttf'  
     id: font_power
     size: 96
     bpp: 4
