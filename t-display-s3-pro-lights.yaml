@@ -116,6 +116,8 @@ lvgl:
             width: 100%
             height: 34
             bg_color: 0x4A90FF
+            border_width: 0
+            outline_width: 0
             align: TOP_MID
             widgets:
               - label:
@@ -152,12 +154,14 @@ lvgl:
             text_align: RIGHT
         - obj:
             id: chart_container
-            width: 160
+            width: 180
             height: 188
             x: 5
             y: 34
             bg_color: 0x000000
             bg_opa: COVER
+            border_width: 0
+            outline_width: 0
         - label:
             id: solar_pwr_p1
             text: "--- W"
@@ -174,8 +178,8 @@ script:
           if (id(chart_obj) == nullptr) {
             auto chart = lv_chart_create(id(chart_container));
             id(chart_obj) = chart;
-            lv_obj_set_size(chart, 150, 170);
-            lv_obj_set_pos(chart, 0, 0);
+            lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
+            lv_obj_center(chart);
             lv_obj_set_style_pad_all(chart, 0, LV_PART_MAIN);
             lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
             lv_chart_set_point_count(chart, 60);
@@ -189,10 +193,15 @@ script:
             lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
-            lv_chart_set_div_line_count(chart, 3, 5);
+            lv_chart_set_div_line_count(chart, 10, 0);  // 10 horizontal lines (every 500W), no vertical lines
             // Dark grey grid lines
             lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
+            // Remove any remaining default borders from other parts
+            lv_obj_set_style_border_width(chart, 0, LV_PART_ITEMS);
+            lv_obj_set_style_border_width(chart, 0, LV_PART_INDICATOR);
+            lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_ITEMS);
+            lv_obj_set_style_outline_width(chart, 0, LV_PART_ITEMS);
           }
 
 sy6970:
