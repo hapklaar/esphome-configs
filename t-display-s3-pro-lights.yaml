@@ -163,18 +163,17 @@ lvgl:
             id: chart_container
             width: 180
             height: 194
-            x: 5
-            y: 37
+            x: 0
+            y: 39
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
             outline_width: 0
             widgets:
-              - { label: { text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 2 } }
-              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 40 } }
-              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 78 } }
-              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 116 } }
-              - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 154 } }
+              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 11 } }
+              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 48 } }
+              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 86 } }
+              - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 124 } }
         - label:
             id: solar_pwr_p1
             text: "---W"
@@ -190,6 +189,7 @@ script:
       - lambda: |-
           if (id(chart_obj) == nullptr) {
             auto chart = lv_chart_create(id(chart_container));
+            lv_obj_move_background(chart);  // ensure axis labels remain on top
             id(chart_obj) = chart;
             lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
             lv_obj_center(chart);
