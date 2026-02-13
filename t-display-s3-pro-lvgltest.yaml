@@ -104,19 +104,25 @@ lvgl:
               - label:
                   id: time_p1
                   text: "--:--:--"
-                  text_font: montserrat_20
+                  text_font: montserrat_22
                   align: LEFT_MID
                   x: 10
               - label:
                   id: batt_v_p1
                   text: "--.-V"
-                  text_font: montserrat_20
+                  text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -70
+                  x: -110
               - label:
                   id: batt_pct_p1
                   text: "--%"
-                  text_font: montserrat_20
+                  text_font: montserrat_22
+                  align: RIGHT_MID
+                  x: -40
+              - label:
+                  id: batt_icon_p1
+                  text: ""
+                  text_font: montserrat_22
                   align: RIGHT_MID
                   x: -10
         - obj:
@@ -157,6 +163,14 @@ sensor:
             if (pct < 0) pct = 0;
             if (pct > 100) pct = 100;
             id(battery_percent) = pct;
+        - lambda: |-
+            const char* icon;
+            if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
+            else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
+            else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
+            else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
+            else icon = LV_SYMBOL_BATTERY_FULL;
+            lv_label_set_text(id(batt_icon_p1), icon);
         - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
         - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
 
