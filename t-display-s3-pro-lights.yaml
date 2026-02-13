@@ -162,9 +162,9 @@ lvgl:
         - obj:
             id: chart_container
             width: 180
-            height: 193
+            height: 190
             x: 0
-            y: 40
+            y: 45
             bg_color: 0x000000
             bg_opa: COVER
             border_width: 0
@@ -176,7 +176,7 @@ lvgl:
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: -26
+                  y: -20
               - label:
                   text: "4kW"
                   text_font: font_axis
@@ -190,14 +190,14 @@ lvgl:
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 49
+                  y: 48
               - label:
                   text: "2kW"
                   text_font: font_axis
                   text_color: 0xFFFFFF
                   align: TOP_LEFT
                   x: 2
-                  y: 87
+                  y: 86
               - label:
                   text: "1kW"
                   text_font: font_axis
@@ -238,7 +238,7 @@ script:
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
             // Ensure chart is behind Y-axis labels
             lv_obj_move_background(chart);
-            lv_chart_set_div_line_count(chart, 10, 0);  // 10 horizontal lines (every 500W), no vertical lines
+            lv_chart_set_div_line_count(chart, 11, 0);  // 10 horizontal lines (every 500W), no vertical lines
             // Remove point markers
             lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
             // Dark grey grid lines
