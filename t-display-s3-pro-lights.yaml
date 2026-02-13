@@ -77,7 +77,6 @@ display:
     spi_id: spi_bus
     data_rate: 80MHz
     rotation: 90
-    
 
 touchscreen:
   - platform: cst226
@@ -88,7 +87,7 @@ touchscreen:
 
 font:
 #  - file: 'fonts/Oswald-Bold.ttf'
-  - file: 'fonts/GoogleSansCode-SemiBoldItalic.ttf'  
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
     id: font_power
     size: 96
     bpp: 4
@@ -149,7 +148,7 @@ lvgl:
                   x: -10
         - label:
             id: main_pwr_p1
-            text: "--- W"
+            text: "---W"
             text_font: font_power
             align: TOP_RIGHT
             x: -10
@@ -167,7 +166,7 @@ lvgl:
             outline_width: 0
         - label:
             id: solar_pwr_p1
-            text: "--- W"
+            text: "---W"
             text_font: font_power
             align: TOP_RIGHT
             x: -10
@@ -274,7 +273,7 @@ sensor:
       - if:
           condition: { lambda: 'return !isnan(x);' }
           then:
-            - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+            - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0fW", x);' }
             - lambda: |-
                 // Static color thresholds
                 lv_color_t c;
