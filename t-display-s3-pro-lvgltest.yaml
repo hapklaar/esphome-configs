@@ -19,13 +19,17 @@ esp32:
   framework: { type: esp-idf }
 
 # ==============================================================================
-# BUS CONFIGURATION (Required for mipi_spi)
+# BUS CONFIGURATION
 # ==============================================================================
 spi:
   clk_pin: 18
   mosi_pin: 17
-  # MISO is not used for this display but often required by the component
   miso_pin: 16 
+
+i2c:
+  sda: 10
+  scl: 11
+  scan: true
 
 # ==============================================================================
 # HARDWARE CONFIGURATION
@@ -51,11 +55,8 @@ display:
   - platform: mipi_spi
     id: my_display
     model: t-display-s3-pro
-    # CS Pin for T-Display S3 Pro is typically 39
     cs_pin: 39
-    # DC Pin is typically 9
     dc_pin: 9
-    # Reset is handled by the display model internal logic or pin 13 (shared with touch)
     rotation: 90°
     dimensions: { width: 480, height: 222 }
 
@@ -188,6 +189,24 @@ sensor:
       - lvgl.label.update: { id: vcc_p1, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
       - lvgl.label.update: { id: vcc_p2, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
       - lvgl.label.update: { id: vcc_p3, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
+
+  - platform: homeassistant
+    id: main_power
+    entity_id: sensor.main_power # Update this to your correct entity ID if needed
+    on_value:
+      - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+      - lvgl.label.update: { id: main_pwr_p2, text: !lambda 'return str_sprintf("%.0f W", x);' }
+      - lambda: |-
+          if(id(my_chart)) {
+            if (x >= 0) {
+              if(id(ser_cons)) lv_chart_set_next_value(id(my_chart), id(ser_cons), (int32_t)x);
+              if(id(ser_prod)) lv_chart_set_next_value(id(my_chart), id(ser_prod), 0);
+            } else {
+              if(id(ser_cons)) lv_chart_set_next_value(id(my_chart), id(ser_cons), 0);
+              if(id(ser_prod)) lv_chart_set_next_value(id(my_chart), id(ser_prod), (int32_t)abs(x));
+            }
+            lv_obj_invalidate(id(my_chart));
+          }
 
   - platform: homeassistant
     id: solar_power
