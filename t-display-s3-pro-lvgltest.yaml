@@ -45,6 +45,7 @@ spi:
   miso_pin: 16
 
 i2c:
+  id: i2c_bus
   sda: 10
   scl: 11
   scan: true
@@ -78,12 +79,7 @@ display:
 ######################################
 touchscreen:
   - platform: cst226
-    interrupt_pin: 21
-    reset_pin: 13
-    display: my_display
-
-
-  - platform: cst226
+    id: my_touch
     interrupt_pin: 21
     reset_pin: 13
     display: my_display
@@ -97,8 +93,29 @@ font:
     id: font_arial_20
     size: 20
 
+# ================= BATTERY (SY6970) =================
+sensor:
+  - platform: sy6970
+    i2c_id: i2c_bus
+    battery_voltage:
+      id: battery_voltage
+      name: "Battery Voltage"
+      on_value:
+        - lambda: |-
+            float pct = (x - 3.0f) / (4.2f - 3.0f) * 100.0f;
+            if (pct < 0) pct = 0;
+            if (pct > 100) pct = 100;
+            id(battery_percent) = pct;
+        - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
+        - lvgl.label.update: { id: batt_v_p2, text: !lambda 'return str_sprintf("%.2fV", x);' }
+        - lvgl.label.update: { id: batt_v_p3, text: !lambda 'return str_sprintf("%.2fV", x);' }
+        - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
+        - lvgl.label.update: { id: batt_pct_p2, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
+        - lvgl.label.update: { id: batt_pct_p3, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
+
 # ================= GLOBALS =================
 globals:
+  - { id: battery_percent, type: float, initial_value: '0.0' }
   - { id: my_chart, type: lv_obj_t*, initial_value: 'nullptr' }
   - { id: ser_cons, type: lv_chart_series_t*, initial_value: 'nullptr' }
   - { id: ser_prod, type: lv_chart_series_t*, initial_value: 'nullptr' }
@@ -107,6 +124,8 @@ globals:
 # ================= LVGL =================
 lvgl:
   log_level: DEBUG
+  touchscreens:
+    - touchscreen_id: my_touch
   buffer_size: 25%
   draw_rounding: 2
   # full_refresh removed (panel geometry corrected)
@@ -122,8 +141,11 @@ lvgl:
             bg_color: 0x2828FF
             align: TOP_MID
             widgets:
-              - label: { id: time_p1, text: "---", align: CENTER, text_font: font_arial_20 }
-              - label: { id: vcc_p1, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 }
+              - label: { id: time_p1, text: "---", align: LEFT_MID, x: 10, text_font: font_arial_20 }
+              - label: { text: " | ", align: LEFT_MID, x: 70, text_font: font_arial_20 }
+              - label: { id: batt_v_p1, text: "--.-V", align: LEFT_MID, x: 100, text_font: font_arial_20 }
+              - label: { text: " | ", align: LEFT_MID, x: 180, text_font: font_arial_20 }
+              - label: { id: batt_pct_p1, text: "--%", align: LEFT_MID, x: 210, text_font: font_arial_20 }
         - obj: &center_container
             width: 100%
             height: 180
@@ -140,8 +162,11 @@ lvgl:
         - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
         - obj: { <<: *header_bar, widgets: [
-            { label: { id: time_p2, text: "---", align: CENTER, text_font: font_arial_20 } },
-            { label: { id: vcc_p2, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 } }
+            { label: { id: time_p2, text: "---", align: LEFT_MID, x: 10, text_font: font_arial_20 } },
+            { label: { text: " | ", align: LEFT_MID, x: 70, text_font: font_arial_20 } },
+            { label: { id: batt_v_p2, text: "--.-V", align: LEFT_MID, x: 100, text_font: font_arial_20 } },
+            { label: { text: " | ", align: LEFT_MID, x: 180, text_font: font_arial_20 } },
+            { label: { id: batt_pct_p2, text: "--%", align: LEFT_MID, x: 210, text_font: font_arial_20 } }
           ] }
         - obj: { <<: *center_container, height: 80, widgets: [
             { label: { id: main_pwr_p2, text: "--- W", text_font: font_bebas_80 } }
@@ -153,8 +178,11 @@ lvgl:
         - lambda: 'if(id(my_chart)) lv_obj_clear_flag(id(my_chart), LV_OBJ_FLAG_HIDDEN);'
       widgets:
         - obj: { <<: *header_bar, widgets: [
-            { label: { id: time_p3, text: "---", align: CENTER, text_font: font_arial_20 } },
-            { label: { id: vcc_p3, text: "---", align: RIGHT_MID, x: -10, text_font: font_arial_20 } }
+            { label: { id: time_p3, text: "---", align: LEFT_MID, x: 10, text_font: font_arial_20 } },
+            { label: { text: " | ", align: LEFT_MID, x: 70, text_font: font_arial_20 } },
+            { label: { id: batt_v_p3, text: "--.-V", align: LEFT_MID, x: 100, text_font: font_arial_20 } },
+            { label: { text: " | ", align: LEFT_MID, x: 180, text_font: font_arial_20 } },
+            { label: { id: batt_pct_p3, text: "--%", align: LEFT_MID, x: 210, text_font: font_arial_20 } }
           ] }
         - obj: { <<: *center_container, height: 80, widgets: [
             { label: { id: solar_pwr_p3, text: "--- W", text_font: font_bebas_80 } }
@@ -204,16 +232,7 @@ time:
           - lvgl.label.update: { id: time_p3, text: !lambda 'return id(esptime).now().strftime("%H:%M");' }
 
 sensor:
-  - platform: adc
-    pin: GPIO04
-    id: vcc
-    update_interval: 60s
-    on_value:
-      - lvgl.label.update: { id: vcc_p1, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
-      - lvgl.label.update: { id: vcc_p2, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
-      - lvgl.label.update: { id: vcc_p3, text: !lambda 'return str_sprintf("%.2fV", x * 2.0);' }
-
-  - platform: homeassistant
+    - platform: homeassistant
     id: main_power
     entity_id: sensor.ecotracker_current_power
     on_value:
