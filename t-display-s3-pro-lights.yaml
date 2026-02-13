@@ -213,13 +213,19 @@ script:
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
             lv_obj_move_background(chart);
-            lv_chart_set_div_line_count(chart, 11, 0);
+            lv_chart_set_div_line_count(chart, 9, 0);  // 9 inner lines → 10 segments (0–5000 in 500W steps)
 
             int h = lv_obj_get_height(chart), pt = lv_obj_get_style_pad_top(chart, LV_PART_MAIN), pb = lv_obj_get_style_pad_bottom(chart, LV_PART_MAIN);
-            int seg = (h - pt - pb) / 10;
-            lv_obj_set_y(id(y_5k), pt + 0 * seg); lv_obj_set_y(id(y_4k), pt + 2 * seg);
-            lv_obj_set_y(id(y_3k), pt + 4 * seg); lv_obj_set_y(id(y_2k), pt + 6 * seg);
-            lv_obj_set_y(id(y_1k), pt + 8 * seg);
+            int drawable = h - pt - pb;
+            int seg = drawable / 10;   // 10 equal 500W segments
+
+            // With 9 inner grid lines, LVGL spacing = drawable / 10
+            // Bottom edge = 0W, top edge = 5000W
+            lv_obj_set_y(id(y_5k), pt);
+            lv_obj_set_y(id(y_4k), pt + drawable - 2 * seg);
+            lv_obj_set_y(id(y_3k), pt + drawable - 4 * seg);
+            lv_obj_set_y(id(y_2k), pt + drawable - 6 * seg);
+            lv_obj_set_y(id(y_1k), pt + drawable - 8 * seg);          // 1000W
           }
 
 sy6970:
