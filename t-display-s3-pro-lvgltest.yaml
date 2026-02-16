@@ -9,6 +9,7 @@ esphome:
     then:
       - switch.turn_on: display_power
       - light.turn_on: { id: display_backlight, brightness: 100% }
+      - script.execute: setup_chart
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -39,6 +40,7 @@ psram:
 logger:
 
 spi:
+  id: spi_bus
   clk_pin: 18
   mosi_pin: 17
   miso_pin: 16
@@ -52,11 +54,15 @@ output:
   - platform: ledc
     pin: 48
     id: backlight_pwm
+    frequency: 5000 Hz
 
 light:
   - platform: monochromatic
     output: backlight_pwm
     id: display_backlight
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+    gamma_correct: 1.0
 
 switch:
   - platform: gpio
@@ -68,8 +74,9 @@ display:
   - platform: mipi_spi
     id: my_display
     model: t-display-s3-pro
+    spi_id: spi_bus
+    data_rate: 80MHz
     rotation: 90
-    
 
 touchscreen:
   - platform: cst226
@@ -79,14 +86,25 @@ touchscreen:
     display: my_display
 
 font:
-  - file: 'fonts/Oswald-Bold.ttf'
+#  - file: 'fonts/Oswald-Bold.ttf'
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
     id: font_power
     size: 96
     bpp: 4
     glyphs: "0123456789.- W"
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
+    id: font_axis
+    size: 12
+    bpp: 4
+    glyphs: "12345kW"
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
+  - { id: chart_obj, type: lv_obj_t*, initial_value: 'nullptr' }
+  - { id: chart_main, type: lv_chart_series_t*, initial_value: 'nullptr' }
+  - { id: chart_solar, type: lv_chart_series_t*, initial_value: 'nullptr' }
+  - { id: last_main_power, type: float, initial_value: '0.0' }
+  - { id: last_solar_power, type: float, initial_value: '0.0' }
 
 lvgl:
   displays:
@@ -94,16 +112,19 @@ lvgl:
   touchscreens:
     - touchscreen_id: my_touch
   full_refresh: false
-  buffer_size: 100%
-  update_interval: 50ms
+  buffer_size: 25%
+  update_interval: 500ms
   pages:
     - id: page1
       bg_color: 0x000000
+      scrollable: false
       widgets:
         - obj:
             width: 100%
             height: 34
             bg_color: 0x4A90FF
+            border_width: 0
+            outline_width: 0
             align: TOP_MID
             widgets:
               - label:
@@ -130,25 +151,94 @@ lvgl:
                   text_font: montserrat_22
                   align: RIGHT_MID
                   x: -10
+        - label:
+            id: main_pwr_p1
+            text: "---W"
+            text_font: font_power
+            align: TOP_RIGHT
+            x: -10
+            y: 20
+            text_align: RIGHT
         - obj:
-            width: 100%
-            height: 180
-            align: TOP_MID
-            y: 34
-            layout: { type: FLEX, flex_flow: COLUMN, flex_align_main: CENTER, flex_align_cross: CENTER }
-            bg_opa: 0
+            id: chart_container
+            width: 185
+            height: 194
+            x: 0
+            y: 39
+            bg_color: 0x000000
+            bg_opa: COVER
+            border_width: 0
+            outline_width: 0
             widgets:
-              - label:
-                  id: main_pwr_p1
-                  text: "--- W"
-                  text_font: font_power
-                  width: 100%
-                  align: CENTER
-                  text_align: CENTER
+              - { label: { text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: -8 } }
+              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 24 } }
+              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 58 } }
+              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 92 } }
+              - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 126 } }
+        - label:
+            id: solar_pwr_p1
+            text: "---W"
+            text_font: font_power
+            align: TOP_RIGHT
+            x: -10
+            y: 110
+            text_align: RIGHT
+            text_color: 0x2196F3
+script:
+  - id: setup_chart
+    then:
+      - lambda: |-
+          if (id(chart_obj) == nullptr) {
+            auto chart = lv_chart_create(id(chart_container));
+            lv_obj_move_background(chart);  // ensure axis labels remain on top
+            id(chart_obj) = chart;
+            lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
+            lv_obj_center(chart);
+            lv_obj_set_style_pad_all(chart, 0, LV_PART_MAIN);
+            lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
+            lv_chart_set_point_count(chart, 60);
+            id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
+            id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
+            lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
+            lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
+            // Black background, no borders
+            lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
+            lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
+            lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
+            lv_chart_set_div_line_count(chart, 11, 0);  // 11 horizontal lines (every 500W), no vertical lines
+            // Remove point markers
+            lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
+            // Dark grey grid lines
+            lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
+            lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
+            // Remove any remaining default borders from other parts
+            lv_obj_set_style_border_width(chart, 0, LV_PART_ITEMS);
+            lv_obj_set_style_border_width(chart, 0, LV_PART_INDICATOR);
+            lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_ITEMS);
+            lv_obj_set_style_outline_width(chart, 0, LV_PART_ITEMS);
+          }
 
 sy6970:
   i2c_id: i2c_bus
-  update_interval: 30s
+  update_interval: 5s
+
+binary_sensor:
+  - platform: template
+    id: usb_present
+    lambda: |-
+      return id(usb_voltage).state > 4.5;
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          if (id(chart_obj) != nullptr) {
+            lv_chart_set_next_value(id(chart_obj), id(chart_main), (lv_coord_t)id(last_main_power));
+            lv_chart_set_next_value(id(chart_obj), id(chart_solar), (lv_coord_t)id(last_solar_power));
+            lv_chart_refresh(id(chart_obj));
+          }
 
 time:
   - platform: homeassistant
@@ -160,6 +250,25 @@ time:
 
 sensor:
   - platform: sy6970
+    vbus_voltage:
+      id: usb_voltage
+      filters:
+        - throttle: 1s
+
+  - platform: homeassistant
+    id: solar_power
+    entity_id: sensor.dds238_2_solar_power
+    filters:
+      - throttle: 1s
+    on_value:
+      - if:
+          condition: { lambda: 'return !isnan(x);' }
+          then:
+            - lvgl.label.update: { id: solar_pwr_p1, text: !lambda 'return str_sprintf("%.0fW", x);' }
+            - lambda: |-
+                id(last_solar_power) = x;
+
+  - platform: sy6970
     battery_voltage:
       id: battery_voltage
       on_value:
@@ -170,11 +279,15 @@ sensor:
             id(battery_percent) = pct;
         - lambda: |-
             const char* icon;
-            if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
-            else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
-            else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
-            else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
-            else icon = LV_SYMBOL_BATTERY_FULL;
+            if (id(usb_present).state) {
+              icon = "";  // lightning bolt when USB connected
+            } else {
+              if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
+              else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
+              else if (id(battery_percent) < 60) icon = LV_SYMBOL_BATTERY_2;
+              else if (id(battery_percent) < 80) icon = LV_SYMBOL_BATTERY_3;
+              else icon = LV_SYMBOL_BATTERY_FULL;
+            }
             lv_label_set_text(id(batt_icon_p1), icon);
         - lvgl.label.update: { id: batt_v_p1, text: !lambda 'return str_sprintf("%.2fV", x);' }
         - lvgl.label.update: { id: batt_pct_p1, text: !lambda 'return str_sprintf("%.0f%%", id(battery_percent));' }
@@ -188,23 +301,20 @@ sensor:
       - if:
           condition: { lambda: 'return !isnan(x);' }
           then:
-            - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0f W", x);' }
+            - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0fW", x);' }
             - lambda: |-
-                // Smooth gradient color
+                // Static color thresholds
                 lv_color_t c;
                 if (x < 0) {
-                  // Export power = blue gradient (0 to -2000W)
-                  float t = fminf(fabsf(x) / 2000.0f, 1.0f);
-                  uint8_t r = (uint8_t)(79  * (1.0f - t));
-                  uint8_t g = (uint8_t)(195 * (1.0f - t));
-                  uint8_t b = 247;
-                  c = lv_color_make(r, g, b);
+                  c = lv_color_hex(0x2196F3);
+                } else if (x <= 1000) {
+                  c = lv_color_hex(0x4CAF50);
+                } else if (x <= 1500) {
+                  c = lv_color_hex(0xFFEB3B);
+                } else if (x <= 2000) {
+                  c = lv_color_hex(0xFF9800);
                 } else {
-                  // Import power gradient: Green -> Orange -> Red (0–3600W)
-                  float t = fminf(x / 3600.0f, 1.0f);
-                  uint8_t r = (uint8_t)(76  + (244 - 76)  * t);
-                  uint8_t g = (uint8_t)(175 - (175 - 67) * t);
-                  uint8_t b = (uint8_t)(80  - 80 * t);
-                  c = lv_color_make(r, g, b);
+                  c = lv_color_hex(0xF44336);
                 }
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
+                id(last_main_power) = x;
