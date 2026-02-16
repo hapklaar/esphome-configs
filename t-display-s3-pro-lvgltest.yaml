@@ -263,12 +263,19 @@ binary_sensor:
         - script.execute: update_battery_ui
 
   - platform: sy6970
+    sy6970_id: sy6970_hub
     charging:
-      name: "Charging Status"
+      name: "Battery Charging"
       id: charging_status
       on_state:
         then:
           - script.execute: update_battery_ui
+    charge_done:
+      name: "Charge Done"
+      id: charging_done
+    vbus_connected:
+      name: "VBUS Connected"
+      id: vbus_connected
 
 interval:
   - interval: 1s
@@ -303,6 +310,15 @@ sensor:
       on_value:
         then:
           - script.execute: update_battery_ui
+    system_voltage:
+      name: "System Voltage"
+      id: system_voltage
+    charge_current:
+      name: "Charge Current"
+      id: charge_current
+    precharge_current:
+      name: "Precharge Current"
+      id: precharge_current
 
   - platform: homeassistant
     id: solar_power
