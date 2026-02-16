@@ -256,6 +256,13 @@ sy6970:
   id: sy6970_hub
   i2c_id: i2c_bus
   update_interval: 2s
+  enable_status_led: true
+  input_current_limit: 1000
+  charge_voltage: 4250
+  charge_current: 1000
+  precharge_current: 128
+  charge_enabled: true
+  enable_adc: true
 
 binary_sensor:
   - platform: gpio
