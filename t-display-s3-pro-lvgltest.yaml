@@ -218,7 +218,8 @@ script:
     then:
       - lambda: |-
           float v = id(battery_voltage).state;
-          bool is_usb = (id(usb_voltage).state > 4.2f);
+          // Robust plug detection: Check voltage (>4.0V) OR explicit charging status
+          bool is_plugged = (id(usb_voltage).state > 4.0f) || id(charging_status).state;
           
           if (!isnan(v) && v > 2.0) {
             float pct = (v - 3.4f) / 0.8f * 100.0f;
@@ -230,8 +231,8 @@ script:
             lv_label_set_text(id(batt_pct_p1), str_sprintf("%.0f%%", pct).c_str());
             
             const char* icon;
-            if (is_usb) {
-              icon = "⚡"; 
+            if (is_plugged) {
+              icon = LV_SYMBOL_CHARGE; 
             } else {
               if (pct < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
               else if (pct < 40) icon = LV_SYMBOL_BATTERY_1;
@@ -243,14 +244,31 @@ script:
           }
 
 sy6970:
+  id: sy6970_hub
   i2c_id: i2c_bus
-  update_interval: 5s
+  update_interval: 2s
 
 binary_sensor:
-  - platform: template
-    id: usb_present
-    lambda: |-
-      return id(usb_voltage).state > 4.2;
+  # Manual configuration for S3 Pro PMU Interrupt (GPIO 14)
+  - platform: gpio
+    pin: 
+      number: 14
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "PMU Interrupt"
+    internal: true
+    on_state:
+      then:
+        - component.update: sy6970_hub
+        - script.execute: update_battery_ui
+
+  - platform: sy6970
+    charging:
+      name: "Charging Status"
+      id: charging_status
+      on_state:
+        then:
+          - script.execute: update_battery_ui
 
 interval:
   - interval: 1s
