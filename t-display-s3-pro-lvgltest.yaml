@@ -13,22 +13,16 @@ esphome:
       - switch.turn_on: display_power
       - light.turn_on: { id: display_backlight, brightness: 100% }
       - script.execute: setup_chart
-      # Force SY6970 into Continuous ADC Conversion Mode using ESP-IDF compatible syntax
+      # Directly write to the ADC Control Register via the sy6970 hub
+      # Register 0x02, Bit 7 (CONV_RATE): 1 for Continuous Conversion
       - lambda: |-
-          // Create a temporary I2C device proxy for the SY6970 (Address 0x6B)
-          esphome::i2c::I2CDevice dev;
-          dev.set_i2c_address(0x6B);
-          dev.set_i2c_bus(id(i2c_bus));
-          
           uint8_t config = 0;
-          uint8_t reg = 0x02; // ADC Control Register
-          
-          if (dev.read_byte(reg, &config)) {
-            config |= 0x80; // Set bit 7 (CONV_RATE/CONV_START) for continuous conversion
-            dev.write_byte(reg, config);
-            ESP_LOGD("custom", "SY6970 ADC set to continuous mode (0x%02X)", config);
+          if (id(sy6970_hub).read_byte(0x02, &config)) {
+            config |= 0x80;
+            id(sy6970_hub).write_byte(0x02, config);
+            ESP_LOGD("sy6970_custom", "Manually set REG 0x02 to 0x%02X for continuous ADC", config);
           } else {
-            ESP_LOGE("custom", "Failed to read SY6970 register 0x02");
+            ESP_LOGE("sy6970_custom", "Failed to access SY6970 registers");
           }
 
 esp32:
