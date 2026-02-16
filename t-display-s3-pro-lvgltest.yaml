@@ -2,7 +2,7 @@
 # Features: LVGL Chart, SY6970 Power Management, Home Assistant Integration
 
 esphome:
-  name: t-display-s3-pro-power-monitor
+  name: t-display-s3-pro-lvgltest
   friendly_name: "T-Display S3 Pro Power Monitor"
   platformio_options:
     build_flags: ["-DLV_USE_CHART=1"]
