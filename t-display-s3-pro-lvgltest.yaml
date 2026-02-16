@@ -255,14 +255,7 @@ script:
 sy6970:
   id: sy6970_hub
   i2c_id: i2c_bus
-  enable_status_led: False
-  input_current_limit: 1000
-  charge_voltage: 4300
-  charge_current: 1000
-  precharge_current: 128
-  charge_enabled: true
-  enable_adc: true
-  update_interval: 1s
+  update_interval: 2s
 
 binary_sensor:
   - platform: gpio
@@ -303,6 +296,7 @@ interval:
           }
   - interval: 5s
     then:
+      - component.update: sy6970_hub
       - script.execute: update_battery_ui
 
 time:
@@ -324,6 +318,7 @@ sensor:
     battery_voltage:
       name: "Battery Voltage"
       id: battery_voltage
+      force_update: true
       on_value:
         then:
           - script.execute: update_battery_ui
