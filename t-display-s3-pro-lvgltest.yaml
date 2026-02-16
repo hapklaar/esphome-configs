@@ -13,17 +13,6 @@ esphome:
       - switch.turn_on: display_power
       - light.turn_on: { id: display_backlight, brightness: 100% }
       - script.execute: setup_chart
-      # Directly write to the ADC Control Register via the sy6970 hub
-      # Register 0x02, Bit 7 (CONV_RATE): 1 for Continuous Conversion
-      - lambda: |-
-          uint8_t config = 0;
-          if (id(sy6970_hub).read_byte(0x02, &config)) {
-            config |= 0x80;
-            id(sy6970_hub).write_byte(0x02, config);
-            ESP_LOGD("sy6970_custom", "Manually set REG 0x02 to 0x%02X for continuous ADC", config);
-          } else {
-            ESP_LOGE("sy6970_custom", "Failed to access SY6970 registers");
-          }
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -309,6 +298,16 @@ interval:
     then:
       - component.update: sy6970_hub
       - script.execute: update_battery_ui
+      # Repeatedly force continuous mode in case the driver reverts it
+      - lambda: |-
+          uint8_t config = 0;
+          if (id(sy6970_hub).read_byte(0x02, &config)) {
+            if (!(config & 0x80)) {
+              config |= 0x80;
+              id(sy6970_hub).write_byte(0x02, config);
+              ESP_LOGD("sy6970_custom", "Re-forcing continuous ADC (0x%02X)", config);
+            }
+          }
 
 time:
   - platform: homeassistant
