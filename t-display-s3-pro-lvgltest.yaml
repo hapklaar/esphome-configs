@@ -1,5 +1,8 @@
+# ESPHome configuration for LilyGO T-Display S3 Pro
+# Features: LVGL Chart, SY6970 Power Management, Home Assistant Integration
+
 esphome:
-  name: t-display-s3-pro-lvgltest
+  name: t-display-s3-pro-power-monitor
   friendly_name: "T-Display S3 Pro Power Monitor"
   platformio_options:
     build_flags: ["-DLV_USE_CHART=1"]
@@ -86,13 +89,12 @@ touchscreen:
     display: my_display
 
 font:
-#  - file: 'fonts/Oswald-Bold.ttf'
-  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'
     id: font_power
     size: 96
     bpp: 4
     glyphs: "0123456789.- W"
-  - file: 'fonts/GoogleSansCode-SemiBold.ttf'  
+  - file: 'fonts/GoogleSansCode-SemiBold.ttf'
     id: font_axis
     size: 12
     bpp: 4
@@ -184,40 +186,33 @@ lvgl:
             y: 110
             text_align: RIGHT
             text_color: 0x2196F3
+
 script:
   - id: setup_chart
     then:
       - lambda: |-
           if (id(chart_obj) == nullptr) {
             auto chart = lv_chart_create(id(chart_container));
-            lv_obj_move_background(chart);  // ensure axis labels remain on top
+            lv_obj_move_background(chart);
             id(chart_obj) = chart;
             lv_obj_set_size(chart, lv_pct(100), lv_pct(100));
             lv_obj_center(chart);
             lv_obj_set_style_pad_all(chart, 0, LV_PART_MAIN);
             lv_chart_set_type(chart, LV_CHART_TYPE_LINE);
-            lv_chart_set_point_count(chart, 60);
+            lv_chart_set_point_count(chart, 185);
             id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
             id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
             lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
             lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
-            // Black background, no borders
             lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
             lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
             lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
-            lv_chart_set_div_line_count(chart, 11, 0);  // 11 horizontal lines (every 500W), no vertical lines
-            // Remove point markers
+            lv_chart_set_div_line_count(chart, 11, 0);
             lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
-            // Dark grey grid lines
             lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
-            // Remove any remaining default borders from other parts
-            lv_obj_set_style_border_width(chart, 0, LV_PART_ITEMS);
-            lv_obj_set_style_border_width(chart, 0, LV_PART_INDICATOR);
-            lv_obj_set_style_bg_opa(chart, LV_OPA_TRANSP, LV_PART_ITEMS);
-            lv_obj_set_style_outline_width(chart, 0, LV_PART_ITEMS);
           }
 
 sy6970:
@@ -280,7 +275,7 @@ sensor:
         - lambda: |-
             const char* icon;
             if (id(usb_present).state) {
-              icon = "";  // lightning bolt when USB connected
+              icon = "";
             } else {
               if (id(battery_percent) < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
               else if (id(battery_percent) < 40) icon = LV_SYMBOL_BATTERY_1;
@@ -303,18 +298,11 @@ sensor:
           then:
             - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0fW", x);' }
             - lambda: |-
-                // Static color thresholds
                 lv_color_t c;
-                if (x < 0) {
-                  c = lv_color_hex(0x2196F3);
-                } else if (x <= 1000) {
-                  c = lv_color_hex(0x4CAF50);
-                } else if (x <= 1500) {
-                  c = lv_color_hex(0xFFEB3B);
-                } else if (x <= 2000) {
-                  c = lv_color_hex(0xFF9800);
-                } else {
-                  c = lv_color_hex(0xF44336);
-                }
+                if (x < 0) c = lv_color_hex(0x2196F3);
+                else if (x <= 750) c = lv_color_hex(0x4CAF50);
+                else if (x <= 1000) c = lv_color_hex(0xFF803B);
+                else if (x <= 2000) c = lv_color_hex(0xFF9800);
+                else c = lv_color_hex(0xF44336);
                 lv_obj_set_style_text_color(id(main_pwr_p1), c, LV_PART_MAIN);
                 id(last_main_power) = x;
