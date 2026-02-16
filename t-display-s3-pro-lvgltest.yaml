@@ -140,19 +140,25 @@ lvgl:
                   text: "--.-V"
                   text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -110
+                  x: -125
               - label:
                   id: batt_pct_p1
                   text: "--%"
                   text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -40
+                  x: -55
               - label:
                   id: batt_icon_p1
                   text: ""
                   text_font: montserrat_22
                   align: RIGHT_MID
-                  x: -10
+                  x: -25
+              - label:
+                  id: batt_charging_icon
+                  text: ""
+                  text_font: montserrat_22
+                  align: RIGHT_MID
+                  x: -5
         - label:
             id: main_pwr_p1
             text: "---W"
@@ -217,9 +223,7 @@ script:
   - id: update_battery_ui
     then:
       - lambda: |-
-          float v = id(battery_voltage).state;
-          // Robust plug detection: Check voltage (>4.0V) OR explicit charging status
-          bool is_plugged = (id(usb_voltage).state > 4.0f) || id(charging_status).state;
+          float v = id(battery_voltage).state;   
           
           if (!isnan(v) && v > 2.0) {
             float pct = (v - 3.4f) / 0.8f * 100.0f;
@@ -230,26 +234,37 @@ script:
             lv_label_set_text(id(batt_v_p1), str_sprintf("%.2fV", v).c_str());
             lv_label_set_text(id(batt_pct_p1), str_sprintf("%.0f%%", pct).c_str());
             
-            const char* icon;
-            if (is_plugged) {
-              icon = LV_SYMBOL_CHARGE; 
+            // Handle Charging Icon (Lightning bolt to the right)
+            if (id(charging_status).state) {
+                lv_label_set_text(id(batt_charging_icon), LV_SYMBOL_CHARGE);
             } else {
-              if (pct < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
-              else if (pct < 40) icon = LV_SYMBOL_BATTERY_1;
-              else if (pct < 60) icon = LV_SYMBOL_BATTERY_2;
-              else if (pct < 80) icon = LV_SYMBOL_BATTERY_3;
-              else icon = LV_SYMBOL_BATTERY_FULL;
+                lv_label_set_text(id(batt_charging_icon), "");
             }
+
+            // Handle Battery Capacity Icon
+            const char* icon;
+            if (pct < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
+            else if (pct < 40) icon = LV_SYMBOL_BATTERY_1;
+            else if (pct < 60) icon = LV_SYMBOL_BATTERY_2;
+            else if (pct < 80) icon = LV_SYMBOL_BATTERY_3;
+            else icon = LV_SYMBOL_BATTERY_FULL;
+            
             lv_label_set_text(id(batt_icon_p1), icon);
           }
 
 sy6970:
   id: sy6970_hub
   i2c_id: i2c_bus
-  update_interval: 2s
+  enable_status_led: true
+  input_current_limit: 1000
+  charge_voltage: 4200
+  charge_current: 500
+  precharge_current: 128
+  charge_enabled: true
+  enable_adc: true
+  update_interval: 1s
 
 binary_sensor:
-  # Manual configuration for S3 Pro PMU Interrupt (GPIO 14)
   - platform: gpio
     pin: 
       number: 14
@@ -302,23 +317,19 @@ sensor:
   - platform: sy6970
     vbus_voltage:
       id: usb_voltage
+      name: "VBUS Voltage"
       on_value:
         then:
           - script.execute: update_battery_ui
     battery_voltage:
+      name: "Battery Voltage"
       id: battery_voltage
       on_value:
         then:
           - script.execute: update_battery_ui
-    system_voltage:
-      name: "System Voltage"
-      id: system_voltage
     charge_current:
       name: "Charge Current"
       id: charge_current
-    precharge_current:
-      name: "Precharge Current"
-      id: precharge_current
 
   - platform: homeassistant
     id: solar_power
