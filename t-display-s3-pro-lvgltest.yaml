@@ -19,10 +19,6 @@ esp32:
   framework:
     type: esp-idf
 
-external_components:
-  - source: github://esphome/esphome@dev
-    components: [sy6970]
-
 api:
   encryption:
     key: !secret api_secret
@@ -257,7 +253,8 @@ script:
             }
 
             const char* icon;
-            if (pct < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
+            if (id(vbus_connected).state) icon = LV_SYMBOL_CHARGE;
+            else if (pct < 20) icon = LV_SYMBOL_BATTERY_EMPTY;
             else if (pct < 40) icon = LV_SYMBOL_BATTERY_1;
             else if (pct < 60) icon = LV_SYMBOL_BATTERY_2;
             else if (pct < 80) icon = LV_SYMBOL_BATTERY_3;
@@ -331,19 +328,6 @@ time:
           - lvgl.label.update: { id: time_p1, text: !lambda 'return id(esptime).now().strftime("%H:%M:%S");' }
 
 sensor:
-  # Debug sensors for system monitoring
-  - platform: debug
-    free:
-      name: "Free Heap"
-    esp32_cpu_load:
-      name: "CPU Load"
-      id: cpu_load_sensor
-      on_value:
-        then:
-          - lvgl.label.update: 
-              id: cpu_load_label
-              text: !lambda 'return str_sprintf("CPU: %.0f%%", x);'
-
   - platform: sy6970
     vbus_voltage:
       id: usb_voltage
