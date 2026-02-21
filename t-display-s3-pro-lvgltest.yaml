@@ -189,7 +189,7 @@ lvgl:
             type: LINE
             point_count: 185
             update_mode: SHIFT
-            # PR #13987 uses y_axis for range control
+            # Corrected PR #13987 syntax based on error feedback:
             y_axis:
               min_value: 0
               max_value: 5000
@@ -200,7 +200,6 @@ lvgl:
                 color: 0xF44336
               - id: series_solar
                 color: 0x4CAF50
-            # Removed line_opa from main block as per validator error
             main:
               line_color: 0x303030
             indicator:
@@ -277,8 +276,9 @@ interval:
             lv_chart_refresh(id(chart_obj));
           }
           // Update New Component Chart (Page 2)
-          id(new_style_chart).set_next_value(id(series_main), id(last_main_power));
-          id(new_style_chart).set_next_value(id(series_solar), id(last_solar_power));
+          lv_chart_set_next_value(id(new_style_chart), id(series_main), (lv_coord_t)id(last_main_power));
+          lv_chart_set_next_value(id(new_style_chart), id(series_solar), (lv_coord_t)id(last_solar_power));
+          lv_chart_refresh(id(new_style_chart));
 
 time:
   - platform: homeassistant
