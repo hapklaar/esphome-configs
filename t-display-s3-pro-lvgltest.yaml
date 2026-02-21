@@ -17,7 +17,7 @@ esphome:
 external_components:
   - source: github://pr#13987
     components: [lvgl]
-    refresh: 1h
+    refresh: 0s
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -143,7 +143,6 @@ lvgl:
             align: TOP_MID
             widgets:
               - label: { id: time_p1, text: "--:--:--", text_font: montserrat_22, align: LEFT_MID, x: 10 }
-              - label: { id: cpu_load_label, text: "CPU: --%", text_font: montserrat_22, align: LEFT_MID, x: 120 }
               - label: { id: batt_v_p1, text: "--.-V", text_font: montserrat_22, align: RIGHT_MID, x: -125 }
               - label: { id: batt_pct_p1, text: "--%", text_font: montserrat_22, align: RIGHT_MID, x: -55 }
               - label: { id: batt_icon_p1, text: "", text_font: montserrat_22, align: RIGHT_MID, x: -25 }
@@ -190,22 +189,23 @@ lvgl:
             type: LINE
             point_count: 185
             update_mode: SHIFT
-            range_y_min: 0
-            range_y_max: 5000
-            div_line_count_v: 11
-            div_line_count_h: 0
+            # PR #13987 uses y_axis for range control
+            y_axis:
+              min_value: 0
+              max_value: 5000
+            div_line_count: [11, 5]
             bg_color: 0x000000
             series:
               - id: series_main
                 color: 0xF44336
               - id: series_solar
                 color: 0x4CAF50
-            styles:
-              - part: INDICATOR
-                size: 0
-              - part: MAIN
-                line_color: 0x303030
-                line_opa: 60%
+            # Removed line_opa from main block as per validator error
+            main:
+              line_color: 0x303030
+            indicator:
+              width: 0
+              height: 0
 
 script:
   - id: setup_chart
@@ -251,6 +251,7 @@ sy6970:
 
 binary_sensor:
   - platform: gpio
+    id: sy6970_interrupt
     pin: { number: 14, mode: INPUT_PULLUP, inverted: true }
     on_state:
       then:
