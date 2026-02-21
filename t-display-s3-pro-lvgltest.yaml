@@ -1,5 +1,5 @@
 # ESPHome configuration for LilyGO T-Display S3 Pro
-# Features: LVGL Chart (New YAML Syntax), SY6970 Power Management, Home Assistant Integration, Swipe Navigation
+# Features: LVGL Chart, SY6970 Power Management, Home Assistant Integration, CPU Load Monitoring
 
 esphome:
   name: t-display-s3-pro-lvgltest
@@ -125,7 +125,7 @@ lvgl:
   full_refresh: false
   buffer_size: 25%
   update_interval: 500ms
-  # Corrected swipe triggers for page navigation
+  # Global swipe handling
   on_swipe_left:
     then:
       - lvgl.page.show: page2
@@ -135,17 +135,34 @@ lvgl:
   pages:
     - id: page1
       bg_color: 0x000000
+      scrollable: false
       widgets:
         - obj:
             width: 100%
             height: 34
             bg_color: 0x4A90FF
+            border_width: 0
+            outline_width: 0
             align: TOP_MID
+            # Disable click on header so swipe passes through to page
+            clickable: false
             widgets:
-              - label: { id: time_p1, text: "--:--:--", text_font: montserrat_22, align: LEFT_MID, x: 10 }
+              - label:
+                  id: time_p1
+                  text: "--:--:--"
+                  text_font: montserrat_22
+                  align: LEFT_MID
+                  x: 10
+              - label:
+                  id: cpu_load_label
+                  text: "CPU: --%"
+                  text_font: montserrat_22
+                  align: LEFT_MID
+                  x: 120
               - label: { id: batt_v_p1, text: "--.-V", text_font: montserrat_22, align: RIGHT_MID, x: -125 }
               - label: { id: batt_pct_p1, text: "--%", text_font: montserrat_22, align: RIGHT_MID, x: -55 }
               - label: { id: batt_icon_p1, text: "", text_font: montserrat_22, align: RIGHT_MID, x: -25 }
+              - label: { id: batt_charging_icon, text: "", text_font: montserrat_22, align: RIGHT_MID, x: -5 }
         - label:
             id: main_pwr_p1
             text: "---W"
@@ -153,6 +170,8 @@ lvgl:
             align: TOP_RIGHT
             x: -10
             y: 20
+            text_align: RIGHT
+            clickable: false
         - obj:
             id: chart_container
             width: 185
@@ -160,9 +179,18 @@ lvgl:
             x: 0
             y: 39
             bg_color: 0x000000
+            bg_opa: COVER
+            border_width: 0
+            outline_width: 0
+            # Charts are often interactive; disable click if only used for display
+            # to allow swipes to be detected by the page controller
+            clickable: false
             widgets:
-              - { label: { text: "5kW", text_font: font_axis, x: 2, y: -8 } }
-              - { label: { text: "1kW", text_font: font_axis, x: 2, y: 126 } }
+              - { label: { text: "5kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: -8 } }
+              - { label: { text: "4kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 24 } }
+              - { label: { text: "3kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 58 } }
+              - { label: { text: "2kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 92 } }
+              - { label: { text: "1kW", text_font: font_axis, text_color: 0xFFFFFF, x: 2, y: 126 } }
         - label:
             id: solar_pwr_p1
             text: "---W"
@@ -170,8 +198,10 @@ lvgl:
             align: TOP_RIGHT
             x: -10
             y: 110
+            text_align: RIGHT
             text_color: 0x2196F3
-
+            clickable: false
+            
     - id: page2
       bg_color: 0x000000
       widgets:
@@ -189,7 +219,6 @@ lvgl:
             type: LINE
             point_count: 185
             update_mode: SHIFT
-            # Corrected PR #13987 syntax based on error feedback:
             y_axis:
               min_value: 0
               max_value: 5000
@@ -225,6 +254,12 @@ script:
             lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
             lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
+            lv_obj_set_style_border_width(chart, 0, LV_PART_MAIN);
+            lv_obj_set_style_outline_width(chart, 0, LV_PART_MAIN);
+            lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
+            // Ensure chart itself doesn't block swipes if not needed for touch
+            lv_obj_clear_flag(chart, LV_OBJ_FLAG_CLICKABLE);
+            lv_chart_set_div_line_count(chart, 11, 0);
             lv_obj_set_style_size(chart, 0, LV_PART_INDICATOR);
             lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
@@ -234,12 +269,12 @@ script:
       - lambda: |-
           float v = id(battery_voltage).state;   
           if (!isnan(v) && v > 2.0) {
-            float pct = (v - 3.4f) / 0.8f * 100.0f;
-            pct = std::clamp(pct, 0.0f, 100.0f);
+            float pct = std::clamp((v - 3.4f) / 0.8f * 100.0f, 0.0f, 100.0f);
             id(battery_percent) = pct;
             lv_label_set_text(id(batt_v_p1), str_sprintf("%.2fV", v).c_str());
             lv_label_set_text(id(batt_pct_p1), str_sprintf("%.0f%%", pct).c_str());
-            const char* icon = (pct < 20) ? LV_SYMBOL_BATTERY_EMPTY : (pct < 80) ? LV_SYMBOL_BATTERY_2 : LV_SYMBOL_BATTERY_FULL;
+            lv_label_set_text(id(batt_charging_icon), id(charging_status).state ? LV_SYMBOL_CHARGE : "");
+            const char* icon = id(vbus_connected).state ? LV_SYMBOL_CHARGE : (pct < 20 ? LV_SYMBOL_BATTERY_EMPTY : (pct < 40 ? LV_SYMBOL_BATTERY_1 : (pct < 60 ? LV_SYMBOL_BATTERY_2 : (pct < 80 ? LV_SYMBOL_BATTERY_3 : LV_SYMBOL_BATTERY_FULL))));
             lv_label_set_text(id(batt_icon_p1), icon);
           }
 
@@ -250,35 +285,31 @@ sy6970:
 
 binary_sensor:
   - platform: gpio
-    id: sy6970_interrupt
     pin: { number: 14, mode: INPUT_PULLUP, inverted: true }
+    name: "PMU Interrupt"
     on_state:
       then:
         - component.update: sy6970_hub
         - script.execute: update_battery_ui
   - platform: sy6970
     sy6970_id: sy6970_hub
-    charging:
-      id: charging_status
-      on_state:
-        then: [script.execute: update_battery_ui]
-    vbus_connected:
-      id: vbus_connected
+    charging: { id: charging_status, on_state: [script.execute: update_battery_ui] }
+    vbus_connected: { id: vbus_connected }
 
 interval:
   - interval: 1s
     then:
       - lambda: |-
-          // Update Legacy Chart (Page 1)
-          if (id(chart_obj) != nullptr) {
+          if (id(chart_obj)) {
             lv_chart_set_next_value(id(chart_obj), id(chart_main), (lv_coord_t)id(last_main_power));
             lv_chart_set_next_value(id(chart_obj), id(chart_solar), (lv_coord_t)id(last_solar_power));
             lv_chart_refresh(id(chart_obj));
           }
-          // Update New Component Chart (Page 2)
           lv_chart_set_next_value(id(new_style_chart), id(series_main), (lv_coord_t)id(last_main_power));
           lv_chart_set_next_value(id(new_style_chart), id(series_solar), (lv_coord_t)id(last_solar_power));
           lv_chart_refresh(id(new_style_chart));
+  - interval: 5s
+    then: [script.execute: update_battery_ui]
 
 time:
   - platform: homeassistant
@@ -292,8 +323,7 @@ sensor:
   - platform: sy6970
     battery_voltage:
       id: battery_voltage
-      on_value:
-        then: [script.execute: update_battery_ui]
+      on_value: [script.execute: update_battery_ui]
   - platform: homeassistant
     id: solar_power
     entity_id: sensor.dds238_2_solar_power
