@@ -32,6 +32,20 @@ psram:
 logger:
 
 ######################################
+# FONTS (Added to fix missing references)
+######################################
+font:
+  - file: "gfonts://Montserrat"
+    id: montserrat_20
+    size: 20
+  - file: "gfonts://Montserrat"
+    id: montserrat_18
+    size: 18
+  - file: "gfonts://Montserrat"
+    id: montserrat_14
+    size: 14
+
+######################################
 # BACKLIGHT (PWM DIMMABLE)
 ######################################
 output:
@@ -250,7 +264,7 @@ sensor:
 
   - platform: homeassistant
     id: house_power
-    entity_id: sensor.441d6474d608_pro3em_active_power_c # Replace with your actual HA power sensor
+    entity_id: sensor.441d6474d608_pro3em_active_power_c
     on_value:
       - lvgl.indicator.update:
           id: power_needle
@@ -425,7 +439,7 @@ lvgl:
                         brightness_val: !lambda return (int)lv_slider_get_value(id(hw_slider));
                     - script.execute: end_slider_hw
 
-# ---------- POWER METER (GAUGE) ----------
+        # ---------- POWER METER (GAUGE) ----------
         - container:
             width: 202
             height: 140
@@ -435,13 +449,6 @@ lvgl:
             bg_color: 0xFFFFFF
             radius: 10
             widgets:
-              # - label:
-              #     text: "Power Usage"
-              #     align: TOP_MID
-              #     y: 0
-              #     text_font: montserrat_14
-              #     text_color: 0x808080
-
               - meter:
                   id: my_meter
                   # FIX: Meter must be a square (Width = Height) to center correctly in v9
@@ -453,32 +460,32 @@ lvgl:
                   bg_opa: TRANSP
                   pad_all: 0 # Prevents the "left-shove" from internal padding
                   scales:
-                    - range_from: 0
-                      range_to: 5000
+                    - range_from: -2000
+                      range_to: 4000
                       angle_range: 180
                       rotation: 180
                       ticks:
                         count: 2
                         width: 0
                       indicators:
-                        # Segment 1: Green (0 - 1000W)
+                        # Segment 1: Green (-2000 to 0W - Exporting Power)
                         - arc:
                             width: 15
                             color: 0x4CAF50 
-                            start_value: 0
-                            end_value: 1000
-                        # Segment 2: Yellow (1000 - 2000W)
+                            start_value: -2000
+                            end_value: 0
+                        # Segment 2: Yellow (0 to 2000W - Moderate Usage)
                         - arc:
                             width: 15
                             color: 0xFFEB3B
-                            start_value: 1000
+                            start_value: 0
                             end_value: 2000
-                        # Segment 3: Red (2000 - 5000W)
+                        # Segment 3: Red (2000 to 4000W - High Usage)
                         - arc:
                             width: 15
                             color: 0xF44336
                             start_value: 2000
-                            end_value: 5000
+                            end_value: 4000
                         # The Needle
                         - line:
                             id: power_needle
