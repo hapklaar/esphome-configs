@@ -444,11 +444,14 @@ lvgl:
 
               - meter:
                   id: my_meter
-                  width: 160
-                  height: 110
+                  # FIX: Meter must be a square (Width = Height) to center correctly in v9
+                  width: 140
+                  height: 140
                   align: CENTER
-                  y: 10
+                  # Nudge the whole square up/down to fit your container
+                  y: 0 
                   bg_opa: TRANSP
+                  pad_all: 0 # Prevents the "left-shove" from internal padding
                   scales:
                     - range_from: 0
                       range_to: 5000
@@ -481,12 +484,12 @@ lvgl:
                             id: power_needle
                             width: 4
                             color: 0x333333
-                            r_mod: -10
+                            r_mod: 0
 
               - label:
                   id: power_label
                   text: "0 W"
                   align: CENTER
-                  y: 52
+                  y: 50
                   text_font: montserrat_20
                   text_color: 0x000000
