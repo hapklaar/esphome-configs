@@ -36,6 +36,9 @@ logger:
 ######################################
 font:
   - file: "gfonts://Montserrat"
+    id: montserrat_28
+    size: 28
+  - file: "gfonts://Montserrat"
     id: montserrat_20
     size: 20
   - file: "gfonts://Montserrat"
@@ -264,7 +267,7 @@ sensor:
 
   - platform: homeassistant
     id: house_power
-    entity_id: sensor.441d6474d608_pro3em_active_power_c
+    entity_id: sensor.ecotracker_current_power
     on_value:
       - lvgl.indicator.update:
           id: power_needle
@@ -369,7 +372,7 @@ lvgl:
             width: 202
             height: 140
             x: 10
-            y: 180
+            y: 160
             pad_all: 10
             bg_color: 0xFFFFFF
             radius: 10
@@ -498,5 +501,5 @@ lvgl:
                   text: "0 W"
                   align: CENTER
                   y: 50
-                  text_font: montserrat_20
+                  text_font: montserrat_28
                   text_color: 0x000000
