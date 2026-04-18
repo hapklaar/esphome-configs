@@ -455,7 +455,8 @@ lvgl:
                       angle_range: 180
                       rotation: 180
                       ticks:
-                        count: 0  # Hide default ticks for a cleaner look
+                        count: 2
+                        width: 0
                       indicators:
                         # Segment 1: Green (0 - 1000W)
                         - arc:
