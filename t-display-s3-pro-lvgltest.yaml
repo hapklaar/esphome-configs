@@ -83,7 +83,7 @@ display:
     model: t-display-s3-pro
     spi_id: spi_bus
     data_rate: 80MHz
-    rotation: 90
+
 
 touchscreen:
   - platform: cst226
@@ -122,6 +122,7 @@ lvgl:
     - my_display
   touchscreens:
     - touchscreen_id: my_touch
+  rotation: 90
   full_refresh: false
   buffer_size: 25%
   update_interval: 500ms
