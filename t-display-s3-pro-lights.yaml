@@ -17,7 +17,7 @@
   slider: &style_slider
     max_value: 255
     width: 182
-    height: 14
+    height: 10
     align: TOP_MID
     y: 77
     bg_color: 0xEEEEEE
@@ -27,29 +27,29 @@
     height: 35
     x: 10
     y: 108
-    bg_color: 0xF5F5F5
+    bg_color: 0xDEDEDE
     radius: 6
   plus_btn: &style_plus_btn
     width: 40
     height: 35
     x: 152
     y: 108
-    bg_color: 0xF5F5F5
+    bg_color: 0xDEDEDE
     radius: 6
   side_label: &style_side_label
     align: CENTER
     text_font: montserrat_20
-    text_color: 0x333333
+    text_color: 0x2E2D2D
   pct_btn: &style_pct_btn
     width: 80
     height: 35
     align: TOP_MID
     y: 108
-    bg_color: 0xFFFFFF
+    bg_color: 0xDEDEDE
   pct_label: &style_pct_label
     align: CENTER
     text_font: montserrat_14
-    text_color: 0x808080
+    text_color: 0x2E2D2D
 
 esphome:
   name: t-display-s3-pro-lights
@@ -342,7 +342,7 @@ lvgl:
                   widgets:
                     - label: 
                         <<: *style_main_label
-                        text: "Ambiance"
+                        text: "Chill"
               
               - slider:
                   <<: *style_slider
