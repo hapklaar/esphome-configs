@@ -5,6 +5,19 @@ esphome:
     priority: -100
     then:
       - script.execute: backlight_wake
+      # Force a sync once API is connected to HA
+      - wait_until:
+          api.connected:
+      - delay: 2s
+      - lvgl.button.update:
+          id: lr_btn
+          state: { checked: !lambda "return id(lr_light_state).state;" }
+      - lvgl.button.update:
+          id: hw_btn
+          state: { checked: !lambda "return id(hw_light_state).state;" }
+      - lvgl.button.update:
+          id: lr_table_btn
+          state: { checked: !lambda "return id(lr_table_light_state).state;" }
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -294,7 +307,7 @@ lvgl:
               - label:
                   id: lr_pct
                   text: "0%"
-                  x: 155
+                  x: 170
                   y: 92
                   text_font: montserrat_14
 
@@ -335,7 +348,7 @@ lvgl:
               - label:
                   id: lr_table_pct
                   text: "0%"
-                  x: 155
+                  x: 170
                   y: 92
                   text_font: montserrat_14
 
@@ -376,6 +389,6 @@ lvgl:
               - label:
                   id: hw_pct
                   text: "0%"
-                  x: 155
+                  x: 170
                   y: 92
                   text_font: montserrat_14
