@@ -200,6 +200,7 @@ script:
           data:
             entity_id: light.yee_group
             brightness: !lambda return brightness_val;
+            transition: "0"
 
   - id: end_slider_lr
     mode: restart
@@ -218,6 +219,7 @@ script:
           data:
             entity_id: light.hallway_dimmer_light
             brightness: !lambda return brightness_val;
+            transition: "0"
 
   - id: end_slider_lr_table
     mode: restart
@@ -236,6 +238,7 @@ script:
           data:
             entity_id: light.ledvance_white_hal
             brightness: !lambda return brightness_val;
+            transition: "0"
 
   - id: end_slider_hw
     mode: restart
@@ -339,7 +342,7 @@ lvgl:
                   widgets:
                     - label: 
                         <<: *style_main_label
-                        text: "Chill"
+                        text: "Ambiance"
               
               - slider:
                   <<: *style_slider
@@ -413,6 +416,7 @@ lvgl:
                         data:
                           entity_id: light.yee_group
                           brightness: "255"
+                          transition: "0"
                     - lvgl.slider.update:
                         id: lr_slider
                         value: 255
@@ -517,6 +521,7 @@ lvgl:
                         data:
                           entity_id: light.hallway_dimmer_light
                           brightness: "255"
+                          transition: "0"
                     - lvgl.slider.update:
                         id: lr_table_slider
                         value: 255
@@ -621,6 +626,7 @@ lvgl:
                         data:
                           entity_id: light.ledvance_white_hal
                           brightness: "255"
+                          transition: "0"
                     - lvgl.slider.update:
                         id: hw_slider
                         value: 255
