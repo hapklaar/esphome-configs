@@ -291,11 +291,11 @@ lvgl:
                   id: lr_slider
                   max_value: 255
                   width: 140
-                  height: 14
+                  height: 24
                   x: 10
-                  y: 95
+                  y: 90
                   bg_color: 0xEEEEEE
-                  radius: 7
+                  radius: 12
                   on_press:
                     - script.stop: end_slider_lr
                     - lambda: "id(slider_active_lr) = true;"
@@ -303,14 +303,30 @@ lvgl:
                     - script.execute:
                         id: debounce_lr
                         brightness_val: !lambda "return (int)x;"
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
                   on_release:
                     - script.execute: end_slider_lr
               - label:
                   id: lr_pct
                   text: "0%"
                   x: 162
-                  y: 92
+                  y: 95
                   text_font: montserrat_14
+                  clickable: true
+                  on_click:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.yee_group
+                          brightness: "255"
+                    - lvgl.slider.update:
+                        id: lr_slider
+                        value: 255
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: "100%"
 
         # --- LR TABLE ---
         - container:
@@ -338,11 +354,11 @@ lvgl:
                   id: lr_table_slider
                   max_value: 255
                   width: 140
-                  height: 14
+                  height: 24
                   x: 10
-                  y: 95
+                  y: 90
                   bg_color: 0xEEEEEE
-                  radius: 7
+                  radius: 12
                   on_press:
                     - script.stop: end_slider_lr_table
                     - lambda: "id(slider_active_lr_table) = true;"
@@ -350,14 +366,30 @@ lvgl:
                     - script.execute:
                         id: debounce_lr_table
                         brightness_val: !lambda "return (int)x;"
+                    - lvgl.label.update:
+                        id: lr_table_pct
+                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
                   on_release:
                     - script.execute: end_slider_lr_table
               - label:
                   id: lr_table_pct
                   text: "0%"
                   x: 162
-                  y: 92
+                  y: 95
                   text_font: montserrat_14
+                  clickable: true
+                  on_click:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.hallway_dimmer_light
+                          brightness: "255"
+                    - lvgl.slider.update:
+                        id: lr_table_slider
+                        value: 255
+                    - lvgl.label.update:
+                        id: lr_table_pct
+                        text: "100%"
 
         # --- HALLWAY ---
         - container:
@@ -385,11 +417,11 @@ lvgl:
                   id: hw_slider
                   max_value: 255
                   width: 140
-                  height: 14
+                  height: 24
                   x: 10
-                  y: 95
+                  y: 90
                   bg_color: 0xEEEEEE
-                  radius: 7
+                  radius: 12
                   on_press:
                     - script.stop: end_slider_hw
                     - lambda: "id(slider_active_hw) = true;"
@@ -397,11 +429,27 @@ lvgl:
                     - script.execute:
                         id: debounce_hw
                         brightness_val: !lambda "return (int)x;"
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
                   on_release:
                     - script.execute: end_slider_hw
               - label:
                   id: hw_pct
                   text: "0%"
                   x: 162
-                  y: 92
+                  y: 95
                   text_font: montserrat_14
+                  clickable: true
+                  on_click:
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.ledvance_white_hal
+                          brightness: "255"
+                    - lvgl.slider.update:
+                        id: hw_slider
+                        value: 255
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: "100%"
