@@ -147,7 +147,7 @@ script:
   - id: end_slider_lr
     mode: restart
     then:
-      - delay: 500ms
+      - delay: 800ms
       - lambda: 'id(slider_active_lr) = false;'
 
   - id: debounce_lr_table
@@ -165,7 +165,7 @@ script:
   - id: end_slider_lr_table
     mode: restart
     then:
-      - delay: 500ms
+      - delay: 800ms
       - lambda: 'id(slider_active_lr_table) = false;'
 
   - id: debounce_hw
@@ -183,7 +183,7 @@ script:
   - id: end_slider_hw
     mode: restart
     then:
-      - delay: 500ms
+      - delay: 800ms
       - lambda: 'id(slider_active_hw) = false;'
 
 binary_sensor:
@@ -289,38 +289,14 @@ lvgl:
                   widgets:
                     - label: { text: "Living Room", align: CENTER, text_font: montserrat_20 }
               
-              # Minus Button (-10%)
-              - button:
-                  id: lr_minus
-                  width: 35
-                  height: 45
-                  x: 0
-                  y: 66
-                  bg_color: 0xF5F5F5
-                  radius: 6
-                  on_click:
-                    - lvgl.slider.update:
-                        id: lr_slider
-                        value: !lambda |-
-                          int next = lv_slider_get_value(id(lr_slider)) - 26;
-                          return next < 0 ? 0 : next;
-                    - script.execute:
-                        id: debounce_lr
-                        brightness_val: !lambda "return lv_slider_get_value(id(lr_slider));"
-                    - lvgl.label.update:
-                        id: lr_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
-                  widgets:
-                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
-
-              # Slider (Thin visual)
+              # Slider (Thin visual, expanded width)
               - slider:
                   id: lr_slider
                   max_value: 255
-                  width: 110
+                  width: 182
                   height: 14
-                  x: 46
-                  y: 81
+                  align: TOP_MID
+                  y: 77
                   bg_color: 0xEEEEEE
                   radius: 7
                   on_press:
@@ -336,16 +312,45 @@ lvgl:
                   on_release:
                     - script.execute: end_slider_lr
 
-              # Plus Button (+10%)
+              # Minus Button (-10%)
               - button:
-                  id: lr_plus
-                  width: 35
-                  height: 45
-                  x: 167
-                  y: 66
+                  id: lr_minus
+                  width: 40
+                  height: 35
+                  x: 10
+                  y: 108
                   bg_color: 0xF5F5F5
                   radius: 6
                   on_click:
+                    - script.stop: end_slider_lr
+                    - lambda: "id(slider_active_lr) = true;"
+                    - lvgl.slider.update:
+                        id: lr_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(lr_slider)) - 26;
+                          return next < 0 ? 0 : next;
+                    - script.execute:
+                        id: debounce_lr
+                        brightness_val: !lambda "return lv_slider_get_value(id(lr_slider));"
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr
+                  widgets:
+                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+
+              # Plus Button (+10%)
+              - button:
+                  id: lr_plus
+                  width: 40
+                  height: 35
+                  x: 152
+                  y: 108
+                  bg_color: 0xF5F5F5
+                  radius: 6
+                  on_click:
+                    - script.stop: end_slider_lr
+                    - lambda: "id(slider_active_lr) = true;"
                     - lvgl.slider.update:
                         id: lr_slider
                         value: !lambda |-
@@ -357,6 +362,7 @@ lvgl:
                     - lvgl.label.update:
                         id: lr_pct
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr
                   widgets:
                     - label: { text: "+", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
 
@@ -365,9 +371,11 @@ lvgl:
                   width: 80
                   height: 35
                   align: TOP_MID
-                  y: 111
+                  y: 108
                   bg_color: 0xFFFFFF
                   on_click:
+                    - script.stop: end_slider_lr
+                    - lambda: "id(slider_active_lr) = true;"
                     - homeassistant.service:
                         service: light.turn_on
                         data:
@@ -379,6 +387,7 @@ lvgl:
                     - lvgl.label.update:
                         id: lr_pct
                         text: "100%"
+                    - script.execute: end_slider_lr
                   widgets:
                     - label:
                         id: lr_pct
@@ -411,38 +420,14 @@ lvgl:
                   widgets:
                     - label: { text: "Front Table", align: CENTER, text_font: montserrat_20 }
               
-              # Minus Button (-10%)
-              - button:
-                  id: lr_table_minus
-                  width: 35
-                  height: 45
-                  x: 0
-                  y: 66
-                  bg_color: 0xF5F5F5
-                  radius: 6
-                  on_click:
-                    - lvgl.slider.update:
-                        id: lr_table_slider
-                        value: !lambda |-
-                          int next = lv_slider_get_value(id(lr_table_slider)) - 26;
-                          return next < 0 ? 0 : next;
-                    - script.execute:
-                        id: debounce_lr_table
-                        brightness_val: !lambda "return lv_slider_get_value(id(lr_table_slider));"
-                    - lvgl.label.update:
-                        id: lr_table_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
-                  widgets:
-                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
-
-              # Slider (Thin visual)
+              # Slider (Thin visual, expanded width)
               - slider:
                   id: lr_table_slider
                   max_value: 255
-                  width: 110
+                  width: 182
                   height: 14
-                  x: 46
-                  y: 81
+                  align: TOP_MID
+                  y: 77
                   bg_color: 0xEEEEEE
                   radius: 7
                   on_press:
@@ -458,16 +443,45 @@ lvgl:
                   on_release:
                     - script.execute: end_slider_lr_table
 
-              # Plus Button (+10%)
+              # Minus Button (-10%)
               - button:
-                  id: lr_table_plus
-                  width: 35
-                  height: 45
-                  x: 167
-                  y: 66
+                  id: lr_table_minus
+                  width: 40
+                  height: 35
+                  x: 10
+                  y: 108
                   bg_color: 0xF5F5F5
                   radius: 6
                   on_click:
+                    - script.stop: end_slider_lr_table
+                    - lambda: "id(slider_active_lr_table) = true;"
+                    - lvgl.slider.update:
+                        id: lr_table_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(lr_table_slider)) - 26;
+                          return next < 0 ? 0 : next;
+                    - script.execute:
+                        id: debounce_lr_table
+                        brightness_val: !lambda "return lv_slider_get_value(id(lr_table_slider));"
+                    - lvgl.label.update:
+                        id: lr_table_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr_table
+                  widgets:
+                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+
+              # Plus Button (+10%)
+              - button:
+                  id: lr_table_plus
+                  width: 40
+                  height: 35
+                  x: 152
+                  y: 108
+                  bg_color: 0xF5F5F5
+                  radius: 6
+                  on_click:
+                    - script.stop: end_slider_lr_table
+                    - lambda: "id(slider_active_lr_table) = true;"
                     - lvgl.slider.update:
                         id: lr_table_slider
                         value: !lambda |-
@@ -479,6 +493,7 @@ lvgl:
                     - lvgl.label.update:
                         id: lr_table_pct
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr_table
                   widgets:
                     - label: { text: "+", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
 
@@ -487,9 +502,11 @@ lvgl:
                   width: 80
                   height: 35
                   align: TOP_MID
-                  y: 111
+                  y: 108
                   bg_color: 0xFFFFFF
                   on_click:
+                    - script.stop: end_slider_lr_table
+                    - lambda: "id(slider_active_lr_table) = true;"
                     - homeassistant.service:
                         service: light.turn_on
                         data:
@@ -501,6 +518,7 @@ lvgl:
                     - lvgl.label.update:
                         id: lr_table_pct
                         text: "100%"
+                    - script.execute: end_slider_lr_table
                   widgets:
                     - label:
                         id: lr_table_pct
@@ -533,38 +551,14 @@ lvgl:
                   widgets:
                     - label: { text: "Hallway", align: CENTER, text_font: montserrat_20 }
               
-              # Minus Button (-10%)
-              - button:
-                  id: hw_minus
-                  width: 35
-                  height: 45
-                  x: 0
-                  y: 66
-                  bg_color: 0xF5F5F5
-                  radius: 6
-                  on_click:
-                    - lvgl.slider.update:
-                        id: hw_slider
-                        value: !lambda |-
-                          int next = lv_slider_get_value(id(hw_slider)) - 26;
-                          return next < 0 ? 0 : next;
-                    - script.execute:
-                        id: debounce_hw
-                        brightness_val: !lambda "return lv_slider_get_value(id(hw_slider));"
-                    - lvgl.label.update:
-                        id: hw_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
-                  widgets:
-                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
-
-              # Slider (Thin visual)
+              # Slider (Thin visual, expanded width)
               - slider:
                   id: hw_slider
                   max_value: 255
-                  width: 110
+                  width: 182
                   height: 14
-                  x: 46
-                  y: 81
+                  align: TOP_MID
+                  y: 77
                   bg_color: 0xEEEEEE
                   radius: 7
                   on_press:
@@ -580,16 +574,45 @@ lvgl:
                   on_release:
                     - script.execute: end_slider_hw
 
-              # Plus Button (+10%)
+              # Minus Button (-10%)
               - button:
-                  id: hw_plus
-                  width: 35
-                  height: 45
-                  x: 167
-                  y: 66
+                  id: hw_minus
+                  width: 40
+                  height: 35
+                  x: 10
+                  y: 108
                   bg_color: 0xF5F5F5
                   radius: 6
                   on_click:
+                    - script.stop: end_slider_hw
+                    - lambda: "id(slider_active_hw) = true;"
+                    - lvgl.slider.update:
+                        id: hw_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(hw_slider)) - 26;
+                          return next < 0 ? 0 : next;
+                    - script.execute:
+                        id: debounce_hw
+                        brightness_val: !lambda "return lv_slider_get_value(id(hw_slider));"
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_hw
+                  widgets:
+                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+
+              # Plus Button (+10%)
+              - button:
+                  id: hw_plus
+                  width: 40
+                  height: 35
+                  x: 152
+                  y: 108
+                  bg_color: 0xF5F5F5
+                  radius: 6
+                  on_click:
+                    - script.stop: end_slider_hw
+                    - lambda: "id(slider_active_hw) = true;"
                     - lvgl.slider.update:
                         id: hw_slider
                         value: !lambda |-
@@ -601,6 +624,7 @@ lvgl:
                     - lvgl.label.update:
                         id: hw_pct
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_hw
                   widgets:
                     - label: { text: "+", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
 
@@ -609,9 +633,11 @@ lvgl:
                   width: 80
                   height: 35
                   align: TOP_MID
-                  y: 111
+                  y: 108
                   bg_color: 0xFFFFFF
                   on_click:
+                    - script.stop: end_slider_hw
+                    - lambda: "id(slider_active_hw) = true;"
                     - homeassistant.service:
                         service: light.turn_on
                         data:
@@ -623,6 +649,7 @@ lvgl:
                     - lvgl.label.update:
                         id: hw_pct
                         text: "100%"
+                    - script.execute: end_slider_hw
                   widgets:
                     - label:
                         id: hw_pct
