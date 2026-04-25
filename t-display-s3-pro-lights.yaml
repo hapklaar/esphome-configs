@@ -326,7 +326,7 @@ lvgl:
                                 entity_id: light.yee_group
                   widgets:
                     - label:
-                        text: "LR Lights"
+                        text: "LR SP Lights"
                         text_font: montserrat_20
                         align: CENTER
 
@@ -401,7 +401,7 @@ lvgl:
                                 entity_id: light.hallway_dimmer_light
                   widgets:
                     - label:
-                        text: "Hallway"
+                        text: "LR Front Table"
                         text_font: montserrat_20
                         align: CENTER
 
