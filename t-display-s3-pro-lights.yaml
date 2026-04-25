@@ -174,7 +174,7 @@ script:
       - homeassistant.service:
           service: light.turn_on
           data:
-            entity_id: light.ledvance_white_hal
+            entity_id: light.hallway_dimmer_light
             brightness: !lambda return brightness_val;
 
   - id: end_slider_lr_table
@@ -193,7 +193,7 @@ script:
       - homeassistant.service:
           service: light.turn_on
           data:
-            entity_id: light.hallway_dimmer_light
+            entity_id: light.ledvance_white_hal
             brightness: !lambda return brightness_val;
 
   - id: end_slider_hw
@@ -228,7 +228,7 @@ binary_sensor:
 
   - platform: homeassistant
     id: hw_light_state
-    entity_id: light.hallway_dimmer_light
+    entity_id: light.ledvance_white_hal
     trigger_on_initial_state: true
     on_state:
       - lvgl.button.update:
@@ -248,7 +248,7 @@ binary_sensor:
 
   - platform: homeassistant
     id: lr_table_light_state
-    entity_id: light.ledvance_white_hal
+    entity_id: light.hallway_dimmer_light
     trigger_on_initial_state: true
     on_state:
       - lvgl.button.update:
@@ -290,7 +290,7 @@ sensor:
 
   - platform: homeassistant
     id: hw_brightness
-    entity_id: light.hallway_dimmer_light
+    entity_id: light.ledvance_white_hal
     attribute: brightness
     on_value:
       - if:
@@ -311,7 +311,7 @@ sensor:
 
   - platform: homeassistant
     id: lr_table_brightness
-    entity_id: light.ledvance_white_hal
+    entity_id: light.hallway_dimmer_light
     attribute: brightness
     on_value:
       - if:
@@ -357,7 +357,7 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
 
-        # ---------- LIVING ROOM ----------
+        # ---------- LIVING ROOM SP ----------
         - container:
             width: 202
             height: 140
@@ -458,12 +458,12 @@ lvgl:
                           - homeassistant.service:
                               service: light.turn_on
                               data:
-                                entity_id: light.ledvance_white_hal
+                                entity_id: light.hallway_dimmer_light
                         else:
                           - homeassistant.service:
                               service: light.turn_off
                               data:
-                                entity_id: light.ledvance_white_hal
+                                entity_id: light.hallway_dimmer_light
                   widgets:
                     - label:
                         text: "LR Front Table"
@@ -533,12 +533,12 @@ lvgl:
                           - homeassistant.service:
                               service: light.turn_on
                               data:
-                                entity_id: light.hallway_dimmer_light
+                                entity_id: light.ledvance_white_hal
                         else:
                           - homeassistant.service:
                               service: light.turn_off
                               data:
-                                entity_id: light.hallway_dimmer_light
+                                entity_id: light.ledvance_white_hal
                   widgets:
                     - label:
                         text: "Hallway"
