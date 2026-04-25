@@ -287,7 +287,7 @@ lvgl:
                         service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.yee_group }
                   widgets:
-                    - label: { text: "Living Room", align: CENTER, text_font: montserrat_20 }
+                    - label: { text: "Ambiance", align: CENTER, text_font: montserrat_20 }
               
               # Slider (Thin visual, expanded width)
               - slider:
@@ -418,7 +418,7 @@ lvgl:
                         service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.hallway_dimmer_light }
                   widgets:
-                    - label: { text: "Front Table", align: CENTER, text_font: montserrat_20 }
+                    - label: { text: "Coffee table", align: CENTER, text_font: montserrat_20 }
               
               # Slider (Thin visual, expanded width)
               - slider:
