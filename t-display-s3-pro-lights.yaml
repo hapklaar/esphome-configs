@@ -6,7 +6,7 @@ esphome:
     then:
       - script.execute: backlight_wake
       - lambda: |-
-          lv_obj_set_style_bg_color(id(lr_btn), lv_color_hex(0xFF9800), LV_STATE_CHECKED);
+          lv_obj_set_style_bg_color(id(lr_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
           lv_obj_set_style_bg_color(id(hw_btn), lv_color_hex(0xFF9800), LV_STATE_CHECKED);
           lv_obj_set_style_bg_color(id(lr_table_btn), lv_color_hex(0xFF9800), LV_STATE_CHECKED);
       # Force a sync once API is connected to HA
