@@ -1,3 +1,56 @@
+.lvgl_styles:
+  container: &style_container
+    width: 202
+    height: 146
+    x: 10
+    bg_color: 0xFFFFFF
+    radius: 12
+  main_btn: &style_main_btn
+    checkable: true
+    width: 182
+    height: 50
+    align: TOP_MID
+    y: 10
+  main_label: &style_main_label
+    align: CENTER
+    text_font: montserrat_20
+  slider: &style_slider
+    max_value: 255
+    width: 182
+    height: 14
+    align: TOP_MID
+    y: 77
+    bg_color: 0xEEEEEE
+    radius: 7
+  minus_btn: &style_minus_btn
+    width: 40
+    height: 35
+    x: 10
+    y: 108
+    bg_color: 0xF5F5F5
+    radius: 6
+  plus_btn: &style_plus_btn
+    width: 40
+    height: 35
+    x: 152
+    y: 108
+    bg_color: 0xF5F5F5
+    radius: 6
+  side_label: &style_side_label
+    align: CENTER
+    text_font: montserrat_20
+    text_color: 0x333333
+  pct_btn: &style_pct_btn
+    width: 80
+    height: 35
+    align: TOP_MID
+    y: 108
+    bg_color: 0xFFFFFF
+  pct_label: &style_pct_label
+    align: CENTER
+    text_font: montserrat_14
+    text_color: 0x808080
+
 esphome:
   name: t-display-s3-pro-lights
   friendly_name: "T-Display S3 Pro Lights"
@@ -7,8 +60,8 @@ esphome:
       - script.execute: backlight_wake
       - lambda: |-
           lv_obj_set_style_bg_color(id(lr_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
-          lv_obj_set_style_bg_color(id(hw_btn), lv_color_hex(0xFF9800), LV_STATE_CHECKED);
-          lv_obj_set_style_bg_color(id(lr_table_btn), lv_color_hex(0xFF9800), LV_STATE_CHECKED);
+          lv_obj_set_style_bg_color(id(hw_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
+          lv_obj_set_style_bg_color(id(lr_table_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
       # Force a sync once API is connected to HA
       - wait_until:
           api.connected:
@@ -269,40 +322,28 @@ lvgl:
     - id: lights_page
       bg_color: 0xF2F2EE
       widgets:
+        # ==========================================
         # --- LIVING ROOM ---
+        # ==========================================
         - container:
-            width: 202
-            height: 146
-            x: 10
+            <<: *style_container
             y: 10
-            bg_color: 0xFFFFFF
-            radius: 12
             widgets:
-              # Main Toggle Button
               - button:
+                  <<: *style_main_btn
                   id: lr_btn
-                  checkable: true
-                  width: 182
-                  height: 50
-                  align: TOP_MID
-                  y: 10
                   on_value:
                     - homeassistant.service:
                         service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.yee_group }
                   widgets:
-                    - label: { text: "Ambiance", align: CENTER, text_font: montserrat_20 }
+                    - label: 
+                        <<: *style_main_label
+                        text: "Chill"
               
-              # Slider (Thin visual, expanded width)
               - slider:
+                  <<: *style_slider
                   id: lr_slider
-                  max_value: 255
-                  width: 182
-                  height: 14
-                  align: TOP_MID
-                  y: 77
-                  bg_color: 0xEEEEEE
-                  radius: 7
                   on_press:
                     - script.stop: end_slider_lr
                     - lambda: "id(slider_active_lr) = true;"
@@ -316,15 +357,9 @@ lvgl:
                   on_release:
                     - script.execute: end_slider_lr
 
-              # Minus Button (-10%)
               - button:
+                  <<: *style_minus_btn
                   id: lr_minus
-                  width: 40
-                  height: 35
-                  x: 10
-                  y: 108
-                  bg_color: 0xF5F5F5
-                  radius: 6
                   on_click:
                     - script.stop: end_slider_lr
                     - lambda: "id(slider_active_lr) = true;"
@@ -341,17 +376,13 @@ lvgl:
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
                     - script.execute: end_slider_lr
                   widgets:
-                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+                    - label: 
+                        <<: *style_side_label
+                        text: "-"
 
-              # Plus Button (+10%)
               - button:
+                  <<: *style_plus_btn
                   id: lr_plus
-                  width: 40
-                  height: 35
-                  x: 152
-                  y: 108
-                  bg_color: 0xF5F5F5
-                  radius: 6
                   on_click:
                     - script.stop: end_slider_lr
                     - lambda: "id(slider_active_lr) = true;"
@@ -368,15 +399,12 @@ lvgl:
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
                     - script.execute: end_slider_lr
                   widgets:
-                    - label: { text: "+", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+                    - label: 
+                        <<: *style_side_label
+                        text: "+"
 
-              # Percentage Button (Hidden Hitbox for 100%)
               - button:
-                  width: 80
-                  height: 35
-                  align: TOP_MID
-                  y: 108
-                  bg_color: 0xFFFFFF
+                  <<: *style_pct_btn
                   on_click:
                     - script.stop: end_slider_lr
                     - lambda: "id(slider_active_lr) = true;"
@@ -394,46 +422,32 @@ lvgl:
                     - script.execute: end_slider_lr
                   widgets:
                     - label:
+                        <<: *style_pct_label
                         id: lr_pct
                         text: "0%"
-                        align: CENTER
-                        text_font: montserrat_14
-                        text_color: 0x808080
 
-        # --- LR TABLE ---
+        # ==========================================
+        # --- COFFEE TABLE ---
+        # ==========================================
         - container:
-            width: 202
-            height: 146
-            x: 10
+            <<: *style_container
             y: 166
-            bg_color: 0xFFFFFF
-            radius: 12
             widgets:
-              # Main Toggle Button
               - button:
+                  <<: *style_main_btn
                   id: lr_table_btn
-                  checkable: true
-                  width: 182
-                  height: 50
-                  align: TOP_MID
-                  y: 10
                   on_value:
                     - homeassistant.service:
                         service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.hallway_dimmer_light }
                   widgets:
-                    - label: { text: "Coffee table", align: CENTER, text_font: montserrat_20 }
+                    - label: 
+                        <<: *style_main_label
+                        text: "Coffee table"
               
-              # Slider (Thin visual, expanded width)
               - slider:
+                  <<: *style_slider
                   id: lr_table_slider
-                  max_value: 255
-                  width: 182
-                  height: 14
-                  align: TOP_MID
-                  y: 77
-                  bg_color: 0xEEEEEE
-                  radius: 7
                   on_press:
                     - script.stop: end_slider_lr_table
                     - lambda: "id(slider_active_lr_table) = true;"
@@ -447,15 +461,9 @@ lvgl:
                   on_release:
                     - script.execute: end_slider_lr_table
 
-              # Minus Button (-10%)
               - button:
+                  <<: *style_minus_btn
                   id: lr_table_minus
-                  width: 40
-                  height: 35
-                  x: 10
-                  y: 108
-                  bg_color: 0xF5F5F5
-                  radius: 6
                   on_click:
                     - script.stop: end_slider_lr_table
                     - lambda: "id(slider_active_lr_table) = true;"
@@ -472,17 +480,13 @@ lvgl:
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
                     - script.execute: end_slider_lr_table
                   widgets:
-                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+                    - label: 
+                        <<: *style_side_label
+                        text: "-"
 
-              # Plus Button (+10%)
               - button:
+                  <<: *style_plus_btn
                   id: lr_table_plus
-                  width: 40
-                  height: 35
-                  x: 152
-                  y: 108
-                  bg_color: 0xF5F5F5
-                  radius: 6
                   on_click:
                     - script.stop: end_slider_lr_table
                     - lambda: "id(slider_active_lr_table) = true;"
@@ -499,15 +503,12 @@ lvgl:
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
                     - script.execute: end_slider_lr_table
                   widgets:
-                    - label: { text: "+", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+                    - label: 
+                        <<: *style_side_label
+                        text: "+"
 
-              # Percentage Button (Hidden Hitbox for 100%)
               - button:
-                  width: 80
-                  height: 35
-                  align: TOP_MID
-                  y: 108
-                  bg_color: 0xFFFFFF
+                  <<: *style_pct_btn
                   on_click:
                     - script.stop: end_slider_lr_table
                     - lambda: "id(slider_active_lr_table) = true;"
@@ -525,46 +526,32 @@ lvgl:
                     - script.execute: end_slider_lr_table
                   widgets:
                     - label:
+                        <<: *style_pct_label
                         id: lr_table_pct
                         text: "0%"
-                        align: CENTER
-                        text_font: montserrat_14
-                        text_color: 0x808080
 
+        # ==========================================
         # --- HALLWAY ---
+        # ==========================================
         - container:
-            width: 202
-            height: 146
-            x: 10
+            <<: *style_container
             y: 322
-            bg_color: 0xFFFFFF
-            radius: 12
             widgets:
-              # Main Toggle Button
               - button:
+                  <<: *style_main_btn
                   id: hw_btn
-                  checkable: true
-                  width: 182
-                  height: 50
-                  align: TOP_MID
-                  y: 10
                   on_value:
                     - homeassistant.service:
                         service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.ledvance_white_hal }
                   widgets:
-                    - label: { text: "Hallway", align: CENTER, text_font: montserrat_20 }
+                    - label: 
+                        <<: *style_main_label
+                        text: "Hallway"
               
-              # Slider (Thin visual, expanded width)
               - slider:
+                  <<: *style_slider
                   id: hw_slider
-                  max_value: 255
-                  width: 182
-                  height: 14
-                  align: TOP_MID
-                  y: 77
-                  bg_color: 0xEEEEEE
-                  radius: 7
                   on_press:
                     - script.stop: end_slider_hw
                     - lambda: "id(slider_active_hw) = true;"
@@ -578,15 +565,9 @@ lvgl:
                   on_release:
                     - script.execute: end_slider_hw
 
-              # Minus Button (-10%)
               - button:
+                  <<: *style_minus_btn
                   id: hw_minus
-                  width: 40
-                  height: 35
-                  x: 10
-                  y: 108
-                  bg_color: 0xF5F5F5
-                  radius: 6
                   on_click:
                     - script.stop: end_slider_hw
                     - lambda: "id(slider_active_hw) = true;"
@@ -603,17 +584,13 @@ lvgl:
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
                     - script.execute: end_slider_hw
                   widgets:
-                    - label: { text: "-", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+                    - label: 
+                        <<: *style_side_label
+                        text: "-"
 
-              # Plus Button (+10%)
               - button:
+                  <<: *style_plus_btn
                   id: hw_plus
-                  width: 40
-                  height: 35
-                  x: 152
-                  y: 108
-                  bg_color: 0xF5F5F5
-                  radius: 6
                   on_click:
                     - script.stop: end_slider_hw
                     - lambda: "id(slider_active_hw) = true;"
@@ -630,15 +607,12 @@ lvgl:
                         text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
                     - script.execute: end_slider_hw
                   widgets:
-                    - label: { text: "+", align: CENTER, text_font: montserrat_20, text_color: 0x333333 }
+                    - label: 
+                        <<: *style_side_label
+                        text: "+"
 
-              # Percentage Button (Hidden Hitbox for 100%)
               - button:
-                  width: 80
-                  height: 35
-                  align: TOP_MID
-                  y: 108
-                  bg_color: 0xFFFFFF
+                  <<: *style_pct_btn
                   on_click:
                     - script.stop: end_slider_hw
                     - lambda: "id(slider_active_hw) = true;"
@@ -656,8 +630,6 @@ lvgl:
                     - script.execute: end_slider_hw
                   widgets:
                     - label:
+                        <<: *style_pct_label
                         id: hw_pct
                         text: "0%"
-                        align: CENTER
-                        text_font: montserrat_14
-                        text_color: 0x808080
