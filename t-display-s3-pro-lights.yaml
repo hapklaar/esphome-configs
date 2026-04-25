@@ -31,9 +31,6 @@ psram:
 
 logger:
 
-######################################
-# FONTS (Added to fix missing references)
-######################################
 font:
   - file: "gfonts://Montserrat"
     id: montserrat_28
@@ -48,9 +45,6 @@ font:
     id: montserrat_14
     size: 14
 
-######################################
-# BACKLIGHT (PWM DIMMABLE)
-######################################
 output:
   - platform: ledc
     pin: 48
@@ -66,9 +60,6 @@ light:
     restore_mode: ALWAYS_ON
     default_transition_length: 0s
 
-######################################
-# SPI / I2C / DISPLAY
-######################################
 spi:
   clk_pin: 18
   mosi_pin: 17
@@ -84,9 +75,6 @@ display:
   - platform: mipi_spi
     model: t-display-s3-pro
 
-######################################
-# TOUCHSCREEN (WAKE BACKLIGHT)
-######################################
 touchscreen:
   - platform: cst226
     interrupt_pin: 21
@@ -94,177 +82,103 @@ touchscreen:
     on_touch:
       - script.execute: backlight_wake
 
-######################################
-# GLOBALS
-######################################
 globals:
   - id: slider_active_lr
     type: bool
-    restore_value: no
     initial_value: "false"
-
   - id: slider_active_hw
     type: bool
-    restore_value: no
     initial_value: "false"
-
   - id: slider_active_lr_table
     type: bool
-    restore_value: no
     initial_value: "false"
-
   - id: backlight_awake
     type: bool
-    restore_value: no
     initial_value: "true"
 
-######################################
-# SCRIPTS
-######################################
 script:
-  # -------- BACKLIGHT --------
+  # -------- BACKLIGHT CONTROL --------
   - id: backlight_idle_timer
     mode: restart
     then:
-      - delay: 10s
+      - delay: 30s
       - light.turn_on:
           id: display_backlight
-          brightness: 20%
-          transition_length: 3s
-      - lambda: |-
-          id(backlight_awake) = false;
+          brightness: 15%
+          transition_length: 2s
+      - lambda: 'id(backlight_awake) = false;'
 
   - id: backlight_wake
     mode: restart
     then:
       - light.turn_on:
           id: display_backlight
-          brightness: 80%
-          transition_length: 0s
-      - lambda: |-
-          id(backlight_awake) = true;
+          brightness: 90%
+          transition_length: 0.1s
+      - lambda: 'id(backlight_awake) = true;'
       - script.execute: backlight_idle_timer
 
-  # -------- LIVING ROOM --------
+  # -------- LIGHT CONTROL DEBOUNCING --------
   - id: debounce_lr
     mode: restart
     parameters:
       brightness_val: int
     then:
-      - delay: 100ms
+      - delay: 50ms
       - homeassistant.service:
           service: light.turn_on
           data:
             entity_id: light.yee_group
             brightness: !lambda return brightness_val;
 
-  - id: end_slider_lr
-    mode: restart
-    then:
-      - delay: 500ms
-      - lambda: 'id(slider_active_lr) = false;'
-
-  # -------- LR_Table --------
   - id: debounce_lr_table
     mode: restart
     parameters:
       brightness_val: int
     then:
-      - delay: 100ms
+      - delay: 50ms
       - homeassistant.service:
           service: light.turn_on
           data:
             entity_id: light.hallway_dimmer_light
             brightness: !lambda return brightness_val;
 
-  - id: end_slider_lr_table
-    mode: restart
-    then:
-      - delay: 1000ms
-      - lambda: 'id(slider_active_lr_table) = false;'
-
-  # -------- HALLWAY --------
   - id: debounce_hw
     mode: restart
     parameters:
       brightness_val: int
     then:
-      - delay: 100ms
+      - delay: 50ms
       - homeassistant.service:
           service: light.turn_on
           data:
             entity_id: light.ledvance_white_hal
             brightness: !lambda return brightness_val;
 
-  - id: end_slider_hw
-    mode: restart
-    then:
-      - delay: 1000ms
-      - lambda: 'id(slider_active_hw) = false;'
-
-######################################
-# HOME ASSISTANT ENTITIES
-######################################
 binary_sensor:
   - platform: homeassistant
     id: lr_light_state
     entity_id: light.yee_group
-    trigger_on_initial_state: true
     on_state:
       - lvgl.button.update:
           id: lr_btn
-          state:
-            checked: !lambda return x;
-      - if:
-          condition:
-            lambda: 'return !x;'
-          then:
-            - lvgl.slider.update:
-                id: lr_slider
-                value: 0
-            - lvgl.label.update:
-                id: lr_pct
-                text: "0%"
-
+          state: { checked: !lambda "return x;" }
+  
   - platform: homeassistant
     id: hw_light_state
     entity_id: light.ledvance_white_hal
-    trigger_on_initial_state: true
     on_state:
       - lvgl.button.update:
           id: hw_btn
-          state:
-            checked: !lambda return x;
-      - if:
-          condition:
-            lambda: 'return !x;'
-          then:
-            - lvgl.slider.update:
-                id: hw_slider
-                value: 0
-            - lvgl.label.update:
-                id: hw_pct
-                text: "0%"
+          state: { checked: !lambda "return x;" }
 
   - platform: homeassistant
     id: lr_table_light_state
     entity_id: light.hallway_dimmer_light
-    trigger_on_initial_state: true
     on_state:
       - lvgl.button.update:
           id: lr_table_btn
-          state:
-            checked: !lambda return x;
-      - if:
-          condition:
-            lambda: 'return !x;'
-          then:
-            - lvgl.slider.update:
-                id: lr_table_slider
-                value: 0
-            - lvgl.label.update:
-                id: lr_table_pct
-                text: "0%"
+          state: { checked: !lambda "return x;" }
 
 sensor:
   - platform: homeassistant
@@ -274,19 +188,14 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: |-
-              return !isnan(x) &&
-                     id(lr_light_state).state &&
-                     !id(slider_active_lr);
+            lambda: 'return !isnan(x) && !id(slider_active_lr);'
           then:
             - lvgl.slider.update:
                 id: lr_slider
-                value: !lambda return (int)x;
+                value: !lambda "return (int)x;"
             - lvgl.label.update:
                 id: lr_pct
-                text: !lambda |-
-                  int pct = (int)((x / 255.0) * 100.0);
-                  return to_string(pct) + "%";
+                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
 
   - platform: homeassistant
     id: hw_brightness
@@ -295,19 +204,14 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: |-
-              return !isnan(x) &&
-                     id(hw_light_state).state &&
-                     !id(slider_active_hw);
+            lambda: 'return !isnan(x) && !id(slider_active_hw);'
           then:
             - lvgl.slider.update:
                 id: hw_slider
-                value: !lambda return (int)x;
+                value: !lambda "return (int)x;"
             - lvgl.label.update:
                 id: hw_pct
-                text: !lambda |-
-                  int pct = (int)((x / 255.0) * 100.0);
-                  return to_string(pct) + "%";
+                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
 
   - platform: homeassistant
     id: lr_table_brightness
@@ -316,330 +220,162 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: |-
-              return !isnan(x) &&
-                     id(lr_table_light_state).state &&
-                     !id(slider_active_lr_table);
+            lambda: 'return !isnan(x) && !id(slider_active_lr_table);'
           then:
             - lvgl.slider.update:
-                id: hw_slider
-                value: !lambda return (int)x;
+                id: lr_table_slider
+                value: !lambda "return (int)x;"
             - lvgl.label.update:
-                id: hw_pct
-                text: !lambda |-
-                  int pct = (int)((x / 255.0) * 100.0);
-                  return to_string(pct) + "%";
-
-  # - platform: homeassistant
-  #   id: house_power
-  #   entity_id: sensor.ecotracker_current_power
-  #   on_value:
-  #     - lvgl.indicator.update:
-  #         id: power_needle
-  #         value: !lambda return x;
-  #     - lvgl.label.update:
-  #         id: power_label
-  #         text: !lambda return str_sprintf("%.0f W", x);
+                id: lr_table_pct
+                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
 
   - platform: ltr_als_ps
     address: 0x23
-    update_interval: 5s
+    update_interval: 10s
     ambient_light:
       name: "Ambient Light"
       id: display_ambient_light
+      on_value:
+        - if:
+            condition:
+              lambda: 'return x < 50 && id(backlight_awake);'
+            then:
+              - light.turn_on:
+                  id: display_backlight
+                  brightness: 40%
+            else:
+              - if:
+                  condition:
+                    lambda: 'return id(backlight_awake);'
+                  then:
+                    - light.turn_on:
+                        id: display_backlight
+                        brightness: 90%
 
-######################################
-# LVGL UI
-######################################
 lvgl:
   pages:
     - id: lights_page
       bg_color: 0xF2F2EE
       widgets:
-
-        # ---------- LIVING ROOM SP ----------
+        # --- LIVING ROOM ---
         - container:
             width: 202
             height: 140
             x: 10
             y: 10
-            pad_all: 10
             bg_color: 0xFFFFFF
-            radius: 10
+            radius: 12
             widgets:
-
               - button:
                   id: lr_btn
                   checkable: true
                   width: 180
-                  height: 70
-                  x: 1
-                  y: 0
+                  height: 60
+                  align: TOP_MID
+                  y: 10
                   on_value:
-                    - if:
-                        condition:
-                          lambda: 'return x;'
-                        then:
-                          - homeassistant.service:
-                              service: light.turn_on
-                              data:
-                                entity_id: light.yee_group
-                        else:
-                          - homeassistant.service:
-                              service: light.turn_off
-                              data:
-                                entity_id: light.yee_group
+                    - homeassistant.service:
+                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                        data: { entity_id: light.yee_group }
                   widgets:
-                    - label:
-                        text: "LR SP Lights"
-                        text_font: montserrat_20
-                        align: CENTER
-
+                    - label: { text: "Living Room", align: CENTER, text_font: montserrat_20 }
+              - slider:
+                  id: lr_slider
+                  max_value: 255
+                  width: 140
+                  x: 10
+                  y: 95
+                  on_press: { lambda: "id(slider_active_lr) = true;" }
+                  on_value:
+                    - script.execute:
+                        id: debounce_lr
+                        brightness_val: !lambda "return (int)x;"
+                  on_release: { lambda: "id(slider_active_lr) = false;" }
               - label:
                   id: lr_pct
                   text: "0%"
-                  text_font: montserrat_18
-                  text_color: 0x808080
                   x: 155
-                  y: 82
+                  y: 92
+                  text_font: montserrat_14
 
-              - slider:
-                  id: lr_slider
-                  min_value: 0
-                  max_value: 255
-                  width: 180
-                  x: 1
-                  y: 100
-                  on_press:
-                    - script.stop: end_slider_lr
-                    - lambda: 'id(slider_active_lr) = true;'
-                  on_value:
-                    - lvgl.label.update:
-                        id: lr_pct
-                        text: !lambda |-
-                          int pct = (int)((x / 255.0) * 100.0);
-                          return to_string(pct) + "%";
-                    - if:
-                        condition:
-                          binary_sensor.is_on: lr_light_state
-                        then:
-                          - script.execute:
-                              id: debounce_lr
-                              brightness_val: !lambda return (int)x;
-                  on_release:
-                    - script.execute:
-                        id: debounce_lr
-                        brightness_val: !lambda return (int)lv_slider_get_value(id(lr_slider));
-                    - script.execute: end_slider_lr
-
-        # ---------- LR Table ----------
+        # --- LR TABLE ---
         - container:
             width: 202
             height: 140
             x: 10
             y: 160
-            pad_all: 10
             bg_color: 0xFFFFFF
-            radius: 10
+            radius: 12
             widgets:
-
               - button:
                   id: lr_table_btn
                   checkable: true
                   width: 180
-                  height: 70
-                  x: 1
-                  y: 0
+                  height: 60
+                  align: TOP_MID
+                  y: 10
                   on_value:
-                    - if:
-                        condition:
-                          lambda: 'return x;'
-                        then:
-                          - homeassistant.service:
-                              service: light.turn_on
-                              data:
-                                entity_id: light.hallway_dimmer_light
-                        else:
-                          - homeassistant.service:
-                              service: light.turn_off
-                              data:
-                                entity_id: light.hallway_dimmer_light
+                    - homeassistant.service:
+                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                        data: { entity_id: light.hallway_dimmer_light }
                   widgets:
-                    - label:
-                        text: "LR Front Table"
-                        text_font: montserrat_20
-                        align: CENTER
-
+                    - label: { text: "Front Table", align: CENTER, text_font: montserrat_20 }
+              - slider:
+                  id: lr_table_slider
+                  max_value: 255
+                  width: 140
+                  x: 10
+                  y: 95
+                  on_press: { lambda: "id(slider_active_lr_table) = true;" }
+                  on_value:
+                    - script.execute:
+                        id: debounce_lr_table
+                        brightness_val: !lambda "return (int)x;"
+                  on_release: { lambda: "id(slider_active_lr_table) = false;" }
               - label:
                   id: lr_table_pct
                   text: "0%"
-                  text_font: montserrat_18
-                  text_color: 0x808080
                   x: 155
-                  y: 82
+                  y: 92
+                  text_font: montserrat_14
 
-              - slider:
-                  id: lr_table_slider
-                  min_value: 0
-                  max_value: 255
-                  width: 180
-                  x: 1
-                  y: 100
-                  on_press:
-                    - script.stop: end_slider_lr_table
-                    - lambda: 'id(slider_active_lr_table) = true;'
-                  on_value:
-                    - lvgl.label.update:
-                        id: lr_table_pct
-                        text: !lambda |-
-                          int pct = (int)((x / 255.0) * 100.0);
-                          return to_string(pct) + "%";
-                    - if:
-                        condition:
-                          binary_sensor.is_on: lr_table_light_state
-                        then:
-                          - script.execute:
-                              id: debounce_lr_table
-                              brightness_val: !lambda return (int)x;
-                  on_release:
-                    - script.execute:
-                        id: debounce_hw
-                        brightness_val: !lambda return (int)lv_slider_get_value(id(lr_table_slider));
-                    - script.execute: end_slider_lr_table
-
-        # ---------- HALLWAY ----------
+        # --- HALLWAY ---
         - container:
             width: 202
             height: 140
             x: 10
-            y: 330
-            pad_all: 10
+            y: 310
             bg_color: 0xFFFFFF
-            radius: 10
+            radius: 12
             widgets:
-
               - button:
                   id: hw_btn
                   checkable: true
                   width: 180
-                  height: 70
-                  x: 1
-                  y: 0
+                  height: 60
+                  align: TOP_MID
+                  y: 10
                   on_value:
-                    - if:
-                        condition:
-                          lambda: 'return x;'
-                        then:
-                          - homeassistant.service:
-                              service: light.turn_on
-                              data:
-                                entity_id: light.ledvance_white_hal
-                        else:
-                          - homeassistant.service:
-                              service: light.turn_off
-                              data:
-                                entity_id: light.ledvance_white_hal
+                    - homeassistant.service:
+                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                        data: { entity_id: light.ledvance_white_hal }
                   widgets:
-                    - label:
-                        text: "Hallway"
-                        text_font: montserrat_20
-                        align: CENTER
-
+                    - label: { text: "Hallway", align: CENTER, text_font: montserrat_20 }
+              - slider:
+                  id: hw_slider
+                  max_value: 255
+                  width: 140
+                  x: 10
+                  y: 95
+                  on_press: { lambda: "id(slider_active_hw) = true;" }
+                  on_value:
+                    - script.execute:
+                        id: debounce_hw
+                        brightness_val: !lambda "return (int)x;"
+                  on_release: { lambda: "id(slider_active_hw) = false;" }
               - label:
                   id: hw_pct
                   text: "0%"
-                  text_font: montserrat_18
-                  text_color: 0x808080
                   x: 155
-                  y: 82
-
-              - slider:
-                  id: hw_slider
-                  min_value: 0
-                  max_value: 255
-                  width: 180
-                  x: 1
-                  y: 100
-                  on_press:
-                    - script.stop: end_slider_hw
-                    - lambda: 'id(slider_active_hw) = true;'
-                  on_value:
-                    - lvgl.label.update:
-                        id: hw_pct
-                        text: !lambda |-
-                          int pct = (int)((x / 255.0) * 100.0);
-                          return to_string(pct) + "%";
-                    - if:
-                        condition:
-                          binary_sensor.is_on: hw_light_state
-                        then:
-                          - script.execute:
-                              id: debounce_hw
-                              brightness_val: !lambda return (int)x;
-                  on_release:
-                    - script.execute:
-                        id: debounce_hw
-                        brightness_val: !lambda return (int)lv_slider_get_value(id(hw_slider));
-                    - script.execute: end_slider_hw
-
-        # # ---------- POWER METER (GAUGE) ----------
-        # - container:
-        #     width: 202
-        #     height: 140
-        #     x: 10
-        #     y: 330
-        #     pad_all: 5
-        #     bg_color: 0xFFFFFF
-        #     radius: 10
-        #     widgets:
-        #       - meter:
-        #           id: my_meter
-        #           # FIX: Meter must be a square (Width = Height) to center correctly in v9
-        #           width: 140
-        #           height: 140
-        #           align: CENTER
-        #           # Nudge the whole square up/down to fit your container
-        #           y: 0 
-        #           bg_opa: TRANSP
-        #           pad_all: 0 # Prevents the "left-shove" from internal padding
-        #           scales:
-        #             - range_from: -2000
-        #               range_to: 4000
-        #               angle_range: 180
-        #               rotation: 180
-        #               ticks:
-        #                 count: 2
-        #                 width: 0
-        #               indicators:
-        #                 # Segment 1: Green (-2000 to 0W - Exporting Power)
-        #                 - arc:
-        #                     width: 15
-        #                     color: 0x4CAF50 
-        #                     start_value: -2000
-        #                     end_value: 0
-        #                 # Segment 2: Yellow (0 to 2000W - Moderate Usage)
-        #                 - arc:
-        #                     width: 15
-        #                     color: 0xFFEB3B
-        #                     start_value: 0
-        #                     end_value: 2000
-        #                 # Segment 3: Red (2000 to 4000W - High Usage)
-        #                 - arc:
-        #                     width: 15
-        #                     color: 0xF44336
-        #                     start_value: 2000
-        #                     end_value: 4000
-        #                 # The Needle
-        #                 - line:
-        #                     id: power_needle
-        #                     width: 4
-        #                     color: 0x333333
-        #                     r_mod: 0
-
-        #       - label:
-        #           id: power_label
-        #           text: "0 W"
-        #           align: CENTER
-        #           y: 50
-        #           text_font: montserrat_28
-        #           text_color: 0x000000
+                  y: 92
+                  text_font: montserrat_14
