@@ -177,6 +177,9 @@ script:
           brightness: 30%
           transition_length: 2s
       - lambda: 'id(backlight_awake) = false;'
+      - lvgl.obj.update:
+          id: wake_overlay
+          hidden: false
 
   - id: backlight_wake
     mode: restart
@@ -186,6 +189,9 @@ script:
           brightness: 90%
           transition_length: 0.1s
       - lambda: 'id(backlight_awake) = true;'
+      - lvgl.obj.update:
+          id: wake_overlay
+          hidden: true
       - script.execute: backlight_idle_timer
 
   # -------- LIGHT CONTROL DEBOUNCING --------
@@ -639,3 +645,17 @@ lvgl:
                         <<: *style_pct_label
                         id: hw_pct
                         text: "0%"
+                        
+        # ==========================================
+        # --- WAKE OVERLAY ---
+        # Absorbs touches when the screen is dimmed
+        # ==========================================
+        - obj:
+            id: wake_overlay
+            x: 0
+            y: 0
+            width: 300
+            height: 600
+            bg_opa: TRANSP
+            clickable: true
+            hidden: true
