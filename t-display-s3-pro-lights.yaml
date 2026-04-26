@@ -253,6 +253,16 @@ script:
       - lambda: 'id(slider_active_hw) = false;'
 
 binary_sensor:
+  - platform: status
+    id: api_status
+    on_state:
+      - lambda: |-
+          if (x) {
+            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0x31B044), 0); // Green when connected
+          } else {
+            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0xF44336), 0); // Red when disconnected
+          }
+
   - platform: homeassistant
     id: lr_light_state
     entity_id: light.yee_group
@@ -332,6 +342,19 @@ lvgl:
       bg_color: 0xF2F2EE
       widgets:
         # ==========================================
+        # --- STATUS INDICATOR ---
+        # ==========================================
+        - obj:
+            id: status_indicator
+            width: 8
+            height: 8
+            align: TOP_RIGHT
+            x: -6
+            y: 6
+            bg_color: 0xF44336
+            radius: 4
+
+        # ==========================================
         # --- LIVING ROOM ---
         # ==========================================
         - container:
@@ -348,7 +371,7 @@ lvgl:
                   widgets:
                     - label: 
                         <<: *style_main_label
-                        text: "Chill"
+                        text: "Ambiance"
               
               - slider:
                   <<: *style_slider
@@ -645,7 +668,7 @@ lvgl:
                         <<: *style_pct_label
                         id: hw_pct
                         text: "0%"
-                        
+
         # ==========================================
         # --- WAKE OVERLAY ---
         # Absorbs touches when the screen is dimmed
