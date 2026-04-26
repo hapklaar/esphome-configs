@@ -189,6 +189,7 @@ script:
           brightness: 90%
           transition_length: 0.1s
       - lambda: 'id(backlight_awake) = true;'
+      - delay: 300ms # Wait to absorb the touch before hiding the overlay
       - lvgl.obj.update:
           id: wake_overlay
           hidden: true
@@ -346,13 +347,15 @@ lvgl:
         # ==========================================
         - obj:
             id: status_indicator
-            width: 8
-            height: 8
+            width: 16
+            height: 16
             align: TOP_RIGHT
-            x: -6
-            y: 6
+            x: -10
+            y: 10
             bg_color: 0xF44336
-            radius: 4
+            bg_opa: COVER
+            radius: 8
+            border_width: 0
 
         # ==========================================
         # --- LIVING ROOM ---
@@ -677,8 +680,8 @@ lvgl:
             id: wake_overlay
             x: 0
             y: 0
-            width: 300
-            height: 600
+            width: 222
+            height: 480
             bg_opa: TRANSP
             clickable: true
             hidden: true
