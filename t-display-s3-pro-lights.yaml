@@ -259,7 +259,7 @@ binary_sensor:
     on_state:
       - lambda: |-
           if (x) {
-            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0x31B044), 0); // Green when connected
+            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0x00FF00), 0); // Brighter Green when connected
           } else {
             lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0xF44336), 0); // Red when disconnected
           }
@@ -350,8 +350,8 @@ lvgl:
             width: 16
             height: 16
             align: TOP_RIGHT
-            x: -10
-            y: 10
+            x: -4
+            y: 4
             bg_color: 0xF44336
             bg_opa: COVER
             radius: 8
@@ -374,7 +374,7 @@ lvgl:
                   widgets:
                     - label: 
                         <<: *style_main_label
-                        text: "Chill"
+                        text: "Ambiance"
               
               - slider:
                   <<: *style_slider
