@@ -374,7 +374,7 @@ lvgl:
                   widgets:
                     - label: 
                         <<: *style_main_label
-                        text: "Ambiance"
+                        text: "Chill"
               
               - slider:
                   <<: *style_slider
