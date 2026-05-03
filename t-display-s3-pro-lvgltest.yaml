@@ -1,5 +1,5 @@
 # ESPHome configuration for LilyGO T-Display S3 Pro
-# Features: LVGL Chart, SY6970 Power Management, Home Assistant Integration, CPU Load Monitoring
+# Features: LVGL Chart, SY6970 Power Management, Home Assistant Integration
 
 esphome:
   name: t-display-s3-pro-lvgltest
@@ -84,7 +84,6 @@ display:
     spi_id: spi_bus
     data_rate: 80MHz
 
-
 touchscreen:
   - platform: cst226
     id: my_touch
@@ -103,11 +102,6 @@ font:
     size: 12
     bpp: 4
     glyphs: "12345kW"
-  - file: 'fonts/GoogleSansCode-SemiBold.ttf'
-    id: font_debug
-    size: 14
-    bpp: 4
-    glyphs: "CPU0123456789% "
 
 globals:
   - { id: battery_percent, type: float, initial_value: '0.0' }
@@ -154,12 +148,6 @@ lvgl:
                   text_font: montserrat_22
                   align: LEFT_MID
                   x: 10
-              - label:
-                  id: cpu_load_label
-                  text: "CPU: --%"
-                  text_font: montserrat_22
-                  align: LEFT_MID
-                  x: 120
               - label: { id: batt_v_p1, text: "--.-V", text_font: montserrat_22, align: RIGHT_MID, x: -125 }
               - label: { id: batt_pct_p1, text: "--%", text_font: montserrat_22, align: RIGHT_MID, x: -55 }
               - label: { id: batt_icon_p1, text: "", text_font: montserrat_22, align: RIGHT_MID, x: -25 }
@@ -221,9 +209,9 @@ lvgl:
             point_count: 185
             update_mode: SHIFT
             y_axis:
-              min_value: 0
+              min_value: -500
               max_value: 5000
-            div_line_count: [11, 5]
+            div_line_count: [12, 5]
             bg_color: 0x000000
             series:
               - id: series_main
@@ -251,7 +239,7 @@ script:
             lv_chart_set_point_count(chart, 185);
             id(chart_main) = lv_chart_add_series(chart, lv_color_hex(0xF44336), LV_CHART_AXIS_PRIMARY_Y);
             id(chart_solar) = lv_chart_add_series(chart, lv_color_hex(0x4CAF50), LV_CHART_AXIS_PRIMARY_Y);
-            lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 5000);
+            lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, -500, 5000);
             lv_chart_set_update_mode(chart, LV_CHART_UPDATE_MODE_SHIFT);
             lv_obj_set_style_bg_color(chart, lv_color_hex(0x000000), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(chart, LV_OPA_COVER, LV_PART_MAIN);
@@ -260,7 +248,7 @@ script:
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_SCROLLABLE);
             // Ensure chart itself doesn't block swipes if not needed for touch
             lv_obj_clear_flag(chart, LV_OBJ_FLAG_CLICKABLE);
-            lv_chart_set_div_line_count(chart, 11, 0);
+            lv_chart_set_div_line_count(chart, 12, 0);
             lv_obj_set_style_size(chart, 0, 0, LV_PART_INDICATOR);
             lv_obj_set_style_line_color(chart, lv_color_hex(0x303030), LV_PART_MAIN);
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
@@ -270,7 +258,7 @@ script:
       - lambda: |-
           float v = id(battery_voltage).state;   
           if (!isnan(v) && v > 2.0) {
-            float pct = std::clamp((v - 3.4f) / 0.8f * 100.0f, 0.0f, 100.0f);
+            float pct = std::clamp((v - 3.2f) / 1.0f * 100.0f, 0.0f, 100.0f);
             id(battery_percent) = pct;
             lv_label_set_text(id(batt_v_p1), str_sprintf("%.2fV", v).c_str());
             lv_label_set_text(id(batt_pct_p1), str_sprintf("%.0f%%", pct).c_str());
