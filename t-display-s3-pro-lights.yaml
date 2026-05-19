@@ -374,7 +374,7 @@ lvgl:
                   widgets:
                     - label: 
                         <<: *style_main_label
-                        text: "Chill"
+                        text: "LR Lights"
               
               - slider:
                   <<: *style_slider
@@ -479,7 +479,7 @@ lvgl:
                   widgets:
                     - label: 
                         <<: *style_main_label
-                        text: "Coffee table"
+                        text: "Table front"
               
               - slider:
                   <<: *style_slider
