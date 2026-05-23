@@ -186,10 +186,10 @@ script:
       
       # 2. Prevent Burn-in (Deep Sleep Phase)
       # Wait an additional 60 seconds (adjust as needed), then turn off the backlight and pause LVGL
-      - delay: 60s
-      - light.turn_off:
-          id: display_backlight
-          transition_length: 2s
+      - delay: 30s
+     # - light.turn_off:
+     #     id: display_backlight
+     #     transition_length: 2s
       - delay: 2s # Wait for the 2s fade-out to finish before pausing rendering
       - lvgl.pause:
           show_snow: true
