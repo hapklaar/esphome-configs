@@ -144,6 +144,8 @@ i2c:
 display:
   - platform: mipi_spi
     model: t-display-s3-pro
+    auto_clear_enabled: false
+    update_interval: never
 
 touchscreen:
   - platform: cst226
@@ -171,6 +173,7 @@ script:
   - id: backlight_idle_timer
     mode: restart
     then:
+      # 1. Dim the screen after 30 seconds of inactivity
       - delay: 30s
       - light.turn_on:
           id: display_backlight
@@ -180,10 +183,24 @@ script:
       - lvgl.obj.update:
           id: wake_overlay
           hidden: false
+      
+      # 2. Prevent Burn-in (Deep Sleep Phase)
+      # Wait an additional 60 seconds (adjust as needed), then turn off the backlight and pause LVGL
+      - delay: 60s
+      - light.turn_off:
+          id: display_backlight
+          transition_length: 2s
+      - delay: 2s # Wait for the 2s fade-out to finish before pausing rendering
+      - lvgl.pause:
+          show_snow: true
 
   - id: backlight_wake
     mode: restart
     then:
+      # 1. Resume LVGL rendering immediately
+      - lvgl.resume:
+      
+      # 2. Wake the backlight
       - light.turn_on:
           id: display_backlight
           brightness: 90%
@@ -193,6 +210,8 @@ script:
       - lvgl.obj.update:
           id: wake_overlay
           hidden: true
+      
+      # 3. Restart the idle timer
       - script.execute: backlight_idle_timer
 
   # -------- LIGHT CONTROL DEBOUNCING --------
