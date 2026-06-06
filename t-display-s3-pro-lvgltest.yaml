@@ -14,6 +14,11 @@ esphome:
       - light.turn_on: { id: display_backlight, brightness: 100% }
       - script.execute: setup_chart
 
+external_components:
+  - source: github://pr#13987
+    components: [lvgl]
+    refresh: 0s
+
 esp32:
   board: esp32-s3-devkitc-1
   framework:
@@ -78,7 +83,6 @@ display:
     model: t-display-s3-pro
     spi_id: spi_bus
     data_rate: 80MHz
-    rotation: 90
 
 touchscreen:
   - platform: cst226
@@ -112,11 +116,17 @@ lvgl:
     - my_display
   touchscreens:
     - touchscreen_id: my_touch
-  #rotation: 90
+  rotation: 90
   full_refresh: false
   buffer_size: 25%
   update_interval: 500ms
   # Global swipe handling
+  on_swipe_left:
+    then:
+      - lvgl.page.show: page2
+  on_swipe_right:
+    then:
+      - lvgl.page.show: page1
   pages:
     - id: page1
       bg_color: 0x000000
@@ -180,6 +190,39 @@ lvgl:
             text_align: RIGHT
             text_color: 0x2196F3
             clickable: false
+            
+    - id: page2
+      bg_color: 0x000000
+      widgets:
+        - label:
+            text: "NEW YAML CHART COMPONENT"
+            text_font: montserrat_14
+            align: TOP_MID
+            y: 5
+        - chart:
+            id: new_style_chart
+            width: 90%
+            height: 160
+            align: BOTTOM_MID
+            y: -10
+            type: LINE
+            point_count: 185
+            update_mode: SHIFT
+            y_axis:
+              min_value: -500
+              max_value: 5000
+            div_line_count: [12, 5]
+            bg_color: 0x000000
+            series:
+              - id: series_main
+                color: 0xF44336
+              - id: series_solar
+                color: 0x4CAF50
+            main:
+              line_color: 0x303030
+            indicator:
+              width: 0
+              height: 0
 
 script:
   - id: setup_chart
@@ -243,6 +286,17 @@ binary_sensor:
     vbus_connected: { id: vbus_connected }
 
 interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          if (id(chart_obj)) {
+            lv_chart_set_next_value(id(chart_obj), id(chart_main), (lv_coord_t)id(last_main_power));
+            lv_chart_set_next_value(id(chart_obj), id(chart_solar), (lv_coord_t)id(last_solar_power));
+            lv_chart_refresh(id(chart_obj));
+          }
+          lv_chart_set_next_value(id(new_style_chart), id(series_main), (lv_coord_t)id(last_main_power));
+          lv_chart_set_next_value(id(new_style_chart), id(series_solar), (lv_coord_t)id(last_solar_power));
+          lv_chart_refresh(id(new_style_chart));
   - interval: 5s
     then: [script.execute: update_battery_ui]
 
