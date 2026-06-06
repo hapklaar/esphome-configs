@@ -204,20 +204,6 @@ script:
             lv_obj_set_style_line_opa(chart, LV_OPA_60, LV_PART_MAIN);
           }
 
-  - id: update_battery_ui
-    then:
-      - lambda: |-
-          float v = id(battery_voltage).state;
-          if (!isnan(v) && v > 2.0) {
-            float pct = std::clamp((v - 3.2f) / 1.0f * 100.0f, 0.0f, 100.0f);
-            id(battery_percent) = pct;
-            lv_label_set_text(id(batt_v_p1), str_sprintf("%.2fV", v).c_str());
-            lv_label_set_text(id(batt_pct_p1), str_sprintf("%.0f%%", pct).c_str());
-            lv_label_set_text(id(batt_charging_icon), id(charging_status).state ? LV_SYMBOL_CHARGE : "");
-            const char* icon = id(vbus_connected).state ? LV_SYMBOL_CHARGE : (pct < 20 ? LV_SYMBOL_BATTERY_EMPTY : (pct < 40 ? LV_SYMBOL_BATTERY_1 : (pct < 60 ? LV_SYMBOL_BATTERY_2 : (pct < 80 ? LV_SYMBOL_BATTERY_3 : LV_SYMBOL_BATTERY_FULL))));
-            lv_label_set_text(id(batt_icon_p1), icon);
-          }
-
 sy6970:
   id: sy6970_hub
   i2c_id: i2c_bus
@@ -230,10 +216,9 @@ binary_sensor:
     on_state:
       then:
         - component.update: sy6970_hub
-        - script.execute: update_battery_ui
   - platform: sy6970
     sy6970_id: sy6970_hub
-    charging: { id: charging_status, on_state: [script.execute: update_battery_ui] }
+    charging: { id: charging_status }
     vbus_connected: { id: vbus_connected }
 
 interval:
@@ -246,7 +231,8 @@ interval:
             lv_chart_refresh(id(chart_obj));
           }
   - interval: 5s
-    then: [script.execute: update_battery_ui]
+    then:
+      - component.update: sy6970_hub
 
 time:
   - platform: homeassistant
@@ -260,7 +246,18 @@ sensor:
   - platform: sy6970
     battery_voltage:
       id: battery_voltage
-      on_value: [script.execute: update_battery_ui]
+      on_value:
+        - lambda: |-
+            float v = x;
+            if (!isnan(v) && v > 2.0) {
+              float pct = std::clamp((v - 3.2f) / 1.0f * 100.0f, 0.0f, 100.0f);
+              id(battery_percent) = pct;
+              lv_label_set_text(id(batt_v_p1), str_sprintf("%.2fV", v).c_str());
+              lv_label_set_text(id(batt_pct_p1), str_sprintf("%.0f%%", pct).c_str());
+              lv_label_set_text(id(batt_charging_icon), id(charging_status).state ? LV_SYMBOL_CHARGE : "");
+              const char* icon = id(vbus_connected).state ? LV_SYMBOL_CHARGE : (pct < 20 ? LV_SYMBOL_BATTERY_EMPTY : (pct < 40 ? LV_SYMBOL_BATTERY_1 : (pct < 60 ? LV_SYMBOL_BATTERY_2 : (pct < 80 ? LV_SYMBOL_BATTERY_3 : LV_SYMBOL_BATTERY_FULL))));
+              lv_label_set_text(id(batt_icon_p1), icon);
+            }
   - platform: homeassistant
     id: solar_power
     entity_id: sensor.dds238_2_solar_power
