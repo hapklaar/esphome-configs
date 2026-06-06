@@ -172,7 +172,7 @@ lvgl:
             x: -10
             y: 110
             text_align: RIGHT
-            text_color: 0x2196F3
+            text_color: 0xff9900
             clickable: false
 
 script:
