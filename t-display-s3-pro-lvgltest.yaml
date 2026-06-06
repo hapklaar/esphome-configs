@@ -14,11 +14,6 @@ esphome:
       - light.turn_on: { id: display_backlight, brightness: 100% }
       - script.execute: setup_chart
 
-external_components:
-  - source: github://pr#13987
-    components: [lvgl]
-    refresh: 0s
-
 esp32:
   board: esp32-s3-devkitc-1
   framework:
