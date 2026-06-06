@@ -258,6 +258,12 @@ sensor:
               const char* icon = id(vbus_connected).state ? LV_SYMBOL_CHARGE : (pct < 20 ? LV_SYMBOL_BATTERY_EMPTY : (pct < 40 ? LV_SYMBOL_BATTERY_1 : (pct < 60 ? LV_SYMBOL_BATTERY_2 : (pct < 80 ? LV_SYMBOL_BATTERY_3 : LV_SYMBOL_BATTERY_FULL))));
               lv_label_set_text(id(batt_icon_p1), icon);
             }
+    system_voltage:
+      name: System Voltage
+    vbus_voltage:
+      name: Vbus Voltage
+    charge_current:
+      name: Charge Current
   - platform: homeassistant
     id: solar_power
     entity_id: sensor.dds238_2_solar_power
