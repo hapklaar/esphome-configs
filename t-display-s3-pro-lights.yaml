@@ -262,7 +262,7 @@ script:
       - homeassistant.service:
           service: light.turn_on
           data:
-            entity_id: light.ledvance_white_hal
+            entity_id: light.woonkamer_ldvwifia100e27dim
             brightness: !lambda return brightness_val;
             transition: "0"
 
@@ -293,7 +293,7 @@ binary_sensor:
   
   - platform: homeassistant
     id: hw_light_state
-    entity_id: light.ledvance_white_hal
+    entity_id: light.woonkamer_ldvwifia100e27dim
     on_state:
       - lvgl.button.update:
           id: hw_btn
@@ -326,7 +326,7 @@ sensor:
 
   - platform: homeassistant
     id: hw_brightness
-    entity_id: light.ledvance_white_hal
+    entity_id: light.woonkamer_ldvwifia100e27dim
     attribute: brightness
     on_value:
       - if:
@@ -599,7 +599,7 @@ lvgl:
                   on_value:
                     - homeassistant.service:
                         service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
-                        data: { entity_id: light.ledvance_white_hal }
+                        data: { entity_id: light.woonkamer_ldvwifia100e27dim }
                   widgets:
                     - label: 
                         <<: *style_main_label
@@ -675,7 +675,7 @@ lvgl:
                     - homeassistant.service:
                         service: light.turn_on
                         data:
-                          entity_id: light.ledvance_white_hal
+                          entity_id: light.woonkamer_ldvwifia100e27dim
                           brightness: "255"
                           transition: "0"
                     - lvgl.slider.update:
