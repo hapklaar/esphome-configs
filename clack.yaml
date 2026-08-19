@@ -53,6 +53,10 @@ time:
 #     - 1.pool.ntp.org
 #     - 2.pool.ntp.org   
 
+api:
+  encryption:
+    key: !secret api_secret
+
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
