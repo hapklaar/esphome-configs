@@ -272,7 +272,7 @@ sensor:
       - lambda: 'id(last_solar_power) = x;'
   - platform: homeassistant
     id: main_power
-    entity_id: sensor.ecotracker_current_power
+    entity_id: sensor.p1_meter_power
     on_value:
       - lvgl.label.update: { id: main_pwr_p1, text: !lambda 'return str_sprintf("%.0fW", x);' }
       - lambda: |-
