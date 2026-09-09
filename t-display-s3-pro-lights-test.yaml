@@ -1,0 +1,762 @@
+.lvgl_styles:
+  container: &style_container
+    width: 202
+    height: 146
+    x: 10
+    bg_color: 0xFFFFFF
+    radius: 12
+  main_btn: &style_main_btn
+    checkable: true
+    width: 182
+    height: 50
+    align: TOP_MID
+    y: 10
+  main_label: &style_main_label
+    align: CENTER
+    text_font: montserrat_20
+  slider: &style_slider
+    max_value: 255
+    width: 182
+    height: 10
+    align: TOP_MID
+    y: 77
+    bg_color: 0xEEEEEE
+    radius: 7
+  minus_btn: &style_minus_btn
+    width: 40
+    height: 35
+    x: 10
+    y: 108
+    bg_color: 0xDEDEDE
+    radius: 6
+  plus_btn: &style_plus_btn
+    width: 40
+    height: 35
+    x: 152
+    y: 108
+    bg_color: 0xDEDEDE
+    radius: 6
+  side_label: &style_side_label
+    align: CENTER
+    text_font: montserrat_20
+    text_color: 0x2E2D2D
+  pct_btn: &style_pct_btn
+    width: 80
+    height: 35
+    align: TOP_MID
+    y: 108
+    bg_color: 0xDEDEDE
+  pct_label: &style_pct_label
+    align: CENTER
+    text_font: montserrat_18
+    text_color: 0x2E2D2D
+
+esphome:
+  name: t-display-s3-pro-lights-test
+  friendly_name: "T-Display S3 Pro Lights TEST"
+  on_boot:
+    priority: -100
+    then:
+      - script.execute: backlight_wake
+      - lambda: |-
+          lv_obj_set_style_bg_color(id(lr_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
+          lv_obj_set_style_bg_color(id(hw_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
+          lv_obj_set_style_bg_color(id(lr_table_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+api:
+  encryption:
+    key: !secret api_secret
+  on_client_connected:
+    - delay: 2s
+    - lvgl.button.update:
+        id: lr_btn
+        state: { checked: !lambda "return id(lr_light_state).state;" }
+    - lvgl.button.update:
+        id: hw_btn
+        state: { checked: !lambda "return id(hw_light_state).state;" }
+    - lvgl.button.update:
+        id: lr_table_btn
+        state: { checked: !lambda "return id(lr_table_light_state).state;" }
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+  min_auth_mode: WPA2
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+logger:
+
+font:
+  - file: "gfonts://Montserrat"
+    id: montserrat_28
+    size: 28
+  - file: "gfonts://Montserrat"
+    id: montserrat_20
+    size: 20
+  - file: "gfonts://Montserrat"
+    id: montserrat_18
+    size: 18
+  - file: "gfonts://Montserrat"
+    id: montserrat_14
+    size: 14
+
+output:
+  - platform: ledc
+    pin: 48
+    id: backlight_pwm
+    frequency: 5000 Hz
+
+light:
+  - platform: monochromatic
+    output: backlight_pwm
+    id: display_backlight
+    gamma_correct: 2.2
+    name: "Display Backlight"
+    restore_mode: ALWAYS_ON
+    default_transition_length: 0s
+
+spi:
+  clk_pin: 18
+  mosi_pin: 17
+
+i2c:
+  - scl: 6
+    sda: 5
+    scan: true
+    id: i2c_onboard
+    frequency: 100kHz
+
+display:
+  - platform: mipi_spi
+    model: t-display-s3-pro
+    auto_clear_enabled: false
+    update_interval: never
+
+touchscreen:
+  - platform: cst226
+    interrupt_pin: 21
+    reset_pin: 13
+    on_touch:
+      - script.execute: backlight_wake
+
+globals:
+  - id: slider_active_lr
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: slider_active_hw
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: slider_active_lr_table
+    type: bool
+    restore_value: no
+    initial_value: "false"
+  - id: backlight_awake
+    type: bool
+    restore_value: no
+    initial_value: "true"
+
+script:
+  # -------- BACKLIGHT CONTROL --------
+  - id: backlight_idle_timer
+    mode: restart
+    then:
+      # 1. Dim the screen after 30 seconds of inactivity
+      - delay: 30s
+      - light.turn_on:
+          id: display_backlight
+          brightness: 30%
+          transition_length: 2s
+      - lambda: 'id(backlight_awake) = false;'
+      - lvgl.obj.update:
+          id: wake_overlay
+          hidden: false
+      
+      # 2. Prevent Burn-in (Deep Sleep Phase)
+      # Wait an additional 60 seconds (adjust as needed), then turn off the backlight and pause LVGL
+      - delay: 30s
+      - light.turn_off:
+          id: display_backlight
+          transition_length: 2s
+      - delay: 2s # Wait for the 2s fade-out to finish before pausing rendering
+      - lvgl.pause:
+          show_snow: true
+
+  - id: backlight_wake
+    mode: restart
+    then:
+      # 1. Resume LVGL rendering immediately
+      - lvgl.resume:
+      
+      # 2. Wake the backlight
+      - light.turn_on:
+          id: display_backlight
+          brightness: 90%
+          transition_length: 0.1s
+      - lambda: 'id(backlight_awake) = true;'
+      - delay: 300ms # Wait to absorb the touch before hiding the overlay
+      - lvgl.obj.update:
+          id: wake_overlay
+          hidden: true
+      
+      # 3. Restart the idle timer
+      - script.execute: backlight_idle_timer
+
+  # -------- LIGHT CONTROL DEBOUNCING --------
+  - id: debounce_lr
+    mode: restart
+    parameters:
+      brightness_val: int
+    then:
+      - delay: 100ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: light.yee_group
+            brightness: !lambda return brightness_val;
+            transition: "0"
+
+  - id: end_slider_lr
+    mode: restart
+    then:
+      - delay: 800ms
+      - lambda: 'id(slider_active_lr) = false;'
+
+  - id: debounce_lr_table
+    mode: restart
+    parameters:
+      brightness_val: int
+    then:
+      - delay: 100ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: light.hallway_dimmer_light
+            brightness: !lambda return brightness_val;
+            transition: "0"
+
+  - id: end_slider_lr_table
+    mode: restart
+    then:
+      - delay: 800ms
+      - lambda: 'id(slider_active_lr_table) = false;'
+
+  - id: debounce_hw
+    mode: restart
+    parameters:
+      brightness_val: int
+    then:
+      - delay: 100ms
+      - homeassistant.service:
+          service: light.turn_on
+          data:
+            entity_id: light.woonkamer_ldvwifia100e27dim
+            brightness: !lambda return brightness_val;
+            transition: "0"
+
+  - id: end_slider_hw
+    mode: restart
+    then:
+      - delay: 800ms
+      - lambda: 'id(slider_active_hw) = false;'
+
+binary_sensor:
+  - platform: status
+    id: api_status
+    on_state:
+      - lambda: |-
+          if (x) {
+            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0x00FF00), 0); // Brighter Green when connected
+            lv_obj_clear_state(id(lr_btn), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(lr_slider), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(lr_minus), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(lr_plus), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(hw_btn), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(hw_slider), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(hw_minus), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(hw_plus), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(lr_table_btn), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(lr_table_slider), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(lr_table_minus), LV_STATE_DISABLED);
+            lv_obj_clear_state(id(lr_table_plus), LV_STATE_DISABLED);
+          } else {
+            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0xF44336), 0); // Red when disconnected
+            lv_obj_add_state(id(lr_btn), LV_STATE_DISABLED);
+            lv_obj_add_state(id(lr_slider), LV_STATE_DISABLED);
+            lv_obj_add_state(id(lr_minus), LV_STATE_DISABLED);
+            lv_obj_add_state(id(lr_plus), LV_STATE_DISABLED);
+            lv_obj_add_state(id(hw_btn), LV_STATE_DISABLED);
+            lv_obj_add_state(id(hw_slider), LV_STATE_DISABLED);
+            lv_obj_add_state(id(hw_minus), LV_STATE_DISABLED);
+            lv_obj_add_state(id(hw_plus), LV_STATE_DISABLED);
+            lv_obj_add_state(id(lr_table_btn), LV_STATE_DISABLED);
+            lv_obj_add_state(id(lr_table_slider), LV_STATE_DISABLED);
+            lv_obj_add_state(id(lr_table_minus), LV_STATE_DISABLED);
+            lv_obj_add_state(id(lr_table_plus), LV_STATE_DISABLED);
+          }
+
+  - platform: homeassistant
+    id: lr_light_state
+    entity_id: light.yee_group
+    on_state:
+      - lvgl.button.update:
+          id: lr_btn
+          state: { checked: !lambda "return x;" }
+      - if:
+          condition:
+            lambda: 'return !x;'
+          then:
+            - lvgl.slider.update:
+                id: lr_slider
+                value: 0
+            - lvgl.label.update:
+                id: lr_pct
+                text: "0%" 
+  
+  - platform: homeassistant
+    id: hw_light_state
+    entity_id: light.woonkamer_ldvwifia100e27dim
+    on_state:
+      - lvgl.button.update:
+          id: hw_btn
+          state: { checked: !lambda "return x;" }
+      - if:
+          condition:
+            lambda: 'return !x;'
+          then:
+            - lvgl.slider.update:
+                id: hw_slider
+                value: 0
+            - lvgl.label.update:
+                id: hw_pct
+                text: "0%" 
+
+  - platform: homeassistant
+    id: lr_table_light_state
+    entity_id: light.hallway_dimmer_light
+    on_state:
+      - lvgl.button.update:
+          id: lr_table_btn
+          state: { checked: !lambda "return x;" }
+      - if:
+          condition:
+            lambda: 'return !x;'
+          then:
+            - lvgl.slider.update:
+                id: lr_table_slider
+                value: 0
+            - lvgl.label.update:
+                id: lr_table_pct
+                text: "0%" 
+
+sensor:
+  - platform: homeassistant
+    id: lr_brightness
+    entity_id: light.yee_group
+    attribute: brightness
+    on_value:
+      - if:
+          condition:
+            lambda: 'return !isnan(x) && id(lr_light_state).state && !id(slider_active_lr);'
+          then:
+            - lvgl.slider.update:
+                id: lr_slider
+                value: !lambda "return (int)x;"
+            - lvgl.label.update:
+                id: lr_pct
+                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+
+  - platform: homeassistant
+    id: hw_brightness
+    entity_id: light.woonkamer_ldvwifia100e27dim
+    attribute: brightness
+    on_value:
+      - if:
+          condition:
+            lambda: 'return !isnan(x) && id(hw_light_state).state && !id(slider_active_hw);'
+          then:
+            - lvgl.slider.update:
+                id: hw_slider
+                value: !lambda "return (int)x;"
+            - lvgl.label.update:
+                id: hw_pct
+                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+
+  - platform: homeassistant
+    id: lr_table_brightness
+    entity_id: light.hallway_dimmer_light
+    attribute: brightness
+    on_value:
+      - if:
+          condition:
+            lambda: 'return !isnan(x) && id(lr_table_light_state).state && !id(slider_active_lr_table);'
+          then:
+            - lvgl.slider.update:
+                id: lr_table_slider
+                value: !lambda "return (int)x;"
+            - lvgl.label.update:
+                id: lr_table_pct
+                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+
+lvgl:
+  pages:
+    - id: lights_page
+      bg_color: 0xF2F2EE
+      widgets:
+        # ==========================================
+        # --- STATUS INDICATOR ---
+        # ==========================================
+        - obj:
+            id: status_indicator
+            width: 16
+            height: 16
+            align: TOP_RIGHT
+            x: -4
+            y: 4
+            bg_color: 0xF44336
+            bg_opa: COVER
+            radius: 8
+            border_width: 0
+
+        # ==========================================
+        # --- LIVING ROOM ---
+        # ==========================================
+        - container:
+            <<: *style_container
+            y: 10
+            widgets:
+              - button:
+                  <<: *style_main_btn
+                  id: lr_btn
+                  on_value:
+                    - homeassistant.service:
+                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                        data: { entity_id: light.yee_group }
+                  widgets:
+                    - label: 
+                        <<: *style_main_label
+                        text: "LR Lights"
+              
+              - slider:
+                  <<: *style_slider
+                  id: lr_slider
+                  on_press:
+                    - script.stop: end_slider_lr
+                    - lambda: "id(slider_active_lr) = true;"
+                  on_value:
+                    - script.execute:
+                        id: debounce_lr
+                        brightness_val: !lambda "return (int)x;"
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                  on_release:
+                    - script.execute: end_slider_lr
+
+              - button:
+                  <<: *style_minus_btn
+                  id: lr_minus
+                  on_click:
+                    - script.stop: end_slider_lr
+                    - lambda: "id(slider_active_lr) = true;"
+                    - lvgl.slider.update:
+                        id: lr_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(lr_slider)) - 26;
+                          return next < 0 ? 0 : next;
+                    - script.execute:
+                        id: debounce_lr
+                        brightness_val: !lambda "return lv_slider_get_value(id(lr_slider));"
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr
+                  widgets:
+                    - label: 
+                        <<: *style_side_label
+                        text: "-"
+
+              - button:
+                  <<: *style_plus_btn
+                  id: lr_plus
+                  on_click:
+                    - script.stop: end_slider_lr
+                    - lambda: "id(slider_active_lr) = true;"
+                    - lvgl.slider.update:
+                        id: lr_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(lr_slider)) + 26;
+                          return next > 255 ? 255 : next;
+                    - script.execute:
+                        id: debounce_lr
+                        brightness_val: !lambda "return lv_slider_get_value(id(lr_slider));"
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr
+                  widgets:
+                    - label: 
+                        <<: *style_side_label
+                        text: "+"
+
+              - button:
+                  <<: *style_pct_btn
+                  on_click:
+                    - script.stop: end_slider_lr
+                    - lambda: "id(slider_active_lr) = true;"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.yee_group
+                          brightness: "255"
+                          transition: "0"
+                    - lvgl.slider.update:
+                        id: lr_slider
+                        value: 255
+                    - lvgl.label.update:
+                        id: lr_pct
+                        text: "100%"
+                    - script.execute: end_slider_lr
+                  widgets:
+                    - label:
+                        <<: *style_pct_label
+                        id: lr_pct
+                        text: "0%"
+
+        # ==========================================
+        # --- COFFEE TABLE ---
+        # ==========================================
+        - container:
+            <<: *style_container
+            y: 166
+            widgets:
+              - button:
+                  <<: *style_main_btn
+                  id: lr_table_btn
+                  on_value:
+                    - homeassistant.service:
+                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                        data: { entity_id: light.hallway_dimmer_light }
+                  widgets:
+                    - label: 
+                        <<: *style_main_label
+                        text: "Table front"
+              
+              - slider:
+                  <<: *style_slider
+                  id: lr_table_slider
+                  on_press:
+                    - script.stop: end_slider_lr_table
+                    - lambda: "id(slider_active_lr_table) = true;"
+                  on_value:
+                    - script.execute:
+                        id: debounce_lr_table
+                        brightness_val: !lambda "return (int)x;"
+                    - lvgl.label.update:
+                        id: lr_table_pct
+                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                  on_release:
+                    - script.execute: end_slider_lr_table
+
+              - button:
+                  <<: *style_minus_btn
+                  id: lr_table_minus
+                  on_click:
+                    - script.stop: end_slider_lr_table
+                    - lambda: "id(slider_active_lr_table) = true;"
+                    - lvgl.slider.update:
+                        id: lr_table_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(lr_table_slider)) - 26;
+                          return next < 0 ? 0 : next;
+                    - script.execute:
+                        id: debounce_lr_table
+                        brightness_val: !lambda "return lv_slider_get_value(id(lr_table_slider));"
+                    - lvgl.label.update:
+                        id: lr_table_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr_table
+                  widgets:
+                    - label: 
+                        <<: *style_side_label
+                        text: "-"
+
+              - button:
+                  <<: *style_plus_btn
+                  id: lr_table_plus
+                  on_click:
+                    - script.stop: end_slider_lr_table
+                    - lambda: "id(slider_active_lr_table) = true;"
+                    - lvgl.slider.update:
+                        id: lr_table_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(lr_table_slider)) + 26;
+                          return next > 255 ? 255 : next;
+                    - script.execute:
+                        id: debounce_lr_table
+                        brightness_val: !lambda "return lv_slider_get_value(id(lr_table_slider));"
+                    - lvgl.label.update:
+                        id: lr_table_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_lr_table
+                  widgets:
+                    - label: 
+                        <<: *style_side_label
+                        text: "+"
+
+              - button:
+                  <<: *style_pct_btn
+                  on_click:
+                    - script.stop: end_slider_lr_table
+                    - lambda: "id(slider_active_lr_table) = true;"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.hallway_dimmer_light
+                          brightness: "255"
+                          transition: "0"
+                    - lvgl.slider.update:
+                        id: lr_table_slider
+                        value: 255
+                    - lvgl.label.update:
+                        id: lr_table_pct
+                        text: "100%"
+                    - script.execute: end_slider_lr_table
+                  widgets:
+                    - label:
+                        <<: *style_pct_label
+                        id: lr_table_pct
+                        text: "0%"
+
+        # ==========================================
+        # --- HALLWAY ---
+        # ==========================================
+        - container:
+            <<: *style_container
+            y: 322
+            widgets:
+              - button:
+                  <<: *style_main_btn
+                  id: hw_btn
+                  on_value:
+                    - homeassistant.service:
+                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                        data: { entity_id: light.woonkamer_ldvwifia100e27dim }
+                  widgets:
+                    - label: 
+                        <<: *style_main_label
+                        text: "Hallway"
+              
+              - slider:
+                  <<: *style_slider
+                  id: hw_slider
+                  on_press:
+                    - script.stop: end_slider_hw
+                    - lambda: "id(slider_active_hw) = true;"
+                  on_value:
+                    - script.execute:
+                        id: debounce_hw
+                        brightness_val: !lambda "return (int)x;"
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                  on_release:
+                    - script.execute: end_slider_hw
+
+              - button:
+                  <<: *style_minus_btn
+                  id: hw_minus
+                  on_click:
+                    - script.stop: end_slider_hw
+                    - lambda: "id(slider_active_hw) = true;"
+                    - lvgl.slider.update:
+                        id: hw_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(hw_slider)) - 26;
+                          return next < 0 ? 0 : next;
+                    - script.execute:
+                        id: debounce_hw
+                        brightness_val: !lambda "return lv_slider_get_value(id(hw_slider));"
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_hw
+                  widgets:
+                    - label: 
+                        <<: *style_side_label
+                        text: "-"
+
+              - button:
+                  <<: *style_plus_btn
+                  id: hw_plus
+                  on_click:
+                    - script.stop: end_slider_hw
+                    - lambda: "id(slider_active_hw) = true;"
+                    - lvgl.slider.update:
+                        id: hw_slider
+                        value: !lambda |-
+                          int next = lv_slider_get_value(id(hw_slider)) + 26;
+                          return next > 255 ? 255 : next;
+                    - script.execute:
+                        id: debounce_hw
+                        brightness_val: !lambda "return lv_slider_get_value(id(hw_slider));"
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
+                    - script.execute: end_slider_hw
+                  widgets:
+                    - label: 
+                        <<: *style_side_label
+                        text: "+"
+
+              - button:
+                  <<: *style_pct_btn
+                  on_click:
+                    - script.stop: end_slider_hw
+                    - lambda: "id(slider_active_hw) = true;"
+                    - homeassistant.service:
+                        service: light.turn_on
+                        data:
+                          entity_id: light.woonkamer_ldvwifia100e27dim
+                          brightness: "255"
+                          transition: "0"
+                    - lvgl.slider.update:
+                        id: hw_slider
+                        value: 255
+                    - lvgl.label.update:
+                        id: hw_pct
+                        text: "100%"
+                    - script.execute: end_slider_hw
+                  widgets:
+                    - label:
+                        <<: *style_pct_label
+                        id: hw_pct
+                        text: "0%"
+
+        # ==========================================
+        # --- WAKE OVERLAY ---
+        # Absorbs touches when the screen is dimmed
+        # ==========================================
+        - obj:
+            id: wake_overlay
+            x: 0
+            y: 0
+            width: 222
+            height: 480
+            bg_opa: TRANSP
+            clickable: true
+            hidden: true
