@@ -243,7 +243,7 @@ script:
       - homeassistant.action:
           action: light.turn_on
           data:
-            entity_id: light.hallway_dimmer_light
+            entity_id: light.front_dimmer_light
             brightness: !lambda return brightness_val;
             transition: "0"
 
@@ -342,7 +342,7 @@ sensor:
 
   - platform: homeassistant
     id: lr_table_brightness
-    entity_id: light.hallway_dimmer_light
+    entity_id: light.front_dimmer_light
     attribute: brightness
     on_value:
       - if:
@@ -494,7 +494,7 @@ lvgl:
                   on_value:
                     - homeassistant.action:
                         action: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
-                        data: { entity_id: light.hallway_dimmer_light }
+                        data: { entity_id: light.front_dimmer_light }
                   widgets:
                     - label: 
                         <<: *style_main_label
@@ -570,7 +570,7 @@ lvgl:
                     - homeassistant.action:
                         action: light.turn_on
                         data:
-                          entity_id: light.hallway_dimmer_light
+                          entity_id: light.front_dimmer_light
                           brightness: "255"
                           transition: "0"
                     - lvgl.slider.update:
