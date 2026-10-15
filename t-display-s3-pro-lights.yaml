@@ -221,8 +221,8 @@ script:
       brightness_val: int
     then:
       - delay: 100ms
-      - homeassistant.service:
-          service: light.turn_on
+      - homeassistant.action:
+          action: light.turn_on
           data:
             entity_id: light.yee_group
             brightness: !lambda return brightness_val;
@@ -240,8 +240,8 @@ script:
       brightness_val: int
     then:
       - delay: 100ms
-      - homeassistant.service:
-          service: light.turn_on
+      - homeassistant.action:
+          action: light.turn_on
           data:
             entity_id: light.hallway_dimmer_light
             brightness: !lambda return brightness_val;
@@ -259,8 +259,8 @@ script:
       brightness_val: int
     then:
       - delay: 100ms
-      - homeassistant.service:
-          service: light.turn_on
+      - homeassistant.action:
+          action: light.turn_on
           data:
             entity_id: light.woonkamer_ldvwifia100e27dim
             brightness: !lambda return brightness_val;
@@ -301,7 +301,7 @@ binary_sensor:
 
   - platform: homeassistant
     id: lr_table_light_state
-    entity_id: light.hallway_dimmer_light
+    entity_id: light.front_dimmer_light
     on_state:
       - lvgl.button.update:
           id: lr_table_btn
@@ -387,8 +387,8 @@ lvgl:
                   <<: *style_main_btn
                   id: lr_btn
                   on_value:
-                    - homeassistant.service:
-                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                    - homeassistant.action:
+                        action: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.yee_group }
                   widgets:
                     - label: 
@@ -462,8 +462,8 @@ lvgl:
                   on_click:
                     - script.stop: end_slider_lr
                     - lambda: "id(slider_active_lr) = true;"
-                    - homeassistant.service:
-                        service: light.turn_on
+                    - homeassistant.action:
+                        action: light.turn_on
                         data:
                           entity_id: light.yee_group
                           brightness: "255"
@@ -492,8 +492,8 @@ lvgl:
                   <<: *style_main_btn
                   id: lr_table_btn
                   on_value:
-                    - homeassistant.service:
-                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                    - homeassistant.action:
+                        action: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.hallway_dimmer_light }
                   widgets:
                     - label: 
@@ -567,8 +567,8 @@ lvgl:
                   on_click:
                     - script.stop: end_slider_lr_table
                     - lambda: "id(slider_active_lr_table) = true;"
-                    - homeassistant.service:
-                        service: light.turn_on
+                    - homeassistant.action:
+                        action: light.turn_on
                         data:
                           entity_id: light.hallway_dimmer_light
                           brightness: "255"
@@ -597,8 +597,8 @@ lvgl:
                   <<: *style_main_btn
                   id: hw_btn
                   on_value:
-                    - homeassistant.service:
-                        service: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
+                    - homeassistant.action:
+                        action: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
                         data: { entity_id: light.woonkamer_ldvwifia100e27dim }
                   widgets:
                     - label: 
@@ -672,8 +672,8 @@ lvgl:
                   on_click:
                     - script.stop: end_slider_hw
                     - lambda: "id(slider_active_hw) = true;"
-                    - homeassistant.service:
-                        service: light.turn_on
+                    - homeassistant.action:
+                        action: light.turn_on
                         data:
                           entity_id: light.woonkamer_ldvwifia100e27dim
                           brightness: "255"
