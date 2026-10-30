@@ -37,7 +37,9 @@ wifi:
         id: ip_label
         text: !lambda |-
           static char buf[24];
-          snprintf(buf, sizeof(buf), "WiFi: %s", id(wifi_id).wifi_sta_ip_addresses()[0].str().c_str());
+          char ip_buf[esphome::network::IP_ADDRESS_BUFFER_SIZE];
+          id(wifi_id).wifi_sta_ip_addresses()[0].str_to(ip_buf);
+          snprintf(buf, sizeof(buf), "WiFi: %s", ip_buf);
           return std::string(buf);
   on_disconnect:
     - lvgl.label.update:
