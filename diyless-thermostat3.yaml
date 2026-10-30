@@ -1258,7 +1258,7 @@ lvgl:
             adjustable: true
             value: 300
             min_value: 300
-            max_value: 600
+            max_value: 650
             width: 340
             height: 340
             arc_width: 24
