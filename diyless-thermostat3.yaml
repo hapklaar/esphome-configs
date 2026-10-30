@@ -521,7 +521,7 @@ lvgl:
     then:
     - light.turn_on:
           id: backlight
-          brightness: 50%
+          brightness: 75%
   pages:
     - id: ch_page
       bg_opa: TRANSP
