@@ -193,7 +193,7 @@ script:
     parameters:
       temp: float
     then:
-      - delay: 500ms
+      - delay: 200ms
       - homeassistant.service:
           service: climate.set_temperature
           data:
@@ -207,7 +207,7 @@ script:
     parameters:
       temp: float
     then:
-      - delay: 500ms
+      - delay: 200ms
       - homeassistant.service:
           service: climate.set_temperature
           data:
@@ -221,7 +221,7 @@ script:
     parameters:
       temp: float
     then:
-      - delay: 500ms
+      - delay: 200ms
       - homeassistant.service:
           service: climate.set_temperature
           data:
@@ -235,7 +235,7 @@ script:
     parameters:
       temp: float
     then:
-      - delay: 500ms
+      - delay: 200ms
       - homeassistant.service:
           service: climate.set_temperature
           data:
@@ -249,7 +249,7 @@ script:
     parameters:
       temp: float
     then:
-      - delay: 500ms
+      - delay: 200ms
       - homeassistant.service:
           service: water_heater.set_temperature
           data:
