@@ -12,13 +12,13 @@ esp32:
       CONFIG_ESP32_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ: "240"
   flash_size: 8MB
-
+  
 psram:
   mode: octal
-  speed: 80MHz
+  speed: 80MHz  
 
 logger:
-  level: INFO
+  level: DEBUG
 
 api:
   encryption:
@@ -35,21 +35,19 @@ wifi:
   on_connect:
     - lvgl.label.update:
         id: ip_label
-        text: !lambda |-
-          static char buf[24];
-          char ip_buf[esphome::network::IP_ADDRESS_BUFFER_SIZE];
-          id(wifi_id).wifi_sta_ip_addresses()[0].str_to(ip_buf);
-          snprintf(buf, sizeof(buf), "WiFi: %s", ip_buf);
-          return std::string(buf);
+        text:
+          format: "\uF1EB %s"
+          args: [ '([]() -> const char* { static char b[16]; id(wifi_id).wifi_sta_ip_addresses()[0].str_to(b); return b; }())' ]
   on_disconnect:
     - lvgl.label.update:
         id: ip_label
-        text: "WiFi: disconnected"
+        text: "\uF1EB disconnected"
   ap:
     ssid: "DIYLESS-Thermostat-3"
     password: ""
-
+    
 captive_portal:
+web_server:
 
 output:
   - platform: ledc
@@ -81,8 +79,7 @@ number:
 i2c:
   sda: GPIO17
   scl: GPIO18
-  scan: false
-  frequency: 400kHz
+  scan: true
 
 spi:
   clk_pin:
@@ -108,13 +105,13 @@ display:
     hsync_pin: GPIO5
     vsync_pin: GPIO4
     pclk_pin: GPIO21
-    pclk_frequency: 16MHz
+    pclk_frequency: 10MHz
     pclk_inverted: false
     hsync_pulse_width: 14
-    hsync_back_porch: 14
+    hsync_back_porch:  14
     hsync_front_porch: 14
-    vsync_pulse_width: 10
-    vsync_back_porch: 14
+    vsync_pulse_width:  10
+    vsync_back_porch:  14
     vsync_front_porch: 14
     data_pins:
       red: [39, 40, 41, 42, 02]
@@ -134,7 +131,7 @@ touchscreen:
       x_max: 480
       y_min: 0
       y_max: 480
-    update_interval: 50ms
+    update_interval: 100ms
     on_release:
       - light.turn_on:
           id: backlight
@@ -146,35 +143,89 @@ font:
       family: Roboto
     id: font_roboto_72
     size: 72
-    bpp: 4
-    glyphs: "0123456789.-°"
+    bpp: 8
   - file:
       type: gfonts
       family: Montserrat
     id: montserrat_20
     size: 20
-    bpp: 4
+    bpp: 8
   - file:
       type: gfonts
       family: Montserrat
     id: montserrat_32
     size: 32
-    bpp: 4
+    bpp: 8
+  - file:
+      type: gfonts
+      family: Montserrat
+    id: montserrat_48
+    size: 48
+    bpp: 8
   - file:
       type: gfonts
       family: Material Icons
     id: material_icons_32
     size: 32
-    bpp: 4
+    bpp: 8
     glyphs:
       - "\uEF55" # Flame
       - "\uE8AC" # Power / Off
       - "\uE3FA" # Auto (hdr_auto)
       - "\uE145" # Plus (add)
       - "\uE15B" # Minus (remove)
-      - "\uE5CB" # Chevron Left
-      - "\uE5CC" # Chevron Right
-      - "\uE63E" # WiFi
+
+script:
+  - id: set_huiskamer
+    mode: restart
+    parameters: { temp: float }
+    then:
+      - delay: 500ms
+      - homeassistant.action:
+          action: climate.set_temperature
+          data: { entity_id: climate.huiskamer }
+          data_template: { temperature: '{{ target }}' }
+          variables: { target: 'return temp;' }
+  - id: set_keuken
+    mode: restart
+    parameters: { temp: float }
+    then:
+      - delay: 500ms
+      - homeassistant.action:
+          action: climate.set_temperature
+          data: { entity_id: climate.keuken }
+          data_template: { temperature: '{{ target }}' }
+          variables: { target: 'return temp;' }
+  - id: set_hal
+    mode: restart
+    parameters: { temp: float }
+    then:
+      - delay: 500ms
+      - homeassistant.action:
+          action: climate.set_temperature
+          data: { entity_id: climate.hal }
+          data_template: { temperature: '{{ target }}' }
+          variables: { target: 'return temp;' }
+  - id: set_slaapkamer
+    mode: restart
+    parameters: { temp: float }
+    then:
+      - delay: 500ms
+      - homeassistant.action:
+          action: climate.set_temperature
+          data: { entity_id: climate.slaapkamer }
+          data_template: { temperature: '{{ target }}' }
+          variables: { target: 'return temp;' }
+  - id: set_dhw
+    mode: restart
+    parameters: { temp: float }
+    then:
+      - delay: 500ms
+      - homeassistant.action:
+          action: water_heater.set_temperature
+          data: { entity_id: water_heater.hot_water }
+          data_template: { temperature: '{{ target }}' }
+          variables: { target: 'return temp;' }
 
 binary_sensor:
   - platform: homeassistant
@@ -203,7 +254,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: huiskamer_action_label
-          text: !lambda 'return x;'
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
   - platform: homeassistant
     id: keuken_action
     entity_id: climate.keuken
@@ -211,7 +262,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: keuken_action_label
-          text: !lambda 'return x;'
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
   - platform: homeassistant
     id: hal_action
     entity_id: climate.hal
@@ -219,7 +270,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: hal_action_label
-          text: !lambda 'return x;'
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
   - platform: homeassistant
     id: slaapkamer_action
     entity_id: climate.slaapkamer
@@ -227,7 +278,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: slaapkamer_action_label
-          text: !lambda 'return x;'
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
 
   # --- HVAC MODES (CONTROLS ARC & BUTTON COLORS) ---
   - platform: homeassistant
@@ -382,7 +433,7 @@ sensor:
       - lvgl.label.update:
           id: huiskamer_target_label
           text: !lambda 'return str_sprintf("%.1f°", x);'
-      - lvgl.arc.update: { id: huiskamer_arc, value: !lambda "return x * 10;" }
+      - lvgl.arc.update: { id: huiskamer_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
     id: keuken_current_temp
@@ -400,7 +451,7 @@ sensor:
       - lvgl.label.update:
           id: keuken_target_label
           text: !lambda 'return str_sprintf("%.1f°", x);'
-      - lvgl.arc.update: { id: keuken_arc, value: !lambda "return x * 10;" }
+      - lvgl.arc.update: { id: keuken_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
     id: hal_current_temp
@@ -418,7 +469,7 @@ sensor:
       - lvgl.label.update:
           id: hal_target_label
           text: !lambda 'return str_sprintf("%.1f°", x);'
-      - lvgl.arc.update: { id: hal_arc, value: !lambda "return x * 10;" }
+      - lvgl.arc.update: { id: hal_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
     id: slaapkamer_current_temp
@@ -436,7 +487,7 @@ sensor:
       - lvgl.label.update:
           id: slaapkamer_target_label
           text: !lambda 'return str_sprintf("%.1f°", x);'
-      - lvgl.arc.update: { id: slaapkamer_arc, value: !lambda "return x * 10;" }
+      - lvgl.arc.update: { id: slaapkamer_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
     id: dhw_target_temp
@@ -446,12 +497,11 @@ sensor:
       - lvgl.label.update:
           id: dhw_target_label
           text: !lambda 'return str_sprintf("%.1f°", x);'
-      - lvgl.arc.update: { id: dhw_arc, value: !lambda "return x * 10;" }
+      - lvgl.arc.update: { id: dhw_arc, value: !lambda return x * 10; }
 
-lvgl:
+lvgl:  
   disp_bg_color: black
   text_color: white
-  buffer_size: 100%
   displays: diyless_display
   touchscreens:
     - touchscreen_id: diyless_touchscreen
@@ -461,14 +511,13 @@ lvgl:
       - light.turn_on:
           id: backlight
           brightness: 70%
-
+  
   top_layer:
     text_color: white
     widgets:
       - label:
           id: ip_label
           text: "0.0.0.0"
-          text_font: montserrat_20
           text_color: 0x808080
           pad_top: 8
           pad_left: 16
@@ -503,21 +552,18 @@ lvgl:
               arc_width: 24
             knob:
               bg_color: 0xFFFFFF
-            on_change:
+            on_value:
               then:
                 - lvgl.label.update:
                     id: huiskamer_target_label
-                    text: !lambda 'return str_sprintf("%.1f°", x / 10.0f);'
-            on_release:
-              then:
-                - homeassistant.action:
-                    action: climate.set_temperature
-                    data:
-                      entity_id: climate.huiskamer
-                    data_template:
-                      temperature: "{{ target }}"
-                    variables:
-                      target: !lambda "return x / 10.0f;"
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(huiskamer_target_temp).state - 0.05) || ((x / 10.0) > id(huiskamer_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_huiskamer
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: huiskamer_action_label
             align: CENTER
@@ -562,16 +608,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::max(50, (int)lv_arc_get_value(id(huiskamer_arc)) - 5);
-                    lv_arc_set_value(id(huiskamer_arc), val);
-                    lv_label_set_text_fmt(id(huiskamer_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.huiskamer }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(huiskamer_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.huiskamer', 'temperature') | float) - 0.5 }}" }
         - button:
             align: CENTER
             x: 45
@@ -590,16 +630,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::min(300, (int)lv_arc_get_value(id(huiskamer_arc)) + 5);
-                    lv_arc_set_value(id(huiskamer_arc), val);
-                    lv_label_set_text_fmt(id(huiskamer_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.huiskamer }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(huiskamer_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.huiskamer', 'temperature') | float) + 0.5 }}" }
         - button:
             id: huiskamer_btn_auto
             align: CENTER
@@ -661,8 +695,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CB", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
                 - lvgl.page.show: { id: dhw_page, animation: MOVE_RIGHT, time: 300ms }
@@ -673,8 +708,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CC", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
                 - lvgl.page.show: { id: keuken_page, animation: MOVE_LEFT, time: 300ms }
@@ -700,21 +736,18 @@ lvgl:
               arc_width: 24
             knob:
               bg_color: 0xFFFFFF
-            on_change:
+            on_value:
               then:
                 - lvgl.label.update:
                     id: keuken_target_label
-                    text: !lambda 'return str_sprintf("%.1f°", x / 10.0f);'
-            on_release:
-              then:
-                - homeassistant.action:
-                    action: climate.set_temperature
-                    data:
-                      entity_id: climate.keuken
-                    data_template:
-                      temperature: "{{ target }}"
-                    variables:
-                      target: !lambda "return x / 10.0f;"
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(keuken_target_temp).state - 0.05) || ((x / 10.0) > id(keuken_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_keuken
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: keuken_action_label
             align: CENTER
@@ -759,16 +792,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::max(50, (int)lv_arc_get_value(id(keuken_arc)) - 5);
-                    lv_arc_set_value(id(keuken_arc), val);
-                    lv_label_set_text_fmt(id(keuken_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.keuken }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(keuken_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.keuken', 'temperature') | float) - 0.5 }}" }
         - button:
             align: CENTER
             x: 45
@@ -787,16 +814,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::min(300, (int)lv_arc_get_value(id(keuken_arc)) + 5);
-                    lv_arc_set_value(id(keuken_arc), val);
-                    lv_label_set_text_fmt(id(keuken_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.keuken }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(keuken_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.keuken', 'temperature') | float) + 0.5 }}" }
         - button:
             id: keuken_btn_auto
             align: CENTER
@@ -858,8 +879,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CB", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
                 - lvgl.page.show: { id: huiskamer_page, animation: MOVE_RIGHT, time: 300ms }
@@ -870,8 +892,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CC", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
                 - lvgl.page.show: { id: hal_page, animation: MOVE_LEFT, time: 300ms }
@@ -897,21 +920,18 @@ lvgl:
               arc_width: 24
             knob:
               bg_color: 0xFFFFFF
-            on_change:
+            on_value:
               then:
                 - lvgl.label.update:
                     id: hal_target_label
-                    text: !lambda 'return str_sprintf("%.1f°", x / 10.0f);'
-            on_release:
-              then:
-                - homeassistant.action:
-                    action: climate.set_temperature
-                    data:
-                      entity_id: climate.hal
-                    data_template:
-                      temperature: "{{ target }}"
-                    variables:
-                      target: !lambda "return x / 10.0f;"
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(hal_target_temp).state - 0.05) || ((x / 10.0) > id(hal_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_hal
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: hal_action_label
             align: CENTER
@@ -956,16 +976,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::max(50, (int)lv_arc_get_value(id(hal_arc)) - 5);
-                    lv_arc_set_value(id(hal_arc), val);
-                    lv_label_set_text_fmt(id(hal_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.hal }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(hal_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.hal', 'temperature') | float) - 0.5 }}" }
         - button:
             align: CENTER
             x: 45
@@ -984,16 +998,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::min(300, (int)lv_arc_get_value(id(hal_arc)) + 5);
-                    lv_arc_set_value(id(hal_arc), val);
-                    lv_label_set_text_fmt(id(hal_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.hal }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(hal_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.hal', 'temperature') | float) + 0.5 }}" }
         - button:
             id: hal_btn_auto
             align: CENTER
@@ -1055,8 +1063,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CB", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
                 - lvgl.page.show: { id: keuken_page, animation: MOVE_RIGHT, time: 300ms }
@@ -1067,8 +1076,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CC", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
                 - lvgl.page.show: { id: slaapkamer_page, animation: MOVE_LEFT, time: 300ms }
@@ -1094,21 +1104,18 @@ lvgl:
               arc_width: 24
             knob:
               bg_color: 0xFFFFFF
-            on_change:
+            on_value:
               then:
                 - lvgl.label.update:
                     id: slaapkamer_target_label
-                    text: !lambda 'return str_sprintf("%.1f°", x / 10.0f);'
-            on_release:
-              then:
-                - homeassistant.action:
-                    action: climate.set_temperature
-                    data:
-                      entity_id: climate.slaapkamer
-                    data_template:
-                      temperature: "{{ target }}"
-                    variables:
-                      target: !lambda "return x / 10.0f;"
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(slaapkamer_target_temp).state - 0.05) || ((x / 10.0) > id(slaapkamer_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_slaapkamer
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: slaapkamer_action_label
             align: CENTER
@@ -1153,16 +1160,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::max(50, (int)lv_arc_get_value(id(slaapkamer_arc)) - 5);
-                    lv_arc_set_value(id(slaapkamer_arc), val);
-                    lv_label_set_text_fmt(id(slaapkamer_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.slaapkamer }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(slaapkamer_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.slaapkamer', 'temperature') | float) - 0.5 }}" }
         - button:
             align: CENTER
             x: 45
@@ -1181,16 +1182,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::min(300, (int)lv_arc_get_value(id(slaapkamer_arc)) + 5);
-                    lv_arc_set_value(id(slaapkamer_arc), val);
-                    lv_label_set_text_fmt(id(slaapkamer_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: climate.set_temperature
                     data: { entity_id: climate.slaapkamer }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(slaapkamer_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('climate.slaapkamer', 'temperature') | float) + 0.5 }}" }
         - button:
             id: slaapkamer_btn_auto
             align: CENTER
@@ -1252,8 +1247,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CB", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
                 - lvgl.page.show: { id: hal_page, animation: MOVE_RIGHT, time: 300ms }
@@ -1264,8 +1260,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CC", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
                 - lvgl.page.show: { id: dhw_page, animation: MOVE_LEFT, time: 300ms }
@@ -1291,21 +1288,18 @@ lvgl:
               arc_width: 24
             knob:
               bg_color: 0xFFFFFF
-            on_change:
+            on_value:
               then:
                 - lvgl.label.update:
                     id: dhw_target_label
-                    text: !lambda 'return str_sprintf("%.1f°", x / 10.0f);'
-            on_release:
-              then:
-                - homeassistant.action:
-                    action: water_heater.set_temperature
-                    data:
-                      entity_id: water_heater.hot_water
-                    data_template:
-                      temperature: "{{ target }}"
-                    variables:
-                      target: !lambda "return x / 10.0f;"
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(dhw_target_temp).state - 0.05) || ((x / 10.0) > id(dhw_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_dhw
+                          temp: !lambda "return x / 10.0;"
         - label:
             align: CENTER
             y: -90
@@ -1342,16 +1336,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::max(300, (int)lv_arc_get_value(id(dhw_arc)) - 10);
-                    lv_arc_set_value(id(dhw_arc), val);
-                    lv_label_set_text_fmt(id(dhw_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: water_heater.set_temperature
                     data: { entity_id: water_heater.hot_water }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(dhw_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('water_heater.hot_water', 'temperature') | float) - 1.0 }}" }
         - button:
             align: CENTER
             x: 45
@@ -1370,16 +1358,10 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - lambda: |-
-                    int val = std::min(650, (int)lv_arc_get_value(id(dhw_arc)) + 10);
-                    lv_arc_set_value(id(dhw_arc), val);
-                    lv_label_set_text_fmt(id(dhw_target_label), "%.1f°", val / 10.0f);
                 - homeassistant.action:
                     action: water_heater.set_temperature
                     data: { entity_id: water_heater.hot_water }
-                    data_template: { temperature: "{{ target }}" }
-                    variables:
-                      target: !lambda "return lv_arc_get_value(id(dhw_arc)) / 10.0f;"
+                    data_template: { temperature: "{{ (state_attr('water_heater.hot_water', 'temperature') | float) + 1.0 }}" }
         - button:
             id: dhw_btn_auto
             align: CENTER
@@ -1441,8 +1423,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CB", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
                 - lvgl.page.show: { id: slaapkamer_page, animation: MOVE_RIGHT, time: 300ms }
@@ -1453,8 +1436,9 @@ lvgl:
             width: 54
             height: 54
             bg_color: 0x000000
+            text_font: montserrat_32
             widgets:
-              - label: { align: CENTER, text: "\uE5CC", text_font: material_icons_32 }
+              - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
                 - lvgl.page.show: { id: huiskamer_page, animation: MOVE_LEFT, time: 300ms }
