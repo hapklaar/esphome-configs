@@ -181,8 +181,8 @@ script:
     parameters: { temp: float }
     then:
       - delay: 500ms
-      - homeassistant.service:
-          service: climate.set_temperature
+      - homeassistant.action:
+          action: climate.set_temperature
           data: { entity_id: climate.huiskamer }
           data_template: { temperature: '{{ target }}' }
           variables: { target: 'return temp;' }
@@ -191,8 +191,8 @@ script:
     parameters: { temp: float }
     then:
       - delay: 500ms
-      - homeassistant.service:
-          service: climate.set_temperature
+      - homeassistant.action:
+          action: climate.set_temperature
           data: { entity_id: climate.keuken }
           data_template: { temperature: '{{ target }}' }
           variables: { target: 'return temp;' }
@@ -201,8 +201,8 @@ script:
     parameters: { temp: float }
     then:
       - delay: 500ms
-      - homeassistant.service:
-          service: climate.set_temperature
+      - homeassistant.action:
+          action: climate.set_temperature
           data: { entity_id: climate.hal }
           data_template: { temperature: '{{ target }}' }
           variables: { target: 'return temp;' }
@@ -211,8 +211,8 @@ script:
     parameters: { temp: float }
     then:
       - delay: 500ms
-      - homeassistant.service:
-          service: climate.set_temperature
+      - homeassistant.action:
+          action: climate.set_temperature
           data: { entity_id: climate.slaapkamer }
           data_template: { temperature: '{{ target }}' }
           variables: { target: 'return temp;' }
@@ -221,8 +221,8 @@ script:
     parameters: { temp: float }
     then:
       - delay: 500ms
-      - homeassistant.service:
-          service: water_heater.set_temperature
+      - homeassistant.action:
+          action: water_heater.set_temperature
           data: { entity_id: water_heater.hot_water }
           data_template: { temperature: '{{ target }}' }
           variables: { target: 'return temp;' }
@@ -609,8 +609,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.huiskamer }
                     data_template: { temperature: "{{ (state_attr('climate.huiskamer', 'temperature') | float) - 0.5 }}" }
         - button:
@@ -631,8 +631,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.huiskamer }
                     data_template: { temperature: "{{ (state_attr('climate.huiskamer', 'temperature') | float) + 0.5 }}" }
         - button:
@@ -650,8 +650,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.huiskamer, hvac_mode: "auto" }
         - button:
             id: huiskamer_btn_heat
@@ -668,8 +668,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.huiskamer, hvac_mode: "heat" }
         - button:
             id: huiskamer_btn_off
@@ -686,8 +686,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.huiskamer, hvac_mode: "off" }
         - button:
             align: CENTER
@@ -786,8 +786,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.keuken }
                     data_template: { temperature: "{{ (state_attr('climate.keuken', 'temperature') | float) - 0.5 }}" }
         - button:
@@ -808,8 +808,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.keuken }
                     data_template: { temperature: "{{ (state_attr('climate.keuken', 'temperature') | float) + 0.5 }}" }
         - button:
@@ -827,8 +827,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.keuken, hvac_mode: "auto" }
         - button:
             id: keuken_btn_heat
@@ -845,8 +845,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.keuken, hvac_mode: "heat" }
         - button:
             id: keuken_btn_off
@@ -863,8 +863,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.keuken, hvac_mode: "off" }
         - button:
             align: CENTER
@@ -963,8 +963,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.hal }
                     data_template: { temperature: "{{ (state_attr('climate.hal', 'temperature') | float) - 0.5 }}" }
         - button:
@@ -985,8 +985,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.hal }
                     data_template: { temperature: "{{ (state_attr('climate.hal', 'temperature') | float) + 0.5 }}" }
         - button:
@@ -1004,8 +1004,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.hal, hvac_mode: "auto" }
         - button:
             id: hal_btn_heat
@@ -1022,8 +1022,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.hal, hvac_mode: "heat" }
         - button:
             id: hal_btn_off
@@ -1040,8 +1040,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.hal, hvac_mode: "off" }
         - button:
             align: CENTER
@@ -1140,8 +1140,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.slaapkamer }
                     data_template: { temperature: "{{ (state_attr('climate.slaapkamer', 'temperature') | float) - 0.5 }}" }
         - button:
@@ -1162,8 +1162,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
+                - homeassistant.action:
+                    action: climate.set_temperature
                     data: { entity_id: climate.slaapkamer }
                     data_template: { temperature: "{{ (state_attr('climate.slaapkamer', 'temperature') | float) + 0.5 }}" }
         - button:
@@ -1181,8 +1181,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.slaapkamer, hvac_mode: "auto" }
         - button:
             id: slaapkamer_btn_heat
@@ -1199,8 +1199,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.slaapkamer, hvac_mode: "heat" }
         - button:
             id: slaapkamer_btn_off
@@ -1217,8 +1217,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: climate.set_hvac_mode
+                - homeassistant.action:
+                    action: climate.set_hvac_mode
                     data: { entity_id: climate.slaapkamer, hvac_mode: "off" }
         - button:
             align: CENTER
@@ -1309,8 +1309,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: water_heater.set_temperature
+                - homeassistant.action:
+                    action: water_heater.set_temperature
                     data: { entity_id: water_heater.hot_water }
                     data_template: { temperature: "{{ (state_attr('water_heater.hot_water', 'temperature') | float) - 1.0 }}" }
         - button:
@@ -1331,8 +1331,8 @@ lvgl:
                   text_color: 0x2095F6
             on_click:
               then:
-                - homeassistant.service:
-                    service: water_heater.set_temperature
+                - homeassistant.action:
+                    action: water_heater.set_temperature
                     data: { entity_id: water_heater.hot_water }
                     data_template: { temperature: "{{ (state_attr('water_heater.hot_water', 'temperature') | float) + 1.0 }}" }
         - button:
@@ -1350,8 +1350,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: water_heater.set_operation_mode
+                - homeassistant.action:
+                    action: water_heater.set_operation_mode
                     data: { entity_id: water_heater.hot_water, operation_mode: "auto" }
         - button:
             id: dhw_btn_heat
@@ -1368,8 +1368,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: water_heater.set_operation_mode
+                - homeassistant.action:
+                    action: water_heater.set_operation_mode
                     data: { entity_id: water_heater.hot_water, operation_mode: "heat" }
         - button:
             id: dhw_btn_off
@@ -1386,8 +1386,8 @@ lvgl:
                   text_font: material_icons_32
             on_click:
               then:
-                - homeassistant.service:
-                    service: water_heater.set_operation_mode
+                - homeassistant.action:
+                    action: water_heater.set_operation_mode
                     data: { entity_id: water_heater.hot_water, operation_mode: "off" }
         - button:
             align: CENTER
