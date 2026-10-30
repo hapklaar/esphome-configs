@@ -700,7 +700,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
-                - lvgl.page.show: { id: dhw_page, animation: MOVE_RIGHT, time: 300ms }
+                - lvgl.page.show: { id: dhw_page, animation: MOVE_RIGHT, time: 20ms }
         - button:
             align: CENTER
             x: 190
@@ -713,7 +713,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
-                - lvgl.page.show: { id: keuken_page, animation: MOVE_LEFT, time: 50ms }
+                - lvgl.page.show: { id: keuken_page, animation: MOVE_LEFT, time: 20ms }
 
     # --- PAGE 2: KEUKEN ---
     - id: keuken_page
@@ -884,7 +884,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
-                - lvgl.page.show: { id: huiskamer_page, animation: MOVE_RIGHT, time: 300ms }
+                - lvgl.page.show: { id: huiskamer_page, animation: MOVE_RIGHT, time: 20ms }
         - button:
             align: CENTER
             x: 190
@@ -897,7 +897,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
-                - lvgl.page.show: { id: hal_page, animation: MOVE_LEFT, time: 300ms }
+                - lvgl.page.show: { id: hal_page, animation: MOVE_LEFT, time: 20ms }
 
     # --- PAGE 3: HAL ---
     - id: hal_page
@@ -1068,7 +1068,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
-                - lvgl.page.show: { id: keuken_page, animation: MOVE_RIGHT, time: 300ms }
+                - lvgl.page.show: { id: keuken_page, animation: MOVE_RIGHT, time: 20ms }
         - button:
             align: CENTER
             x: 190
@@ -1081,7 +1081,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
-                - lvgl.page.show: { id: slaapkamer_page, animation: MOVE_LEFT, time: 300ms }
+                - lvgl.page.show: { id: slaapkamer_page, animation: MOVE_LEFT, time: 20ms }
 
     # --- PAGE 4: SLAAPKAMER ---
     - id: slaapkamer_page
@@ -1252,7 +1252,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
-                - lvgl.page.show: { id: hal_page, animation: MOVE_RIGHT, time: 300ms }
+                - lvgl.page.show: { id: hal_page, animation: MOVE_RIGHT, time: 20ms }
         - button:
             align: CENTER
             x: 190
@@ -1265,7 +1265,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
-                - lvgl.page.show: { id: dhw_page, animation: MOVE_LEFT, time: 300ms }
+                - lvgl.page.show: { id: dhw_page, animation: MOVE_LEFT, time: 20ms }
 
     # --- PAGE 5: DHW (HOT WATER) ---
     - id: dhw_page
@@ -1428,7 +1428,7 @@ lvgl:
               - label: { align: CENTER, text: "\uF053" }
             on_click:
               then:
-                - lvgl.page.show: { id: slaapkamer_page, animation: MOVE_RIGHT, time: 300ms }
+                - lvgl.page.show: { id: slaapkamer_page, animation: MOVE_RIGHT, time: 20ms }
         - button:
             align: CENTER
             x: 190
@@ -1441,4 +1441,4 @@ lvgl:
               - label: { align: CENTER, text: "\uF054" }
             on_click:
               then:
-                - lvgl.page.show: { id: huiskamer_page, animation: MOVE_LEFT, time: 300ms }
+                - lvgl.page.show: { id: huiskamer_page, animation: MOVE_LEFT, time: 20ms }
