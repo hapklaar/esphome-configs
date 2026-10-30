@@ -171,9 +171,9 @@ font:
     glyphs:
       - "\uEF55" # Flame
       - "\uE8AC" # Power / Off
-      - "\uE3FA" # Auto
-      - "\uE145" # Plus
-      - "\uE15B" # Minus
+      - "\uE3FA" # Auto (hdr_auto)
+      - "\uE145" # Plus (add)
+      - "\uE15B" # Minus (remove)
 
 script:
   - id: set_huiskamer
@@ -254,7 +254,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: huiskamer_action_label
-          text: { format: "%s", args: [ 'x.c_str()' ] }
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
   - platform: homeassistant
     id: keuken_action
     entity_id: climate.keuken
@@ -262,7 +262,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: keuken_action_label
-          text: { format: "%s", args: [ 'x.c_str()' ] }
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
   - platform: homeassistant
     id: hal_action
     entity_id: climate.hal
@@ -270,7 +270,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: hal_action_label
-          text: { format: "%s", args: [ 'x.c_str()' ] }
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
   - platform: homeassistant
     id: slaapkamer_action
     entity_id: climate.slaapkamer
@@ -278,9 +278,9 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: slaapkamer_action_label
-          text: { format: "%s", args: [ 'x.c_str()' ] }
+          text: !lambda 'return str_sprintf("%s", x.c_str());'
 
-  # --- HVAC MODES ---
+  # --- HVAC MODES (CONTROLS ARC & BUTTON COLORS) ---
   - platform: homeassistant
     id: huiskamer_mode
     entity_id: climate.huiskamer
@@ -424,7 +424,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: huiskamer_current_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
   - platform: homeassistant
     id: huiskamer_target_temp
     entity_id: climate.huiskamer
@@ -432,7 +432,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: huiskamer_target_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
       - lvgl.arc.update: { id: huiskamer_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
@@ -442,7 +442,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: keuken_current_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
   - platform: homeassistant
     id: keuken_target_temp
     entity_id: climate.keuken
@@ -450,7 +450,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: keuken_target_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
       - lvgl.arc.update: { id: keuken_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
@@ -460,7 +460,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: hal_current_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
   - platform: homeassistant
     id: hal_target_temp
     entity_id: climate.hal
@@ -468,7 +468,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: hal_target_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
       - lvgl.arc.update: { id: hal_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
@@ -478,7 +478,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: slaapkamer_current_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
   - platform: homeassistant
     id: slaapkamer_target_temp
     entity_id: climate.slaapkamer
@@ -486,7 +486,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: slaapkamer_target_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
       - lvgl.arc.update: { id: slaapkamer_arc, value: !lambda return x * 10; }
 
   - platform: homeassistant
@@ -496,7 +496,7 @@ sensor:
     on_value:
       - lvgl.label.update:
           id: dhw_target_label
-          text: { format: "%.1f°", args: [ 'x' ] }
+          text: !lambda 'return str_sprintf("%.1f°", x);'
       - lvgl.arc.update: { id: dhw_arc, value: !lambda return x * 10; }
 
 lvgl:  
@@ -556,7 +556,7 @@ lvgl:
               then:
                 - lvgl.label.update:
                     id: huiskamer_target_label
-                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(huiskamer_target_temp).state - 0.05) || ((x / 10.0) > id(huiskamer_target_temp).state + 0.05);'
@@ -740,7 +740,7 @@ lvgl:
               then:
                 - lvgl.label.update:
                     id: keuken_target_label
-                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(keuken_target_temp).state - 0.05) || ((x / 10.0) > id(keuken_target_temp).state + 0.05);'
@@ -924,7 +924,7 @@ lvgl:
               then:
                 - lvgl.label.update:
                     id: hal_target_label
-                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(hal_target_temp).state - 0.05) || ((x / 10.0) > id(hal_target_temp).state + 0.05);'
@@ -1108,7 +1108,7 @@ lvgl:
               then:
                 - lvgl.label.update:
                     id: slaapkamer_target_label
-                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(slaapkamer_target_temp).state - 0.05) || ((x / 10.0) > id(slaapkamer_target_temp).state + 0.05);'
@@ -1292,7 +1292,7 @@ lvgl:
               then:
                 - lvgl.label.update:
                     id: dhw_target_label
-                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
+                    text: !lambda 'return str_sprintf("%.1f°", (float)x / 10.0);'
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(dhw_target_temp).state - 0.05) || ((x / 10.0) > id(dhw_target_temp).state + 0.05);'
