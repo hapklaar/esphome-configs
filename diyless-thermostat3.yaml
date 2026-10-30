@@ -179,6 +179,78 @@ font:
     size: 48
     bpp: 8
 
+script:
+  - id: set_huiskamer
+    mode: restart
+    parameters:
+      temp: float
+    then:
+      - delay: 500ms
+      - homeassistant.service:
+          service: climate.set_temperature
+          data:
+            entity_id: climate.huiskamer
+          data_template:
+            temperature: '{{ target }}'
+          variables:
+            target: 'return temp;'
+  - id: set_keuken
+    mode: restart
+    parameters:
+      temp: float
+    then:
+      - delay: 500ms
+      - homeassistant.service:
+          service: climate.set_temperature
+          data:
+            entity_id: climate.keuken
+          data_template:
+            temperature: '{{ target }}'
+          variables:
+            target: 'return temp;'
+  - id: set_hal
+    mode: restart
+    parameters:
+      temp: float
+    then:
+      - delay: 500ms
+      - homeassistant.service:
+          service: climate.set_temperature
+          data:
+            entity_id: climate.hal
+          data_template:
+            temperature: '{{ target }}'
+          variables:
+            target: 'return temp;'
+  - id: set_slaapkamer
+    mode: restart
+    parameters:
+      temp: float
+    then:
+      - delay: 500ms
+      - homeassistant.service:
+          service: climate.set_temperature
+          data:
+            entity_id: climate.slaapkamer
+          data_template:
+            temperature: '{{ target }}'
+          variables:
+            target: 'return temp;'
+  - id: set_dhw
+    mode: restart
+    parameters:
+      temp: float
+    then:
+      - delay: 500ms
+      - homeassistant.service:
+          service: water_heater.set_temperature
+          data:
+            entity_id: water_heater.hot_water
+          data_template:
+            temperature: '{{ target }}'
+          variables:
+            target: 'return temp;'
+
 binary_sensor:
   - platform: homeassistant
     id: boiler_flame
@@ -195,7 +267,7 @@ binary_sensor:
             else:
               - lvgl.label.update:
                   id: flame_icon
-                  text_color: 0x000000
+                  text_color: 0x2095F6
 
 text_sensor:
   - platform: homeassistant
@@ -402,9 +474,9 @@ lvgl:
           align: BOTTOM_RIGHT
           x: -16
           y: -16
-          text: "\uF06D"
+          text: "\u25CF"
           text_font: montserrat_32
-          text_color: 0x000000
+          text_color: 0x2095F6
 
   pages:
     # --- PAGE 1: HUISKAMER ---
@@ -430,14 +502,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
-                    data:
-                      entity_id: climate.huiskamer
-                    data_template:
-                      temperature: '{{ new_temp }}'
-                    variables:
-                      new_temp: 'return x / 10.0;'
+                - script.execute:
+                    id: set_huiskamer
+                    temp: !lambda "return x / 10.0;"
         - label:
             id: huiskamer_action_label
             align: CENTER
@@ -460,7 +527,7 @@ lvgl:
             y: 100
         - label:
             align: CENTER
-            y: -140
+            y: 200
             text: "HUISKAMER"
             text_font: montserrat_32
             text_color: 0xFFFFFF
@@ -530,14 +597,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
-                    data:
-                      entity_id: climate.keuken
-                    data_template:
-                      temperature: '{{ new_temp }}'
-                    variables:
-                      new_temp: 'return x / 10.0;'
+                - script.execute:
+                    id: set_keuken
+                    temp: !lambda "return x / 10.0;"
         - label:
             id: keuken_action_label
             align: CENTER
@@ -560,7 +622,7 @@ lvgl:
             y: 100
         - label:
             align: CENTER
-            y: -140
+            y: 200
             text: "KEUKEN"
             text_font: montserrat_32
             text_color: 0xFFFFFF
@@ -630,14 +692,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
-                    data:
-                      entity_id: climate.hal
-                    data_template:
-                      temperature: '{{ new_temp }}'
-                    variables:
-                      new_temp: 'return x / 10.0;'
+                - script.execute:
+                    id: set_hal
+                    temp: !lambda "return x / 10.0;"
         - label:
             id: hal_action_label
             align: CENTER
@@ -660,7 +717,7 @@ lvgl:
             y: 100
         - label:
             align: CENTER
-            y: -140
+            y: 200
             text: "HAL"
             text_font: montserrat_32
             text_color: 0xFFFFFF
@@ -730,14 +787,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - homeassistant.service:
-                    service: climate.set_temperature
-                    data:
-                      entity_id: climate.slaapkamer
-                    data_template:
-                      temperature: '{{ new_temp }}'
-                    variables:
-                      new_temp: 'return x / 10.0;'
+                - script.execute:
+                    id: set_slaapkamer
+                    temp: !lambda "return x / 10.0;"
         - label:
             id: slaapkamer_action_label
             align: CENTER
@@ -760,7 +812,7 @@ lvgl:
             y: 100
         - label:
             align: CENTER
-            y: -140
+            y: 200
             text: "SLAAPKAMER"
             text_font: montserrat_32
             text_color: 0xFFFFFF
@@ -830,14 +882,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - homeassistant.service:
-                    service: water_heater.set_temperature
-                    data:
-                      entity_id: water_heater.hot_water
-                    data_template:
-                      temperature: '{{ new_temp }}'
-                    variables:
-                      new_temp: 'return x / 10.0;'
+                - script.execute:
+                    id: set_dhw
+                    temp: !lambda "return x / 10.0;"
         - label:
             id: dhw_action_label
             align: CENTER
@@ -860,7 +907,7 @@ lvgl:
             y: 100
         - label:
             align: CENTER
-            y: -140
+            y: 200
             text: "HOT WATER"
             text_font: montserrat_32
             text_color: 0xFFFFFF
