@@ -505,6 +505,7 @@ lvgl:
   displays: diyless_display
   touchscreens:
     - touchscreen_id: diyless_touchscreen
+  buffer_size: 20%
   on_idle:
     timeout: !lambda "return (id(display_timeout).state * 1000);"
     then:
