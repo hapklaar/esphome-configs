@@ -178,6 +178,14 @@ font:
     id: montserrat_48
     size: 48
     bpp: 8
+  - file:
+      type: gfonts
+      family: Material Icons
+    id: material_icons_32
+    size: 32
+    bpp: 8
+    glyphs:
+      - "\uEF55"
 
 script:
   - id: set_huiskamer
@@ -474,9 +482,9 @@ lvgl:
           align: BOTTOM_RIGHT
           x: -16
           y: -16
-          text: "\u25CF"
-          text_font: montserrat_32
-          text_color: 0x2095F6
+          text: "\uEF55"
+          text_font: material_icons_32
+          text_color: 0x808080
 
   pages:
     # --- PAGE 1: HUISKAMER ---
