@@ -298,6 +298,45 @@ sensor:
     name: OEM Diagnostic Code
     entity_category: diagnostic
 
+text_sensor:
+  - platform: homeassistant
+    id: tado_hvac_action
+    entity_id: climate.huiskamer
+    attribute: hvac_action
+    on_value:
+      - lvgl.label.update:
+          id: ch_action_label
+          text:
+            format: "%s"
+            args: [ 'x.c_str()' ]
+  - platform: homeassistant
+    id: tado_hvac_mode
+    entity_id: climate.huiskamer
+    # The default state of a climate entity is its mode (auto, heat, or off)
+    on_value:
+      - if:
+          condition:
+            - lambda: 'return x == "off";'
+          then:
+            # If Tado is OFF, highlight the OFF button
+            - lvgl.button.update:
+                id: ch_off_button
+                state:
+                  checked: true
+            - lvgl.button.update:
+                id: ch_on_button
+                state:
+                  checked: false
+          else:
+            # If Tado is AUTO or HEAT, highlight the HEAT button
+            - lvgl.button.update:
+                id: ch_off_button
+                state:
+                  checked: false
+            - lvgl.button.update:
+                id: ch_on_button
+                state:
+                  checked: true
 
 # Use PID Climate component for automatic boiler setpoint calculation
 # https://esphome.io/components/climate/pid
@@ -540,7 +579,7 @@ lvgl:
             x: -50
             y: 190
             width: 70
-            checkable: true
+            checkable: false
             bg_color: 0x292929
             shadow_width: 0
             pressed:
@@ -553,14 +592,18 @@ lvgl:
                   text: 'OFF'
             on_click:
               then:
-                - switch.turn_off: ch_enable
+                - homeassistant.service:
+                    service: climate.set_hvac_mode
+                    data:
+                      entity_id: climate.huiskamer
+                      hvac_mode: 'off'
         - button:
             id: ch_on_button
             align: CENTER
             x: 50
             y: 190
             width: 70
-            checkable: true
+            checkable: false
             bg_color: 0x292929
             shadow_width: 0
             pressed:
@@ -573,7 +616,11 @@ lvgl:
                   text: 'HEAT'
             on_click:
               then:
-                - switch.turn_on: ch_enable
+                - homeassistant.service:
+                    service: climate.set_hvac_mode
+                    data:
+                      entity_id: climate.huiskamer
+                      hvac_mode: 'auto'
         - button:
             id: go_dhw_button
             align: CENTER
