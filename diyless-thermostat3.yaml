@@ -450,12 +450,9 @@ touchscreen:
       y_max: 480
     update_interval: 100ms
     on_release:
-      - if:
-          condition: lvgl.is_paused
-          then:
-            - lvgl.resume:
-            - lvgl.widget.redraw:
-            - light.turn_on: backlight
+      - light.turn_on:
+          id: backlight
+          brightness: 100%
 
 i2c:
   sda: GPIO17
@@ -483,8 +480,9 @@ lvgl:
   on_idle:
     timeout: !lambda "return (id(display_timeout).state * 1000);"
     then:
-      - light.turn_off: backlight
-      - lvgl.pause:  
+    - light.turn_on:
+          id: backlight
+          brightness: 50%
   pages:
     - id: ch_page
       bg_opa: TRANSP
