@@ -44,7 +44,7 @@ wifi:
         id: ip_label
         text:
           format: "\uF1EB %s"
-          args: [ 'id(wifi_id).wifi_sta_ip_addresses()[0].str().c_str()' ]
+          args: [ '([]() -> const char* { static char b[16]; id(wifi_id).wifi_sta_ip_addresses()[0].str_to(b); return b; }())' ]
   on_disconnect:
     - lvgl.label.update:
         id: ip_label
