@@ -171,9 +171,9 @@ font:
     glyphs:
       - "\uEF55" # Flame
       - "\uE8AC" # Power / Off
-      - "\uE3FA" # Auto (hdr_auto)
-      - "\uE145" # Plus (add)
-      - "\uE15B" # Minus (remove)
+      - "\uE3FA" # Auto
+      - "\uE145" # Plus
+      - "\uE15B" # Minus
 
 script:
   - id: set_huiskamer
@@ -254,9 +254,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: huiskamer_action_label
-          text:
-            format: "%s"
-            args: [ 'x.c_str()' ]
+          text: { format: "%s", args: [ 'x.c_str()' ] }
   - platform: homeassistant
     id: keuken_action
     entity_id: climate.keuken
@@ -264,9 +262,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: keuken_action_label
-          text:
-            format: "%s"
-            args: [ 'x.c_str()' ]
+          text: { format: "%s", args: [ 'x.c_str()' ] }
   - platform: homeassistant
     id: hal_action
     entity_id: climate.hal
@@ -274,9 +270,7 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: hal_action_label
-          text:
-            format: "%s"
-            args: [ 'x.c_str()' ]
+          text: { format: "%s", args: [ 'x.c_str()' ] }
   - platform: homeassistant
     id: slaapkamer_action
     entity_id: climate.slaapkamer
@@ -284,11 +278,9 @@ text_sensor:
     on_value:
       - lvgl.label.update:
           id: slaapkamer_action_label
-          text:
-            format: "%s"
-            args: [ 'x.c_str()' ]
+          text: { format: "%s", args: [ 'x.c_str()' ] }
 
-  # --- HVAC MODES (CONTROLS ARC & BUTTON COLORS) ---
+  # --- HVAC MODES ---
   - platform: homeassistant
     id: huiskamer_mode
     entity_id: climate.huiskamer
@@ -562,6 +554,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
+                - lvgl.label.update:
+                    id: huiskamer_target_label
+                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(huiskamer_target_temp).state - 0.05) || ((x / 10.0) > id(huiskamer_target_temp).state + 0.05);'
@@ -743,6 +738,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
+                - lvgl.label.update:
+                    id: keuken_target_label
+                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(keuken_target_temp).state - 0.05) || ((x / 10.0) > id(keuken_target_temp).state + 0.05);'
@@ -924,6 +922,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
+                - lvgl.label.update:
+                    id: hal_target_label
+                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(hal_target_temp).state - 0.05) || ((x / 10.0) > id(hal_target_temp).state + 0.05);'
@@ -1105,6 +1106,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
+                - lvgl.label.update:
+                    id: slaapkamer_target_label
+                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(slaapkamer_target_temp).state - 0.05) || ((x / 10.0) > id(slaapkamer_target_temp).state + 0.05);'
@@ -1286,6 +1290,9 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
+                - lvgl.label.update:
+                    id: dhw_target_label
+                    text: { format: "%.1f°", args: [ 'x / 10.0' ] }
                 - if:
                     condition:
                       lambda: 'return ((x / 10.0) < id(dhw_target_temp).state - 0.05) || ((x / 10.0) > id(dhw_target_temp).state + 0.05);'
