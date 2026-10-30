@@ -239,7 +239,7 @@ binary_sensor:
             then:
               - lvgl.label.update:
                   id: flame_icon
-                  text_color: 0xFF9800
+                  text_color: 0xFF1800
             else:
               - lvgl.label.update:
                   id: flame_icon
