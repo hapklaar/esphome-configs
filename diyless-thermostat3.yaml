@@ -287,16 +287,6 @@ text_sensor:
           text:
             format: "%s"
             args: [ 'x.c_str()' ]
-  - platform: homeassistant
-    id: dhw_action
-    entity_id: water_heater.hot_water
-    attribute: current_operation
-    on_value:
-      - lvgl.label.update:
-          id: dhw_action_label
-          text:
-            format: "%s"
-            args: [ 'x.c_str()' ]
 
   # --- HVAC MODES (CONTROLS ARC & BUTTON COLORS) ---
   - platform: homeassistant
@@ -507,14 +497,6 @@ sensor:
           text: { format: "%.1f°", args: [ 'x' ] }
       - lvgl.arc.update: { id: slaapkamer_arc, value: !lambda return x * 10; }
 
-  - platform: homeassistant
-    id: dhw_current_temp
-    entity_id: water_heater.hot_water
-    attribute: current_temperature
-    on_value:
-      - lvgl.label.update:
-          id: dhw_current_label
-          text: { format: "%.1f°", args: [ 'x' ] }
   - platform: homeassistant
     id: dhw_target_temp
     entity_id: water_heater.hot_water
@@ -1276,7 +1258,7 @@ lvgl:
             adjustable: true
             value: 300
             min_value: 300
-            max_value: 800
+            max_value: 600
             width: 340
             height: 340
             arc_width: 24
@@ -1292,11 +1274,10 @@ lvgl:
                     id: set_dhw
                     temp: !lambda "return x / 10.0;"
         - label:
-            id: dhw_action_label
             align: CENTER
             y: -90
             text_font: montserrat_20
-            text: "--"
+            text: "Target"
             text_color: 0xFFFFFF
         - label:
             id: dhw_target_label
@@ -1304,13 +1285,6 @@ lvgl:
             text: "--.-°"
             y: -10
             text_font: font_roboto_72
-        - label:
-            id: dhw_current_label
-            align: CENTER
-            text: "--.-°"
-            text_font: montserrat_32
-            text_color: 0x808080
-            y: 60
         - label:
             align: CENTER
             y: -210
