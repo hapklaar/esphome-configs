@@ -26,7 +26,7 @@ api:
 
 ota:
   - platform: esphome
-    encryption: 
+    encryption:
 
 wifi:
   id: wifi_id
@@ -562,9 +562,13 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - script.execute:
-                    id: set_huiskamer
-                    temp: !lambda "return x / 10.0;"
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(huiskamer_target_temp).state - 0.05) || ((x / 10.0) > id(huiskamer_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_huiskamer
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: huiskamer_action_label
             align: CENTER
@@ -739,9 +743,13 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - script.execute:
-                    id: set_keuken
-                    temp: !lambda "return x / 10.0;"
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(keuken_target_temp).state - 0.05) || ((x / 10.0) > id(keuken_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_keuken
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: keuken_action_label
             align: CENTER
@@ -916,9 +924,13 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - script.execute:
-                    id: set_hal
-                    temp: !lambda "return x / 10.0;"
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(hal_target_temp).state - 0.05) || ((x / 10.0) > id(hal_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_hal
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: hal_action_label
             align: CENTER
@@ -1093,9 +1105,13 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - script.execute:
-                    id: set_slaapkamer
-                    temp: !lambda "return x / 10.0;"
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(slaapkamer_target_temp).state - 0.05) || ((x / 10.0) > id(slaapkamer_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_slaapkamer
+                          temp: !lambda "return x / 10.0;"
         - label:
             id: slaapkamer_action_label
             align: CENTER
@@ -1270,9 +1286,13 @@ lvgl:
               bg_color: 0xFFFFFF
             on_value:
               then:
-                - script.execute:
-                    id: set_dhw
-                    temp: !lambda "return x / 10.0;"
+                - if:
+                    condition:
+                      lambda: 'return ((x / 10.0) < id(dhw_target_temp).state - 0.05) || ((x / 10.0) > id(dhw_target_temp).state + 0.05);'
+                    then:
+                      - script.execute:
+                          id: set_dhw
+                          temp: !lambda "return x / 10.0;"
         - label:
             align: CENTER
             y: -90
