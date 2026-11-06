@@ -175,19 +175,12 @@ script:
           brightness: 30%
           transition_length: 2s
       - lvgl.widget.show: wake_overlay
-      - delay: 120s
-      - delay: 2s
-      - lvgl.pause:
-          show_snow: false
+      # lvgl.pause and the 120s delay have been removed. 
+      # The screen will now continuously update while dimmed.
 
   - id: backlight_wake
     mode: restart
     then:
-      - if:
-          condition: lvgl.is_paused
-          then:
-            - lvgl.resume:
-            - lvgl.widget.redraw:
       - light.turn_on:
           id: display_backlight
           brightness: 90%
