@@ -175,10 +175,10 @@ script:
           brightness: 30%
           transition_length: 2s
       - lvgl.widget.show: wake_overlay
-      - delay: 30s
+      - delay: 120s
       - delay: 2s
       - lvgl.pause:
-          show_snow: true
+          show_snow: false
 
   - id: backlight_wake
     mode: restart
