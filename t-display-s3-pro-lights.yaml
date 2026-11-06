@@ -164,7 +164,7 @@ script:
           brightness: 30%
           transition_length: 2s
       - lvgl.widget.show: wake_overlay
-      - delay: 30s
+      - delay: 300s
       # Uncomment below if you want the backlight completely off during snow/pause
       # - light.turn_off:
       #     id: display_backlight
