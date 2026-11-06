@@ -237,7 +237,7 @@ script:
       - homeassistant.action:
           action: light.turn_on
           data:
-            entity_id: light.woonkamer_ldvwifia100e27dim
+            entity_id: light.front_dimmer_light
             brightness: !lambda "return brightness_val;"
             transition: "0"
 
@@ -277,7 +277,7 @@ binary_sensor:
 
   - platform: homeassistant
     id: hw_light_state
-    entity_id: light.woonkamer_ldvwifia100e27dim
+    entity_id: light.front_dimmer_light
     trigger_on_initial_state: true
     on_state:
       - lvgl.widget.update:
@@ -334,7 +334,7 @@ sensor:
 
   - platform: homeassistant
     id: hw_brightness
-    entity_id: light.woonkamer_ldvwifia100e27dim
+    entity_id: light.front_dimmer_light
     attribute: brightness
     on_value:
       - if:
@@ -611,7 +611,7 @@ lvgl:
                     - homeassistant.action:
                         action: light.toggle
                         data:
-                          entity_id: light.woonkamer_ldvwifia100e27dim
+                          entity_id: light.front_dimmer_light
                   widgets:
                     - label:
                         <<: *style_main_label
@@ -687,7 +687,7 @@ lvgl:
                     - homeassistant.action:
                         action: light.turn_on
                         data:
-                          entity_id: light.woonkamer_ldvwifia100e27dim
+                          entity_id: light.front_dimmer_light
                           brightness: "255"
                           transition: "0"
                     - lvgl.slider.update:
