@@ -11,10 +11,15 @@
     height: 50
     align: TOP_MID
     y: 10
+    bg_color: 0x4A4A4A
+    checked:
+      bg_color: 0xFF6600
   main_label: &style_main_label
     align: CENTER
     text_font: montserrat_20
+    text_color: 0xFFFFFF
   slider: &style_slider
+    min_value: 0
     max_value: 255
     width: 182
     height: 10
@@ -58,23 +63,6 @@ esphome:
     priority: -100
     then:
       - script.execute: backlight_wake
-      - lambda: |-
-          lv_obj_set_style_bg_color(id(lr_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
-          lv_obj_set_style_bg_color(id(hw_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
-          lv_obj_set_style_bg_color(id(lr_table_btn), lv_color_hex(0xFF6600), LV_STATE_CHECKED);
-      # Force a sync once API is connected to HA
-      - wait_until:
-          api.connected:
-      - delay: 2s
-      - lvgl.button.update:
-          id: lr_btn
-          state: { checked: !lambda "return id(lr_light_state).state;" }
-      - lvgl.button.update:
-          id: hw_btn
-          state: { checked: !lambda "return id(hw_light_state).state;" }
-      - lvgl.button.update:
-          id: lr_table_btn
-          state: { checked: !lambda "return id(lr_table_light_state).state;" }
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -139,7 +127,7 @@ i2c:
     sda: 5
     scan: true
     id: i2c_onboard
-    frequency: 100kHz
+    frequency: 400kHz # CST226 supports 400kHz Fast Mode for lower touch latency
 
 display:
   - platform: mipi_spi
@@ -164,54 +152,41 @@ globals:
   - id: slider_active_lr_table
     type: bool
     initial_value: "false"
-  - id: backlight_awake
-    type: bool
-    initial_value: "true"
 
 script:
   # -------- BACKLIGHT CONTROL --------
   - id: backlight_idle_timer
     mode: restart
     then:
-      # 1. Dim the screen after 30 seconds of inactivity
       - delay: 30s
       - light.turn_on:
           id: display_backlight
           brightness: 30%
           transition_length: 2s
-      - lambda: 'id(backlight_awake) = false;'
-      - lvgl.obj.update:
-          id: wake_overlay
-          hidden: false
-      
-      # 2. Prevent Burn-in (Deep Sleep Phase)
-      # Wait an additional 60 seconds (adjust as needed), then turn off the backlight and pause LVGL
+      - lvgl.widget.show: wake_overlay
       - delay: 30s
-     # - light.turn_off:
-     #     id: display_backlight
-     #     transition_length: 2s
-      - delay: 2s # Wait for the 2s fade-out to finish before pausing rendering
+      # Uncomment below if you want the backlight completely off during snow/pause
+      # - light.turn_off:
+      #     id: display_backlight
+      #     transition_length: 2s
+      - delay: 2s
       - lvgl.pause:
           show_snow: true
 
   - id: backlight_wake
     mode: restart
     then:
-      # 1. Resume LVGL rendering immediately
-      - lvgl.resume:
-      
-      # 2. Wake the backlight
+      - if:
+          condition: lvgl.is_paused
+          then:
+            - lvgl.resume:
+            - lvgl.widget.redraw:
       - light.turn_on:
           id: display_backlight
           brightness: 90%
           transition_length: 0.1s
-      - lambda: 'id(backlight_awake) = true;'
-      - delay: 300ms # Wait to absorb the touch before hiding the overlay
-      - lvgl.obj.update:
-          id: wake_overlay
-          hidden: true
-      
-      # 3. Restart the idle timer
+      - delay: 300ms
+      - lvgl.widget.hide: wake_overlay
       - script.execute: backlight_idle_timer
 
   # -------- LIGHT CONTROL DEBOUNCING --------
@@ -225,14 +200,14 @@ script:
           action: light.turn_on
           data:
             entity_id: light.yee_group
-            brightness: !lambda return brightness_val;
+            brightness: !lambda "return brightness_val;"
             transition: "0"
 
   - id: end_slider_lr
     mode: restart
     then:
       - delay: 800ms
-      - lambda: 'id(slider_active_lr) = false;'
+      - lambda: "id(slider_active_lr) = false;"
 
   - id: debounce_lr_table
     mode: restart
@@ -244,14 +219,14 @@ script:
           action: light.turn_on
           data:
             entity_id: light.front_dimmer_light
-            brightness: !lambda return brightness_val;
+            brightness: !lambda "return brightness_val;"
             transition: "0"
 
   - id: end_slider_lr_table
     mode: restart
     then:
       - delay: 800ms
-      - lambda: 'id(slider_active_lr_table) = false;'
+      - lambda: "id(slider_active_lr_table) = false;"
 
   - id: debounce_hw
     mode: restart
@@ -263,49 +238,82 @@ script:
           action: light.turn_on
           data:
             entity_id: light.woonkamer_ldvwifia100e27dim
-            brightness: !lambda return brightness_val;
+            brightness: !lambda "return brightness_val;"
             transition: "0"
 
   - id: end_slider_hw
     mode: restart
     then:
       - delay: 800ms
-      - lambda: 'id(slider_active_hw) = false;'
+      - lambda: "id(slider_active_hw) = false;"
 
 binary_sensor:
   - platform: status
     id: api_status
     on_state:
-      - lambda: |-
-          if (x) {
-            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0x00FF00), 0); // Brighter Green when connected
-          } else {
-            lv_obj_set_style_bg_color(id(status_indicator), lv_color_hex(0xF44336), 0); // Red when disconnected
-          }
+      - lvgl.widget.update:
+          id: status_indicator
+          bg_color: !lambda "return x ? lv_color_hex(0x00FF00) : lv_color_hex(0xF44336);"
 
   - platform: homeassistant
     id: lr_light_state
     entity_id: light.yee_group
+    publish_initial_state: true
     on_state:
-      - lvgl.button.update:
+      - lvgl.widget.update:
           id: lr_btn
-          state: { checked: !lambda "return x;" }
-  
+          state:
+            checked: !lambda "return x;"
+      - if:
+          condition:
+            lambda: "return !x && !id(slider_active_lr);"
+          then:
+            - lvgl.slider.update:
+                id: lr_slider
+                value: 0
+            - lvgl.label.update:
+                id: lr_pct
+                text: "0%"
+
   - platform: homeassistant
     id: hw_light_state
     entity_id: light.woonkamer_ldvwifia100e27dim
+    publish_initial_state: true
     on_state:
-      - lvgl.button.update:
+      - lvgl.widget.update:
           id: hw_btn
-          state: { checked: !lambda "return x;" }
+          state:
+            checked: !lambda "return x;"
+      - if:
+          condition:
+            lambda: "return !x && !id(slider_active_hw);"
+          then:
+            - lvgl.slider.update:
+                id: hw_slider
+                value: 0
+            - lvgl.label.update:
+                id: hw_pct
+                text: "0%"
 
   - platform: homeassistant
     id: lr_table_light_state
     entity_id: light.front_dimmer_light
+    publish_initial_state: true
     on_state:
-      - lvgl.button.update:
+      - lvgl.widget.update:
           id: lr_table_btn
-          state: { checked: !lambda "return x;" }
+          state:
+            checked: !lambda "return x;"
+      - if:
+          condition:
+            lambda: "return !x && !id(slider_active_lr_table);"
+          then:
+            - lvgl.slider.update:
+                id: lr_table_slider
+                value: 0
+            - lvgl.label.update:
+                id: lr_table_pct
+                text: "0%"
 
 sensor:
   - platform: homeassistant
@@ -315,14 +323,14 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: 'return !isnan(x) && !id(slider_active_lr);'
+            lambda: "return !isnan(x) && !id(slider_active_lr);"
           then:
             - lvgl.slider.update:
                 id: lr_slider
-                value: !lambda "return (int)x;"
+                value: !lambda "return (int)roundf(x);"
             - lvgl.label.update:
                 id: lr_pct
-                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                text: !lambda 'return str_sprintf("%d%%", (int)roundf((x / 255.0f) * 100.0f));'
 
   - platform: homeassistant
     id: hw_brightness
@@ -331,14 +339,14 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: 'return !isnan(x) && !id(slider_active_hw);'
+            lambda: "return !isnan(x) && !id(slider_active_hw);"
           then:
             - lvgl.slider.update:
                 id: hw_slider
-                value: !lambda "return (int)x;"
+                value: !lambda "return (int)roundf(x);"
             - lvgl.label.update:
                 id: hw_pct
-                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                text: !lambda 'return str_sprintf("%d%%", (int)roundf((x / 255.0f) * 100.0f));'
 
   - platform: homeassistant
     id: lr_table_brightness
@@ -347,16 +355,17 @@ sensor:
     on_value:
       - if:
           condition:
-            lambda: 'return !isnan(x) && !id(slider_active_lr_table);'
+            lambda: "return !isnan(x) && !id(slider_active_lr_table);"
           then:
             - lvgl.slider.update:
                 id: lr_table_slider
-                value: !lambda "return (int)x;"
+                value: !lambda "return (int)roundf(x);"
             - lvgl.label.update:
                 id: lr_table_pct
-                text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                text: !lambda 'return str_sprintf("%d%%", (int)roundf((x / 255.0f) * 100.0f));'
 
 lvgl:
+  buffer_size: 25%
   pages:
     - id: lights_page
       bg_color: 0xF2F2EE
@@ -386,15 +395,16 @@ lvgl:
               - button:
                   <<: *style_main_btn
                   id: lr_btn
-                  on_value:
+                  on_click:
                     - homeassistant.action:
-                        action: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
-                        data: { entity_id: light.yee_group }
+                        action: light.toggle
+                        data:
+                          entity_id: light.yee_group
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_main_label
                         text: "LR Lights"
-              
+
               - slider:
                   <<: *style_slider
                   id: lr_slider
@@ -407,7 +417,7 @@ lvgl:
                         brightness_val: !lambda "return (int)x;"
                     - lvgl.label.update:
                         id: lr_pct
-                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((x / 255.0f) * 100.0f));'
                   on_release:
                     - script.execute: end_slider_lr
 
@@ -427,10 +437,10 @@ lvgl:
                         brightness_val: !lambda "return lv_slider_get_value(id(lr_slider));"
                     - lvgl.label.update:
                         id: lr_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((lv_slider_get_value(id(lr_slider)) / 255.0f) * 100.0f));'
                     - script.execute: end_slider_lr
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_side_label
                         text: "-"
 
@@ -450,10 +460,10 @@ lvgl:
                         brightness_val: !lambda "return lv_slider_get_value(id(lr_slider));"
                     - lvgl.label.update:
                         id: lr_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_slider)) / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((lv_slider_get_value(id(lr_slider)) / 255.0f) * 100.0f));'
                     - script.execute: end_slider_lr
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_side_label
                         text: "+"
 
@@ -491,15 +501,16 @@ lvgl:
               - button:
                   <<: *style_main_btn
                   id: lr_table_btn
-                  on_value:
+                  on_click:
                     - homeassistant.action:
-                        action: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
-                        data: { entity_id: light.front_dimmer_light }
+                        action: light.toggle
+                        data:
+                          entity_id: light.front_dimmer_light
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_main_label
                         text: "Table front"
-              
+
               - slider:
                   <<: *style_slider
                   id: lr_table_slider
@@ -512,7 +523,7 @@ lvgl:
                         brightness_val: !lambda "return (int)x;"
                     - lvgl.label.update:
                         id: lr_table_pct
-                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((x / 255.0f) * 100.0f));'
                   on_release:
                     - script.execute: end_slider_lr_table
 
@@ -532,10 +543,10 @@ lvgl:
                         brightness_val: !lambda "return lv_slider_get_value(id(lr_table_slider));"
                     - lvgl.label.update:
                         id: lr_table_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((lv_slider_get_value(id(lr_table_slider)) / 255.0f) * 100.0f));'
                     - script.execute: end_slider_lr_table
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_side_label
                         text: "-"
 
@@ -555,10 +566,10 @@ lvgl:
                         brightness_val: !lambda "return lv_slider_get_value(id(lr_table_slider));"
                     - lvgl.label.update:
                         id: lr_table_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(lr_table_slider)) / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((lv_slider_get_value(id(lr_table_slider)) / 255.0f) * 100.0f));'
                     - script.execute: end_slider_lr_table
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_side_label
                         text: "+"
 
@@ -596,15 +607,16 @@ lvgl:
               - button:
                   <<: *style_main_btn
                   id: hw_btn
-                  on_value:
+                  on_click:
                     - homeassistant.action:
-                        action: !lambda 'return x ? "light.turn_on" : "light.turn_off";'
-                        data: { entity_id: light.woonkamer_ldvwifia100e27dim }
+                        action: light.toggle
+                        data:
+                          entity_id: light.woonkamer_ldvwifia100e27dim
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_main_label
                         text: "Hallway"
-              
+
               - slider:
                   <<: *style_slider
                   id: hw_slider
@@ -617,7 +629,7 @@ lvgl:
                         brightness_val: !lambda "return (int)x;"
                     - lvgl.label.update:
                         id: hw_pct
-                        text: !lambda 'return to_string((int)((x / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((x / 255.0f) * 100.0f));'
                   on_release:
                     - script.execute: end_slider_hw
 
@@ -637,10 +649,10 @@ lvgl:
                         brightness_val: !lambda "return lv_slider_get_value(id(hw_slider));"
                     - lvgl.label.update:
                         id: hw_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((lv_slider_get_value(id(hw_slider)) / 255.0f) * 100.0f));'
                     - script.execute: end_slider_hw
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_side_label
                         text: "-"
 
@@ -660,10 +672,10 @@ lvgl:
                         brightness_val: !lambda "return lv_slider_get_value(id(hw_slider));"
                     - lvgl.label.update:
                         id: hw_pct
-                        text: !lambda 'return to_string((int)((lv_slider_get_value(id(hw_slider)) / 255.0) * 100.0)) + "%";'
+                        text: !lambda 'return str_sprintf("%d%%", (int)roundf((lv_slider_get_value(id(hw_slider)) / 255.0f) * 100.0f));'
                     - script.execute: end_slider_hw
                   widgets:
-                    - label: 
+                    - label:
                         <<: *style_side_label
                         text: "+"
 
@@ -693,7 +705,6 @@ lvgl:
 
         # ==========================================
         # --- WAKE OVERLAY ---
-        # Absorbs touches when the screen is dimmed
         # ==========================================
         - obj:
             id: wake_overlay
