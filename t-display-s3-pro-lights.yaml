@@ -14,6 +14,9 @@
     bg_color: 0x4A4A4A
     checked:
       bg_color: 0xFF6600
+    disabled:
+      bg_color: 0x888888
+      bg_opa: 50%
   main_label: &style_main_label
     align: CENTER
     text_font: montserrat_20
@@ -27,6 +30,8 @@
     y: 77
     bg_color: 0xEEEEEE
     radius: 7
+    disabled:
+      bg_color: 0xCCCCCC
   minus_btn: &style_minus_btn
     width: 40
     height: 35
@@ -34,6 +39,8 @@
     y: 108
     bg_color: 0xDEDEDE
     radius: 6
+    disabled:
+      bg_color: 0xEEEEEE
   plus_btn: &style_plus_btn
     width: 40
     height: 35
@@ -41,6 +48,8 @@
     y: 108
     bg_color: 0xDEDEDE
     radius: 6
+    disabled:
+      bg_color: 0xEEEEEE
   side_label: &style_side_label
     align: CENTER
     text_font: montserrat_20
@@ -51,6 +60,8 @@
     align: TOP_MID
     y: 108
     bg_color: 0xDEDEDE
+    disabled:
+      bg_color: 0xEEEEEE
   pct_label: &style_pct_label
     align: CENTER
     text_font: montserrat_18
@@ -127,7 +138,7 @@ i2c:
     sda: 5
     scan: true
     id: i2c_onboard
-    frequency: 400kHz # CST226 supports 400kHz Fast Mode for lower touch latency
+    frequency: 400kHz
 
 display:
   - platform: mipi_spi
@@ -164,11 +175,7 @@ script:
           brightness: 30%
           transition_length: 2s
       - lvgl.widget.show: wake_overlay
-      - delay: 300s
-      # Uncomment below if you want the backlight completely off during snow/pause
-      # - light.turn_off:
-      #     id: display_backlight
-      #     transition_length: 2s
+      - delay: 30s
       - delay: 2s
       - lvgl.pause:
           show_snow: true
@@ -237,7 +244,7 @@ script:
       - homeassistant.action:
           action: light.turn_on
           data:
-            entity_id: light.front_dimmer_light
+            entity_id: light.woonkamer_ldvwifia100e27dim
             brightness: !lambda "return brightness_val;"
             transition: "0"
 
@@ -246,6 +253,82 @@ script:
     then:
       - delay: 800ms
       - lambda: "id(slider_active_hw) = false;"
+
+text_sensor:
+  - platform: homeassistant
+    id: lr_light_availability
+    entity_id: light.yee_group
+    on_value:
+      - if:
+          condition:
+            lambda: 'return x == "unavailable" || x == "unknown";'
+          then:
+            - lambda: |-
+                lv_obj_add_state(id(lr_btn), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_slider), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_minus), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_plus), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_pct_btn), LV_STATE_DISABLED);
+                lv_label_set_text(id(lr_btn_label), "Offline");
+                lv_label_set_text(id(lr_pct), "-");
+          else:
+            - lambda: |-
+                lv_obj_clear_state(id(lr_btn), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_slider), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_minus), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_plus), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_pct_btn), LV_STATE_DISABLED);
+                lv_label_set_text(id(lr_btn_label), "LR Lights");
+
+  - platform: homeassistant
+    id: lr_table_light_availability
+    entity_id: light.front_dimmer_light
+    on_value:
+      - if:
+          condition:
+            lambda: 'return x == "unavailable" || x == "unknown";'
+          then:
+            - lambda: |-
+                lv_obj_add_state(id(lr_table_btn), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_table_slider), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_table_minus), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_table_plus), LV_STATE_DISABLED);
+                lv_obj_add_state(id(lr_table_pct_btn), LV_STATE_DISABLED);
+                lv_label_set_text(id(lr_table_btn_label), "Offline");
+                lv_label_set_text(id(lr_table_pct), "-");
+          else:
+            - lambda: |-
+                lv_obj_clear_state(id(lr_table_btn), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_table_slider), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_table_minus), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_table_plus), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(lr_table_pct_btn), LV_STATE_DISABLED);
+                lv_label_set_text(id(lr_table_btn_label), "Table front");
+
+  - platform: homeassistant
+    id: hw_light_availability
+    entity_id: light.woonkamer_ldvwifia100e27dim
+    on_value:
+      - if:
+          condition:
+            lambda: 'return x == "unavailable" || x == "unknown";'
+          then:
+            - lambda: |-
+                lv_obj_add_state(id(hw_btn), LV_STATE_DISABLED);
+                lv_obj_add_state(id(hw_slider), LV_STATE_DISABLED);
+                lv_obj_add_state(id(hw_minus), LV_STATE_DISABLED);
+                lv_obj_add_state(id(hw_plus), LV_STATE_DISABLED);
+                lv_obj_add_state(id(hw_pct_btn), LV_STATE_DISABLED);
+                lv_label_set_text(id(hw_btn_label), "Offline");
+                lv_label_set_text(id(hw_pct), "-");
+          else:
+            - lambda: |-
+                lv_obj_clear_state(id(hw_btn), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(hw_slider), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(hw_minus), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(hw_plus), LV_STATE_DISABLED);
+                lv_obj_clear_state(id(hw_pct_btn), LV_STATE_DISABLED);
+                lv_label_set_text(id(hw_btn_label), "Hallway");
 
 binary_sensor:
   - platform: status
@@ -258,7 +341,7 @@ binary_sensor:
   - platform: homeassistant
     id: lr_light_state
     entity_id: light.yee_group
-    trigger_on_initial_state: true
+    publish_initial_state: true
     on_state:
       - lvgl.widget.update:
           id: lr_btn
@@ -277,8 +360,8 @@ binary_sensor:
 
   - platform: homeassistant
     id: hw_light_state
-    entity_id: light.front_dimmer_light
-    trigger_on_initial_state: true
+    entity_id: light.woonkamer_ldvwifia100e27dim
+    publish_initial_state: true
     on_state:
       - lvgl.widget.update:
           id: hw_btn
@@ -298,7 +381,7 @@ binary_sensor:
   - platform: homeassistant
     id: lr_table_light_state
     entity_id: light.front_dimmer_light
-    trigger_on_initial_state: true
+    publish_initial_state: true
     on_state:
       - lvgl.widget.update:
           id: lr_table_btn
@@ -334,7 +417,7 @@ sensor:
 
   - platform: homeassistant
     id: hw_brightness
-    entity_id: light.front_dimmer_light
+    entity_id: light.woonkamer_ldvwifia100e27dim
     attribute: brightness
     on_value:
       - if:
@@ -403,6 +486,7 @@ lvgl:
                   widgets:
                     - label:
                         <<: *style_main_label
+                        id: lr_btn_label
                         text: "LR Lights"
 
               - slider:
@@ -469,6 +553,7 @@ lvgl:
 
               - button:
                   <<: *style_pct_btn
+                  id: lr_pct_btn
                   on_click:
                     - script.stop: end_slider_lr
                     - lambda: "id(slider_active_lr) = true;"
@@ -509,6 +594,7 @@ lvgl:
                   widgets:
                     - label:
                         <<: *style_main_label
+                        id: lr_table_btn_label
                         text: "Table front"
 
               - slider:
@@ -575,6 +661,7 @@ lvgl:
 
               - button:
                   <<: *style_pct_btn
+                  id: lr_table_pct_btn
                   on_click:
                     - script.stop: end_slider_lr_table
                     - lambda: "id(slider_active_lr_table) = true;"
@@ -611,10 +698,11 @@ lvgl:
                     - homeassistant.action:
                         action: light.toggle
                         data:
-                          entity_id: light.front_dimmer_light
+                          entity_id: light.woonkamer_ldvwifia100e27dim
                   widgets:
                     - label:
                         <<: *style_main_label
+                        id: hw_btn_label
                         text: "Hallway"
 
               - slider:
@@ -681,13 +769,14 @@ lvgl:
 
               - button:
                   <<: *style_pct_btn
+                  id: hw_pct_btn
                   on_click:
                     - script.stop: end_slider_hw
                     - lambda: "id(slider_active_hw) = true;"
                     - homeassistant.action:
                         action: light.turn_on
                         data:
-                          entity_id: light.front_dimmer_light
+                          entity_id: light.woonkamer_ldvwifia100e27dim
                           brightness: "255"
                           transition: "0"
                     - lvgl.slider.update:
