@@ -341,7 +341,7 @@ binary_sensor:
   - platform: homeassistant
     id: lr_light_state
     entity_id: light.yee_group
-    publish_initial_state: true
+    trigger_on_initial_state: true
     on_state:
       - lvgl.widget.update:
           id: lr_btn
@@ -361,7 +361,7 @@ binary_sensor:
   - platform: homeassistant
     id: hw_light_state
     entity_id: light.ledvance_dimming_lightbulb
-    publish_initial_state: true
+    trigger_on_initial_state: true
     on_state:
       - lvgl.widget.update:
           id: hw_btn
@@ -381,7 +381,7 @@ binary_sensor:
   - platform: homeassistant
     id: lr_table_light_state
     entity_id: light.front_dimmer_light
-    publish_initial_state: true
+    trigger_on_initial_state: true
     on_state:
       - lvgl.widget.update:
           id: lr_table_btn
