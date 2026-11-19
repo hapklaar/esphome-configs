@@ -4,6 +4,7 @@ substitutions:
   wifi_password: !secret wifi_password
   api_encryption_key: !secret api_secret
   ota_encryption: true                                    # Encrypt the OTA updates with the API encryption key
+  ota_password: ${wifi_password}
   language: en                                            # Language code - see docs/localization.md for all supported codes
   boot_sound: false
   # Add-on configuration (if needed)
@@ -26,6 +27,6 @@ packages:
       # Optional advanced and add-on configurations
       # - esphome/nspanel_esphome_addon_climate_cool.yaml
       # - esphome/nspanel_esphome_addon_climate_heat.yaml
-      # - esphome/nspanel_esphome_addon_climate_dual.yaml
+      - esphome/nspanel_esphome_addon_climate_dual.yaml
       # - esphome/nspanel_esphome_addon_cover.yaml
       # - esphome/nspanel_esphome_addon_display_light.yaml  # Show the display as a light in Home Assistant
